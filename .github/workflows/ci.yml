@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+
+  # Backend
+
+  backend-build:
+    name: Backend - Build & Test
+    runs-on: ubuntu-latest
+    if: >
+      contains(toJSON(github.event.commits.*.modified), 'DentFlow-PZ/') ||
+      contains(toJSON(github.event.commits.*.added), 'DentFlow-PZ/') ||
+      github.event_name == 'pull_request'
+    defaults:
+      run:
+        working-directory: DentFlow-PZ
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: dentflow_test
+          POSTGRES_USER: dentflow
+          POSTGRES_PASSWORD: testpass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U dentflow"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Compile
+        run: mvn compile -q
+
+      - name: Run tests
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/dentflow_test
+          SPRING_DATASOURCE_USERNAME: dentflow
+          SPRING_DATASOURCE_PASSWORD: testpass
+          JWT_SECRET: ci-test-secret-key-min-256-bit-for-testing-only
+          JWT_EXPIRATION: 86400000
+          SENDGRID_API_KEY: SG.fake-key-for-ci
+          MAIL_HOST: smtp.sendgrid.net
+          MAIL_PORT: 587
+          MAIL_USERNAME: apikey
+          SUPABASE_URL: https://fake.supabase.co
+          SUPABASE_SERVICE_KEY: fake-key-for-ci
+        run: mvn test -q
+
+      - name: Package
+        run: mvn package -DskipTests -q
+
+  # Android
+
+  android-build:
+    name: Android Build & Lint
+    runs-on: ubuntu-latest
+    if: >
+      contains(toJSON(github.event.commits.*.modified), 'DentFlowAndroid/') ||
+      contains(toJSON(github.event.commits.*.added), 'DentFlowAndroid/') ||
+      github.event_name == 'pull_request'
+    defaults:
+      run:
+        working-directory: DentFlowAndroid
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Lint
+        run: ./gradlew lint --quiet
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --quiet
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --quiet

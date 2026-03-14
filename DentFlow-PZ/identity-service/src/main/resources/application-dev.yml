@@ -1,0 +1,12 @@
+# Profil dev - domyslne wartosci do lokalnego uruchamiania
+# Aktywacja: mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dentflow
+    username: dentflow
+    password: dentflow
+
+jwt:
+  secret: dev-only-secret-key-replace-in-production-min-256bit
+  expiration: 86400000

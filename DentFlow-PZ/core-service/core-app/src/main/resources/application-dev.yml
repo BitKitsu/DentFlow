@@ -1,0 +1,20 @@
+# Profil dev - domyslne wartosci do lokalnego uruchamiania
+# Aktywacja: mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dentflow
+    username: dentflow
+    password: dentflow
+  mail:
+    host: smtp.sendgrid.net
+    port: 587
+    username: apikey
+    password: fake-dev-key
+
+jwt:
+  secret: dev-only-secret-key-replace-in-production-min-256bit
+
+supabase:
+  url: https://fake.supabase.co
+  service-key: fake-dev-key

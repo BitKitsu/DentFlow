@@ -1,0 +1,70 @@
+@startuml DentFlow - Diagram aktywnosci - Logowanie
+
+title Diagram aktywnosci: Logowanie uzytkownika
+
+skinparam activity {
+  BackgroundColor #F5F5F5
+  BorderColor #333333
+  DiamondBackgroundColor #FFFACD
+  DiamondBorderColor #DAA520
+  ArrowColor #555555
+}
+skinparam partition {
+  BackgroundColor #FAFAFA
+  BorderColor #CCCCCC
+}
+
+start
+
+partition "Aplikacja mobilna" {
+  :Otworz ekran logowania;
+  :Wprowadz email i haslo;
+  :Kliknij "Zaloguj sie";
+}
+
+partition "Identity Service" {
+  :Odbierz zadanie POST /auth/login;
+  :Walidacja formatu danych;
+
+  if (Dane poprawne?) then (nie)
+    :Zwroc blad 400\n(niepoprawny format);
+    stop
+  else (tak)
+  endif
+
+  :Wyszukaj uzytkownika w bazie po email;
+
+  if (Uzytkownik istnieje?) then (nie)
+    :Zwroc blad 401\n(nieprawidlowe dane);
+    stop
+  else (tak)
+  endif
+
+  :Pobierz hash hasla z bazy;
+  :Porownaj haslo z hashem (BCrypt);
+
+  if (Haslo poprawne?) then (nie)
+    :Zwroc blad 401\n(nieprawidlowe dane);
+    stop
+  else (tak)
+  endif
+
+  if (Konto aktywne?) then (nie)
+    :Zwroc blad 403\n(konto nieaktywne);
+    stop
+  else (tak)
+  endif
+
+  :Pobierz role uzytkownika;
+  :Wygeneruj token JWT\n(userId, email, role, tenantId);
+  :Zwroc token JWT (200 OK);
+}
+
+partition "Aplikacja mobilna" {
+  :Zapisz token w pamieci;
+  :Przekieruj na ekran glowny;
+}
+
+stop
+
+@enduml

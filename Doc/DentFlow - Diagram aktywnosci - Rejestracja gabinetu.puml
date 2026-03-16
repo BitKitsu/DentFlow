@@ -1,0 +1,55 @@
+@startuml DentFlow - Diagram aktywnosci - Rejestracja gabinetu
+
+title Diagram aktywnosci: Rejestracja gabinetu
+
+skinparam activity {
+  BackgroundColor #F5F5F5
+  BorderColor #333333
+  DiamondBackgroundColor #FFFACD
+  DiamondBorderColor #DAA520
+  ArrowColor #555555
+}
+skinparam partition {
+  BackgroundColor #FAFAFA
+  BorderColor #CCCCCC
+}
+
+start
+
+partition "Owner" {
+  :Wypelnij formularz rejestracji gabinetu\n(nazwa, NIP, dane kontaktowe);
+  :Podaj dane pierwszej lokalizacji\n(adres, telefon);
+  :Utworz konto Owner\n(email, haslo);
+}
+
+partition "Identity Service" {
+  :Walidacja danych rejestracji;
+
+  if (Email juz istnieje?) then (tak)
+    :Zwroc blad 409\n(email zajety);
+    stop
+  else (nie)
+  endif
+
+  :Utworz konto uzytkownika\n(rola: OWNER);
+  :Wygeneruj tenant_id;
+}
+
+partition "Core Service - Clinic" {
+  :Utworz rekord Tenant\n(gabinet stomatologiczny);
+  :Utworz pierwsza lokalizacje;
+  :Utworz profil StaffMember\ndla Owner;
+}
+
+partition "Identity Service" {
+  :Wygeneruj token JWT;
+  :Zwroc token (201 Created);
+}
+
+partition "Owner" {
+  :Zalogowano - ekran glowny gabinetu;
+}
+
+stop
+
+@enduml

@@ -1,0 +1,87 @@
+@startuml DentFlow - Diagram aktywnosci - Rezerwacja wizyty
+
+title Diagram aktywnosci: Rezerwacja wizyty
+
+skinparam activity {
+  BackgroundColor #F5F5F5
+  BorderColor #333333
+  DiamondBackgroundColor #FFFACD
+  DiamondBorderColor #DAA520
+  ArrowColor #555555
+}
+skinparam partition {
+  BackgroundColor #FAFAFA
+  BorderColor #CCCCCC
+}
+
+start
+
+partition "Uzytkownik (Recepcja / Pacjent)" {
+  :Wybierz date z kalendarza;
+  :Wybierz uslugi z cennika;
+  :Wybierz dentysty;
+}
+
+partition "Core Service - Scheduling" {
+  :Pobierz grafik dentysty\nna wybrany dzien;
+  :Pobierz istniejace rezerwacje\ni blokady;
+  :Oblicz dostepne sloty czasowe;
+}
+
+partition "Uzytkownik (Recepcja / Pacjent)" {
+  :Wyswietl dostepne sloty;
+  :Wybierz slot czasowy;
+
+  if (Rezerwacja przez recepcje?) then (tak)
+    :Wyszukaj lub dodaj pacjenta;
+  else (nie - portal pacjenta)
+    :Uzyj danych zalogowanego pacjenta;
+  endif
+
+  :Potwierdz rezerwacje;
+}
+
+partition "Core Service - Reservation" {
+  :Odbierz zadanie POST /appointments;
+  :Walidacja danych wejsciowych;
+
+  if (Dane poprawne?) then (nie)
+    :Zwroc blad 400;
+    stop
+  else (tak)
+  endif
+
+  :Sprawdz ponownie dostepnosc slotu\n(zabezpieczenie przed race condition);
+
+  if (Slot nadal dostepny?) then (nie)
+    :Zwroc blad 409\n(konflikt - slot zajety);
+    stop
+  else (tak)
+  endif
+
+  :Oblicz czas zakonczenia\n(start + suma czasow uslug);
+
+  if (Wizyta miesci sie w grafiku?) then (nie)
+    :Zwroc blad 422\n(przekroczenie grafiku);
+    stop
+  else (tak)
+  endif
+
+  :Zapisz rezerwacje w bazie\n(status: SCHEDULED);
+}
+
+partition "Core Service - Notification" {
+  fork
+    :Utworz powiadomienie in-app\ndla dentysty;
+  fork again
+    :Wyslij email potwierdzenia\ndo pacjenta (SendGrid);
+  end fork
+}
+
+partition "Uzytkownik (Recepcja / Pacjent)" {
+  :Wyswietl potwierdzenie rezerwacji;
+}
+
+stop
+
+@enduml

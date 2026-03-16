@@ -1,0 +1,103 @@
+@startuml DentFlow - Diagram aktywnosci - Zarzadzanie grafikiem
+
+title Diagram aktywnosci: Zarzadzanie grafikiem pracy
+
+skinparam activity {
+  BackgroundColor #F5F5F5
+  BorderColor #333333
+  DiamondBackgroundColor #FFFACD
+  DiamondBorderColor #DAA520
+  ArrowColor #555555
+}
+skinparam partition {
+  BackgroundColor #FAFAFA
+  BorderColor #CCCCCC
+}
+
+start
+
+partition "Dentysta" {
+  :Otworz widok grafiku pracy;
+}
+
+partition "Core Service - Scheduling" {
+  :Pobierz grafik na wybrany tydzien\n(sloty + blokady);
+  :Zwroc dane grafiku;
+}
+
+partition "Dentysta" {
+  :Wyswietl grafik tygodniowy;
+
+  switch (Wybierz akcje)
+  case (Dodaj slot)
+
+    :Wybierz dzien, godzine\nstart i koniec;
+    :Wybierz lokalizacje\ni gabinet (Room);
+
+    partition "Core Service - Scheduling" {
+      :Walidacja slotu;
+
+      if (Slot naklada sie\nna istniejacy?) then (tak)
+        :Zwroc blad 409\n(konflikt slotow);
+        stop
+      else (nie)
+      endif
+
+      :Zapisz WorkScheduleSlot\nw bazie;
+      :Zwroc 201 Created;
+    }
+
+    :Wyswietl nowy slot\nw grafiku;
+
+  case (Dodaj blokade)
+
+    :Wybierz typ blokady\n(urlop / przerwa / inne);
+    :Wybierz zakres dat\ni godzin;
+    :Opcjonalnie dodaj powod;
+
+    partition "Core Service - Scheduling" {
+      :Sprawdz czy sa rezerwacje\nw zakresie blokady;
+
+      if (Istnieja kolidujace\nrezerwacje?) then (tak)
+        :Zwroc liste kolidujacych wizyt;
+
+        partition "Dentysta" {
+          if (Kontynuowac mimo\nkolizji?) then (nie)
+            stop
+          else (tak)
+          endif
+        }
+      else (nie)
+      endif
+
+      :Zapisz Blocker w bazie;
+      :Zwroc 201 Created;
+    }
+
+    :Wyswietl blokade\nw grafiku;
+
+  case (Usun slot)
+
+    :Wybierz istniejacy slot;
+
+    partition "Core Service - Scheduling" {
+      :Sprawdz czy sa rezerwacje\nw tym slocie;
+
+      if (Istnieja rezerwacje?) then (tak)
+        :Zwroc blad 409\n(nie mozna usunac -\nsa rezerwacje);
+        stop
+      else (nie)
+      endif
+
+      :Usun slot z bazy;
+      :Zwroc 204 No Content;
+    }
+
+    :Usun slot z widoku grafiku;
+
+  endswitch
+}
+
+stop
+
+@enduml

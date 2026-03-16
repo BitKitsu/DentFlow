@@ -1,0 +1,86 @@
+@startuml DentFlow - Diagram aktywnosci - Anulowanie wizyty
+
+title Diagram aktywnosci: Anulowanie wizyty
+
+skinparam activity {
+  BackgroundColor #F5F5F5
+  BorderColor #333333
+  DiamondBackgroundColor #FFFACD
+  DiamondBorderColor #DAA520
+  ArrowColor #555555
+}
+skinparam partition {
+  BackgroundColor #FAFAFA
+  BorderColor #CCCCCC
+}
+
+start
+
+if (Kto anuluje?) then (Recepcja)
+
+  partition "Recepcja" {
+    :Otworz kalendarz wizyt;
+    :Wyszukaj wizyte do anulowania;
+    :Kliknij "Anuluj wizyte";
+    :Podaj powod anulowania;
+  }
+
+else (Pacjent - portal)
+
+  partition "Pacjent" {
+    :Otworz "Moje wizyty";
+    :Wybierz wizyte do anulowania;
+    :Kliknij "Anuluj wizyte";
+  }
+
+endif
+
+partition "Core Service - Reservation" {
+  :Odbierz zadanie PATCH /appointments/{id}/cancel;
+  :Pobierz dane wizyty z bazy;
+
+  if (Wizyta istnieje?) then (nie)
+    :Zwroc blad 404;
+    stop
+  else (tak)
+  endif
+
+  if (Status wizyty\npozwala na anulowanie?) then (nie)
+    note right
+      Nie mozna anulowac wizyt
+      ze statusem COMPLETED
+      lub juz CANCELLED
+    end note
+    :Zwroc blad 422\n(nieprawidlowy status);
+    stop
+  else (tak)
+  endif
+
+  if (Anuluje pacjent?) then (tak)
+    if (Wizyta w ciagu 24h?) then (tak)
+      :Zwroc blad 422\n(za pozno na anulowanie\nprzez pacjenta);
+      stop
+    else (nie)
+    endif
+  else (nie - recepcja)
+  endif
+
+  :Zmien status wizyty na CANCELLED;
+  :Zapisz w bazie;
+  :Zwolnij slot czasowy;
+  :Zwroc 200 OK;
+}
+
+partition "Core Service - Notification" {
+  fork
+    :Powiadomienie in-app\ndla dentysty;
+  fork again
+    :Email do pacjenta\n(potwierdzenie anulowania);
+  end fork
+}
+
+:Wyswietl potwierdzenie anulowania;
+
+stop
+
+@enduml

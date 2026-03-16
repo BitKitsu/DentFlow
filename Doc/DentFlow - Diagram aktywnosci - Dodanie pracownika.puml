@@ -1,0 +1,66 @@
+@startuml DentFlow - Diagram aktywnosci - Dodanie pracownika
+
+title Diagram aktywnosci: Dodanie pracownika
+
+skinparam activity {
+  BackgroundColor #F5F5F5
+  BorderColor #333333
+  DiamondBackgroundColor #FFFACD
+  DiamondBorderColor #DAA520
+  ArrowColor #555555
+}
+skinparam partition {
+  BackgroundColor #FAFAFA
+  BorderColor #CCCCCC
+}
+
+start
+
+partition "Owner" {
+  :Przejdz do panelu personelu;
+  :Kliknij "Dodaj pracownika";
+  :Wypelnij formularz\n(email, imie, nazwisko,\nspecjalizacja, rola);
+}
+
+partition "Core Service - Clinic" {
+  :Odbierz POST /staff;
+  :Sprawdz JWT - czy uzytkownik to Owner;
+
+  if (Uzytkownik jest Owner?) then (nie)
+    :Zwroc blad 403\n(brak uprawnien);
+    stop
+  else (tak)
+  endif
+}
+
+partition "Identity Service" {
+  :Utworz konto uzytkownika\n(email, wygenerowane haslo);
+
+  if (Email juz istnieje?) then (tak)
+    :Zwroc blad 409\n(email zajety);
+    stop
+  else (nie)
+  endif
+
+  :Przypisz role\n(DENTIST / RECEPTIONIST / ASSISTANT);
+  :Przypisz tenant_id Ownera;
+  :Zwroc user_id;
+}
+
+partition "Core Service - Clinic" {
+  :Utworz profil StaffMember\n(user_id, specjalizacja, lokalizacja);
+  :Zapisz w bazie;
+  :Zwroc 201 Created;
+}
+
+partition "Core Service - Notification" {
+  :Wyslij email z danymi logowania\ndo nowego pracownika;
+}
+
+partition "Owner" {
+  :Wyswietl potwierdzenie\n"Pracownik dodany pomyslnie";
+}
+
+stop
+
+@enduml

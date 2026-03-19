@@ -67,6 +67,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("androidx.compose.material:material-icons-extended:1.7.0")
 
     // HILT (Dependency Injection)
     implementation("com.google.dagger:hilt-android:2.51.1")
@@ -75,7 +77,11 @@ dependencies {
     // RETROFIT (Network)
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("androidx.navigation:navigation-compose:2.8.0")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
+    implementation("com.google.dagger:hilt-android:2.51.1")
+    kapt("com.google.dagger:hilt-android-compiler:2.51.1")
     // TESTY
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

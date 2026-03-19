@@ -9,7 +9,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val apiService: ApiService // Hilt sam to tu wstawi!
+    private val apiService: ApiService
 ) : ViewModel() {
 
     fun fetchData() {

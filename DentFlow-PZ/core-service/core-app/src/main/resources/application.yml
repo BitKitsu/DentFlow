@@ -20,6 +20,9 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    table: flyway_schema_history_core
+    baseline-on-migrate: true
+    baseline-version: 0
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}

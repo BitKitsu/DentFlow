@@ -42,4 +42,13 @@ public class TenantController {
     public ResponseEntity<TenantResponse> getTenant(@PathVariable Long tenantId) {
         return ResponseEntity.ok(tenantService.getTenant(tenantId));
     }
+
+    @PutMapping("/{tenantId}")
+    @Operation(summary = "Aktualizacja danych gabinetu")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<TenantResponse> updateTenant(
+            @PathVariable Long tenantId,
+            @Valid @RequestBody UpdateTenantRequest request) {
+        return ResponseEntity.ok(tenantService.updateTenant(tenantId, request));
+    }
 }

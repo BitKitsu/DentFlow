@@ -56,6 +56,15 @@ public class TenantService {
         return TenantResponse.from(tenant);
     }
 
+    @Transactional
+    public TenantResponse updateTenant(Long tenantId, UpdateTenantRequest request) {
+        Tenant tenant = tenantRepository.findById(tenantId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Gabinet nie istnieje"));
+        tenant.setName(request.name());
+        return TenantResponse.from(tenantRepository.save(tenant));
+    }
+
     // ----- Zarządzanie lokalizacjami (stub) -----
 
     public List<LocationResponse> getLocations(Long tenantId) {
@@ -94,6 +103,38 @@ public class TenantService {
                     "Lokalizacja nie należy do tego gabinetu");
         }
         locationRepository.delete(location);
+    }
+
+    public LocationResponse getLocation(Long tenantId, Long locationId) {
+        requireTenantExists(tenantId);
+        Location location = locationRepository.findById(locationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Lokalizacja nie istnieje"));
+        if (!location.getTenant().getId().equals(tenantId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Lokalizacja nie należy do tego gabinetu");
+        }
+        return LocationResponse.from(location);
+    }
+
+    @Transactional
+    public LocationResponse updateLocation(Long tenantId, Long locationId, UpdateLocationRequest request) {
+        requireTenantExists(tenantId);
+        Location location = locationRepository.findById(locationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Lokalizacja nie istnieje"));
+        if (!location.getTenant().getId().equals(tenantId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Lokalizacja nie należy do tego gabinetu");
+        }
+
+        location.setName(request.name());
+        location.setAddressStreet(request.addressStreet());
+        location.setAddressCity(request.addressCity());
+        location.setAddressZip(request.addressZip());
+        location.setAddressCountry(request.addressCountry());
+
+        return LocationResponse.from(locationRepository.save(location));
     }
 
     private void requireTenantExists(Long tenantId) {

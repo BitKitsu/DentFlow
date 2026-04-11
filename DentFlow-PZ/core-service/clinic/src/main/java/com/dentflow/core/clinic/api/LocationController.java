@@ -38,6 +38,23 @@ public class LocationController {
                 .body(tenantService.addLocation(tenantId, request));
     }
 
+    @GetMapping("/{locationId}")
+    @Operation(summary = "Pobranie lokalizacji")
+    public ResponseEntity<LocationResponse> getLocation(
+            @PathVariable Long tenantId,
+            @PathVariable Long locationId) {
+        return ResponseEntity.ok(tenantService.getLocation(tenantId, locationId));
+    }
+
+    @PutMapping("/{locationId}")
+    @Operation(summary = "Zaktualizowanie lokalizacji")
+    public ResponseEntity<LocationResponse> updateLocation(
+            @PathVariable Long tenantId,
+            @PathVariable Long locationId,
+            @Valid @RequestBody UpdateLocationRequest request) {
+        return ResponseEntity.ok(tenantService.updateLocation(tenantId, locationId, request));
+    }
+
     @DeleteMapping("/{locationId}")
     @Operation(summary = "[stub] Usunięcie lokalizacji")
     public ResponseEntity<Void> deleteLocation(

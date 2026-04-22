@@ -69,7 +69,8 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("androidx.compose.material:material-icons-extended:1.7.0")
-
+// Dodaj to w sekcji dependencies:
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     // HILT (Dependency Injection)
     implementation("com.google.dagger:hilt-android:2.51.1")
     kapt("com.google.dagger:hilt-android-compiler:2.51.1") // To było kluczowe!
@@ -79,6 +80,9 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("androidx.navigation:navigation-compose:2.8.0")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
     implementation("com.google.dagger:hilt-android:2.51.1")
     kapt("com.google.dagger:hilt-android-compiler:2.51.1")

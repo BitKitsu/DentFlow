@@ -1,4 +1,4 @@
-package com.example.dentflow_android
+package com.example.dentflow_android.Screens
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -23,16 +23,27 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
+import com.example.dentflow_android.data.ViewModel.TenantViewModel
 
 @Composable
 fun AccountScreen(
-    isOwner: Boolean = true,
+    tenantViewModel: TenantViewModel = hiltViewModel(),
     onSettingsClick: () -> Unit,
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    onEditBusinessClick: () -> Unit
 ) {
     val scrollState = rememberScrollState()
+
+    // --- WCZYTYWANIE DANYCH ---
+    LaunchedEffect(Unit) {
+        tenantViewModel.loadTenantData(1L)
+    }
+
+    val tenantData by tenantViewModel.tenantState
+
+    val isOwner = true
 
     // --- LOGIKA WYBORU ZDJĘĆ ---
     var profileImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -85,7 +96,6 @@ fun AccountScreen(
                     )
                 }
             }
-            // Przycisk zmiany zdjęcia profilowego
             Box(
                 modifier = Modifier
                     .size(32.dp)
@@ -105,12 +115,11 @@ fun AccountScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(text = "Jan Kowalski", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Text(text = if (isOwner) "Właściciel Kliniki" else "Pracownik", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // --- SEKCJA: TWOJA FIRMA (TYLKO DLA OWNERA) ---
+        // --- SEKCJA: TWOJA FIRMA (DYNAMICZNA) ---
         if (isOwner) {
             Text(
                 text = "Twoja Firma",
@@ -125,7 +134,6 @@ fun AccountScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        // LOGO FIRMY
                         Box(
                             modifier = Modifier
                                 .size(60.dp)
@@ -147,22 +155,25 @@ fun AccountScreen(
                         }
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
-                            Text("Logo i dane firmy", fontWeight = FontWeight.Bold)
-                            Text("DentFlow Clinic Rzeszów", style = MaterialTheme.typography.bodySmall)
+                            val businessName = tenantData?.name ?: "Pobieranie danych..."
+                            val cityName = tenantData?.locations?.firstOrNull()?.addressCity ?: "Brak adresu"
+
+                            Text(businessName, fontWeight = FontWeight.Bold)
+                            Text(cityName, style = MaterialTheme.typography.bodySmall)
                         }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
-                        onClick = { /* Otwórz edycję firmy */ },
+                        onClick = onEditBusinessClick,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
                     ) {
                         Icon(Icons.Default.Business, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("EDYTUJ DANE KLINIKI")
+                        Text("ZARZĄDZAJ KLINIKĄ")
                     }
                 }
             }
@@ -189,15 +200,9 @@ fun AccountScreen(
             onClick = { /* Ekran edycji danych */ }
         )
 
-        AccountMenuItem(
-            title = "Zmień hasło",
-            icon = Icons.Default.Lock,
-            onClick = { /* Ekran zmiany hasła */ }
-        )
-
         Spacer(modifier = Modifier.height(40.dp))
 
-        // --- PRZYCISK WYLOGUJ (INTENSYWNA CZERWIEŃ + BIAŁY NAPIS) ---
+        // --- PRZYCISK WYLOGUJ ---
         Button(
             onClick = onLogoutClick,
             modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -207,17 +212,9 @@ fun AccountScreen(
             ),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.Logout,
-                contentDescription = null,
-                tint = Color.White
-            )
+            Icon(Icons.Default.Logout, contentDescription = null, tint = Color.White)
             Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "WYLOGUJ SIĘ",
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
+            Text("WYLOGUJ SIĘ", fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -235,20 +232,11 @@ fun AccountMenuItem(title: String, icon: ImageVector, onClick: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(text = title)
             }
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
-                modifier = Modifier.size(16.dp)
-            )
+            Icon(Icons.Default.ChevronRight, contentDescription = null, modifier = Modifier.size(16.dp))
         }
     }
 }

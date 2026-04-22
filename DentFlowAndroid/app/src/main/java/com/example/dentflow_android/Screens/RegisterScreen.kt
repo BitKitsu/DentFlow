@@ -1,4 +1,4 @@
-package com.example.dentflow_android
+package com.example.dentflow_android.Screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -10,23 +10,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.dentflow_android.data.remote.RegisterRequest
+import com.example.dentflow_android.ui.viewmodels.AuthViewModel
 
 @Composable
-fun RegisterScreen(onRegisterSuccess: () -> Unit, onBackToLogin: () -> Unit) {
-    // Stan pól formularza
+fun RegisterScreen(
+    onRegisterSuccess: () -> Unit,
+    onBackToLogin: () -> Unit,
+    viewModel: AuthViewModel = hiltViewModel()
+) {
     var firstname by remember { mutableStateOf("") }
     var lastname by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") } // NOWE: Powtórz hasło
 
-    // Stan błędów walidacji
+    val isLoading by viewModel.isLoading.collectAsState()
+    val serverErrorMessage by viewModel.errorMessage.collectAsState()
+
     var showError by remember { mutableStateOf(false) }
 
-    // Proste funkcje sprawdzające
+    // Walidacja
     val isEmailValid = email.contains("@") && email.contains(".")
     val isPasswordValid = password.length >= 6
+    val passwordsMatch = password == confirmPassword && password.isNotEmpty() // NOWE: Czy hasła są takie same
     val isPhoneValid = phone.length >= 9
     val areFieldsNotEmpty = firstname.isNotBlank() && lastname.isNotBlank()
 
@@ -37,10 +48,8 @@ fun RegisterScreen(onRegisterSuccess: () -> Unit, onBackToLogin: () -> Unit) {
         unfocusedLabelColor = MaterialTheme.colorScheme.secondary,
         focusedBorderColor = MaterialTheme.colorScheme.primary,
         cursorColor = MaterialTheme.colorScheme.secondary,
-        // Dodajemy kolory dla błędów
         errorBorderColor = MaterialTheme.colorScheme.error,
-        errorLabelColor = MaterialTheme.colorScheme.error,
-        errorSupportingTextColor = MaterialTheme.colorScheme.error
+        errorLabelColor = MaterialTheme.colorScheme.error
     )
 
     val textFieldTextStyle = TextStyle(color = MaterialTheme.colorScheme.secondary)
@@ -68,8 +77,8 @@ fun RegisterScreen(onRegisterSuccess: () -> Unit, onBackToLogin: () -> Unit) {
             value = firstname,
             onValueChange = { firstname = it; showError = false },
             label = { Text("Imię") },
+            enabled = !isLoading,
             isError = showError && firstname.isBlank(),
-            supportingText = { if (showError && firstname.isBlank()) Text("Imię jest wymagane") },
             modifier = Modifier.fillMaxWidth(),
             textStyle = textFieldTextStyle,
             colors = textFieldColors
@@ -82,8 +91,8 @@ fun RegisterScreen(onRegisterSuccess: () -> Unit, onBackToLogin: () -> Unit) {
             value = lastname,
             onValueChange = { lastname = it; showError = false },
             label = { Text("Nazwisko") },
+            enabled = !isLoading,
             isError = showError && lastname.isBlank(),
-            supportingText = { if (showError && lastname.isBlank()) Text("Nazwisko jest wymagane") },
             modifier = Modifier.fillMaxWidth(),
             textStyle = textFieldTextStyle,
             colors = textFieldColors
@@ -96,8 +105,8 @@ fun RegisterScreen(onRegisterSuccess: () -> Unit, onBackToLogin: () -> Unit) {
             value = phone,
             onValueChange = { phone = it; showError = false },
             label = { Text("Numer telefonu") },
+            enabled = !isLoading,
             isError = showError && !isPhoneValid,
-            supportingText = { if (showError && !isPhoneValid) Text("Min. 9 cyfr") },
             modifier = Modifier.fillMaxWidth(),
             textStyle = textFieldTextStyle,
             colors = textFieldColors
@@ -110,8 +119,8 @@ fun RegisterScreen(onRegisterSuccess: () -> Unit, onBackToLogin: () -> Unit) {
             value = email,
             onValueChange = { email = it; showError = false },
             label = { Text("E-mail") },
+            enabled = !isLoading,
             isError = showError && !isEmailValid,
-            supportingText = { if (showError && !isEmailValid) Text("Niepoprawny format e-mail") },
             modifier = Modifier.fillMaxWidth(),
             textStyle = textFieldTextStyle,
             colors = textFieldColors
@@ -119,36 +128,77 @@ fun RegisterScreen(onRegisterSuccess: () -> Unit, onBackToLogin: () -> Unit) {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Hasło
+        // Hasło (Z GWIAZDKAMI)
         OutlinedTextField(
             value = password,
             onValueChange = { password = it; showError = false },
             label = { Text("Hasło") },
+            enabled = !isLoading,
             isError = showError && !isPasswordValid,
-            supportingText = { if (showError && !isPasswordValid) Text("Hasło musi mieć min. 6 znaków") },
+            visualTransformation = PasswordVisualTransformation(), // GWIAZDKI
             modifier = Modifier.fillMaxWidth(),
             textStyle = textFieldTextStyle,
             colors = textFieldColors
         )
 
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Powtórz hasło (NOWE POLE)
+        OutlinedTextField(
+            value = confirmPassword,
+            onValueChange = { confirmPassword = it; showError = false },
+            label = { Text("Powtórz hasło") },
+            enabled = !isLoading,
+            isError = showError && !passwordsMatch,
+            visualTransformation = PasswordVisualTransformation(), // GWIAZDKI
+            modifier = Modifier.fillMaxWidth(),
+            textStyle = textFieldTextStyle,
+            colors = textFieldColors,
+            supportingText = {
+                if (showError && !passwordsMatch && confirmPassword.isNotEmpty()) {
+                    Text("Hasła muszą być identyczne")
+                }
+            }
+        )
+
+        if (serverErrorMessage != null) {
+            Text(
+                text = serverErrorMessage!!,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
+
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Przycisk Rejestracji
         Button(
             onClick = {
-                if (areFieldsNotEmpty && isEmailValid && isPasswordValid && isPhoneValid) {
-                    onRegisterSuccess()
+                if (areFieldsNotEmpty && isEmailValid && isPasswordValid && isPhoneValid && passwordsMatch) {
+                    val request = RegisterRequest(
+                        firstName = firstname,
+                        lastName = lastname,
+                        email = email,
+                        password = password,
+                        phone = phone
+                    )
+                    viewModel.register(request, onRegisterSuccess)
                 } else {
-                    showError = true // Pokazuje błędy we wszystkich polach
+                    showError = true
                 }
             },
+            enabled = !isLoading,
             modifier = Modifier.fillMaxWidth().height(56.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
-            Text("ZAREJESTRUJ SIĘ", color = Color.White, fontWeight = FontWeight.Bold)
+            if (isLoading) {
+                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+            } else {
+                Text("ZAREJESTRUJ SIĘ", color = Color.White, fontWeight = FontWeight.Bold)
+            }
         }
 
-        TextButton(onClick = { onBackToLogin() }) {
+        TextButton(onClick = { onBackToLogin() }, enabled = !isLoading) {
             Text(
                 text = "Masz już konto? Zaloguj się",
                 color = MaterialTheme.colorScheme.secondary,

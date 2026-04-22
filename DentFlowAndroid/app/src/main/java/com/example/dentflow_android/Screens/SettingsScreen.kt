@@ -1,4 +1,4 @@
-package com.example.dentflow_android
+package com.example.dentflow_android.Screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*

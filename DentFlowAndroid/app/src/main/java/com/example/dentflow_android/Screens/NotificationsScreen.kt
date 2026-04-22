@@ -1,4 +1,4 @@
-package com.example.dentflow_android
+package com.example.dentflow_android.Screens
 
 import androidx.compose.foundation.BorderStroke // Import dla ramki
 import androidx.compose.foundation.background
@@ -15,10 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 data class NotificationItem(
     val id: Int,
@@ -136,7 +134,6 @@ fun NotificationCard(notification: NotificationItem) {
                         else
                             MaterialTheme.colorScheme.secondary
                     )
-                    // Niebieska kropka zostaje, bo dobrze pasuje
                     if (!notification.isRead) {
                         Box(
                             modifier = Modifier

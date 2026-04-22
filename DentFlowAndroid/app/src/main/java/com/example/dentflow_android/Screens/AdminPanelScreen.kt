@@ -1,4 +1,4 @@
-package com.example.dentflow_android
+package com.example.dentflow_android.Screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -8,24 +8,37 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.dentflow_android.data.ViewModel.AdminViewModel
 
 @Composable
-fun AdminPanelScreen() {
+fun AdminPanelScreen(
+    onNavigateToStaff: () -> Unit,
+    onNavigateToPatients: () -> Unit,
+    viewModel: AdminViewModel = hiltViewModel()
+) {
+    // Obserwujemy dynamiczne dane z ViewModelu
+    val visitCount by viewModel.visitCount.collectAsState()
+    val patientCount by viewModel.patientCount.collectAsState()
+
+    // Pobieramy dane przy starcie ekranu
+    LaunchedEffect(Unit) {
+        viewModel.loadStats(1L)
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
-        // --- NAGŁÓWEK ---
         Text(
             text = "Panel Administratora",
             style = MaterialTheme.typography.headlineMedium,
@@ -33,29 +46,29 @@ fun AdminPanelScreen() {
             color = MaterialTheme.colorScheme.primary
         )
         Text(
-            text = "Zarządzaj swoją kliniką w jednym miejscu",
+            text = "Zarządzaj swoją kliniką dynamicznie",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // --- STATYSTYKI (Quick Stats) ---
+        // --- STATYSTYKI ---
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             StatCard(
                 label = "Dzisiejsze wizyty",
-                value = "12",
+                value = visitCount,
                 icon = Icons.Default.Event,
                 modifier = Modifier.weight(1f),
                 containerColor = MaterialTheme.colorScheme.primaryContainer
             )
             StatCard(
-                label = "Przychód (dziś)",
-                value = "2 450 zł",
-                icon = Icons.Default.Payments,
+                label = "Wszyscy Pacjenci",
+                value = patientCount,
+                icon = Icons.Default.People,
                 modifier = Modifier.weight(1f),
                 containerColor = MaterialTheme.colorScheme.secondaryContainer
             )
@@ -63,7 +76,6 @@ fun AdminPanelScreen() {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // --- SEKCJA ZARZĄDZANIA (GRID) ---
         Text(
             text = "Zarządzanie",
             style = MaterialTheme.typography.titleLarge,
@@ -78,26 +90,22 @@ fun AdminPanelScreen() {
             modifier = Modifier.fillMaxSize()
         ) {
             item {
-                AdminActionCard("Pracownicy", Icons.Default.People, "Lista i uprawnienia") { /* Nav do Staff */ }
+                AdminActionCard("Pracownicy", Icons.Default.Badge, "Lista personelu", onNavigateToStaff)
             }
             item {
-                AdminActionCard("Usługi i Cennik", Icons.Default.ListAlt, "Edytuj ofertę") { /* Nav do Services */ }
+                AdminActionCard("Pacjenci", Icons.Default.ContactPage, "Baza danych", onNavigateToPatients)
             }
             item {
-                AdminActionCard("Raporty", Icons.Default.BarChart, "Analiza finansowa") { /* Nav do Reports */ }
+                AdminActionCard("Usługi", Icons.Default.ListAlt, "Cennik", {})
             }
             item {
-                AdminActionCard("Pacjenci", Icons.Default.ContactPage, "Baza danych") { /* Nav do Patients */ }
-            }
-            item {
-                AdminActionCard("Magazyn", Icons.Default.Inventory, "Materiały i zapasy") { /* Nav do Inventory */ }
-            }
-            item {
-                AdminActionCard("Ustawienia", Icons.Default.SettingsSystemDaydream, "Zaawansowane") { /* Nav do Config */ }
+                AdminActionCard("Ustawienia", Icons.Default.Settings, "Konfiguracja", {})
             }
         }
     }
 }
+
+// --- FUNKCJE POMOCNICZE (KOMPONENTY) ---
 
 @Composable
 fun StatCard(
@@ -113,10 +121,10 @@ fun StatCard(
         colors = CardDefaults.cardColors(containerColor = containerColor)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+            Icon(icon, contentDescription = null)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = value, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
-            Text(text = label, style = MaterialTheme.typography.labelSmall)
+            Text(text = value, fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
+            Text(text = label, style = MaterialTheme.typography.labelMedium)
         }
     }
 }
@@ -134,21 +142,14 @@ fun AdminActionCard(
         modifier = Modifier.fillMaxWidth().height(120.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-        ),
-        border = null // Płaski wygląd
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp).fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.Start
+            verticalArrangement = Arrangement.Center
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(28.dp)
-            )
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(8.dp))
             Text(text = title, fontWeight = FontWeight.Bold, fontSize = 16.sp)
             Text(text = subtitle, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)

@@ -12,7 +12,7 @@ class MockVisitRepository @Inject constructor() {
             Visit(
                 id = 1,
                 patientName = "Jan Kowalski",
-                doctorName = "dr Karol Ogonowski", // Wykorzystujemy dane z zespołu
+                doctorName = "dr Karol Ogonowski",
                 serviceName = "Przegląd stomatologiczny",
                 date = "2026-03-20 10:30",
                 status = "CONFIRMED"

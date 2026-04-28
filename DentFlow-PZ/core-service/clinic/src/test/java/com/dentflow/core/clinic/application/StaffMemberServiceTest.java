@@ -108,4 +108,26 @@ class StaffMemberServiceTest {
         assertThatThrownBy(() -> staffMemberService.getStaffMembers(99L))
                 .isInstanceOf(ResponseStatusException.class);
     }
+
+    @Test
+    void shouldThrowWhenAddingStaffToNonExistentTenant() {
+        when(tenantRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> staffMemberService.addStaffMember(99L, mock(CreateStaffMemberRequest.class)))
+                .isInstanceOf(ResponseStatusException.class);
+    }
+
+    @Test
+    void shouldThrowWhenStaffMemberNotFound() {
+        when(staffMemberRepository.findByIdAndTenantId(99L, 1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> staffMemberService.getStaffMember(1L, 99L))
+                .isInstanceOf(ResponseStatusException.class);
+        
+        assertThatThrownBy(() -> staffMemberService.updateStaffMember(1L, 99L, mock(UpdateStaffMemberRequest.class)))
+                .isInstanceOf(ResponseStatusException.class);
+
+        assertThatThrownBy(() -> staffMemberService.deleteStaffMember(1L, 99L))
+                .isInstanceOf(ResponseStatusException.class);
+    }
 }

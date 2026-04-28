@@ -93,4 +93,20 @@ class PatientServiceTest {
         assertThatThrownBy(() -> patientService.deletePatient(100L, 99L))
                 .isInstanceOf(ResponseStatusException.class);
     }
+
+    @Test
+    void shouldThrowNotFoundWhenGettingNonExistent() {
+        when(patientRepository.findByIdAndTenantId(99L, 100L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> patientService.getPatient(100L, 99L))
+                .isInstanceOf(ResponseStatusException.class);
+    }
+
+    @Test
+    void shouldThrowNotFoundWhenUpdatingNonExistent() {
+        when(patientRepository.findByIdAndTenantId(99L, 100L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> patientService.updatePatient(100L, 99L, null))
+                .isInstanceOf(ResponseStatusException.class);
+    }
 }

@@ -30,6 +30,22 @@ echo "4. Uruchamianie testów modułu Powiadomień (NotificationServiceTest) [SC
 echo "   - Powiadomienia in-app: pobieranie, oznaczanie."
 mvn test -Dtest=NotificationServiceTest -Dsurefire.failIfNoSpecifiedTests=false -pl core-service/notification
 
+echo ""
+echo "3. Uruchamianie testów modułu Grafiku pracy (SchedulingServiceTest)..."
+echo "   - Sloty grafiku: dodawanie, pobieranie, usuwanie."
+echo "   - Blokady czasu: dodawanie, pobieranie, usuwanie."
+echo "   - Walidacja: endAt musi być po startAt."
+mvn test -Dtest=SchedulingServiceTest -Dsurefire.failIfNoSpecifiedTests=false -pl core-service/scheduling
+
+echo ""
+echo "4. Uruchamianie testów modułu Rezerwacji wizyt (AppointmentServiceTest)..."
+echo "   - Tworzenie wizyty: sukces i walidacja konfliktu (409)."
+echo "   - Anulowanie i zakończenie wizyty."
+echo "   - Walidacja: endAt musi być po startAt."
+echo "   - Testy niepoprawności (404 przy braku wizyty)."
+mvn test -Dtest=AppointmentServiceTest -Dsurefire.failIfNoSpecifiedTests=false -pl core-service/reservation
+
+echo ""
 echo "------------------------------------------------------------"
 echo "Testy zakończone."
 echo "------------------------------------------------------------"

@@ -47,4 +47,34 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             @Param("patientId") Long patientId);
 
     List<Appointment> findByTenantIdAndStatus(Long tenantId, String status);
+
+    @Query(value = """
+            SELECT 
+                a.id as appointmentId,
+                a.start_at as startAt,
+                a.end_at as endAt,
+                a.status as status,
+                p.first_name as patientFirstName,
+                p.last_name as patientLastName,
+                s.display_name as dentistName,
+                l.name as locationName,
+                r.name as roomName,
+                a.notes as notes
+            FROM appointment a
+            JOIN patient p ON a.patient_id = p.id
+            JOIN staff_member s ON a.dentist_staff_id = s.id
+            JOIN location l ON a.location_id = l.id
+            LEFT JOIN room r ON a.room_id = r.id
+            WHERE a.tenant_id = :tenantId
+            AND (:status IS NULL OR a.status = :status)
+            AND (:dentistId IS NULL OR a.dentist_staff_id = :dentistId)
+            AND (:patientId IS NULL OR a.patient_id = :patientId)
+            ORDER BY a.start_at DESC
+            """, nativeQuery = true)
+    List<AppointmentDetailsProjection> searchAppointmentsDetails(
+            @Param("tenantId") Long tenantId,
+            @Param("status") String status,
+            @Param("dentistId") Long dentistId,
+            @Param("patientId") Long patientId
+    );
 }

@@ -5,15 +5,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
-    List<Notification> findByUserIdOrderByCreatedAtDesc(Long userId);
+    List<Notification> findByTenantIdAndUserIdOrderByCreatedAtDesc(Long tenantId, Long userId);
 
-    List<Notification> findByUserIdAndReadFalseOrderByCreatedAtDesc(Long userId);
+    List<Notification> findByTenantIdAndUserIdAndReadFalseOrderByCreatedAtDesc(Long tenantId, Long userId);
 
-    List<Notification> findByTenantId(Long tenantId);
+    long countByTenantIdAndUserIdAndReadFalse(Long tenantId, Long userId);
 
-    long countByUserIdAndReadFalse(Long userId);
+    Optional<Notification> findByIdAndTenantId(Long id, Long tenantId);
 }

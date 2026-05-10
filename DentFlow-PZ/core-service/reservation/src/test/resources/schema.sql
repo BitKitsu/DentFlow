@@ -1,0 +1,37 @@
+CREATE TABLE IF NOT EXISTS patient (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50)
+);
+
+CREATE TABLE IF NOT EXISTS staff_member (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    display_name VARCHAR(100)
+);
+
+CREATE TABLE IF NOT EXISTS location (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100)
+);
+
+CREATE TABLE IF NOT EXISTS room (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100)
+);
+
+CREATE TABLE IF NOT EXISTS appointment (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    tenant_id BIGINT NOT NULL,
+    location_id BIGINT NOT NULL,
+    room_id BIGINT,
+    dentist_staff_id BIGINT NOT NULL,
+    patient_id BIGINT NOT NULL,
+    service_item_id BIGINT,
+    start_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'SCHEDULED',
+    created_by_user_id BIGINT,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    notes TEXT
+);

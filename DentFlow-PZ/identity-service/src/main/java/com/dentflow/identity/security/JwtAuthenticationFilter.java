@@ -6,6 +6,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,6 +20,8 @@ import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtService jwtService;
     private final UserRepository userRepository;
@@ -37,21 +41,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = authHeader.substring(7);
-        String email = jwtService.extractEmail(token);
+        try {
+            String token = authHeader.substring(7);
+            String email = jwtService.extractEmail(token);
 
-        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            User user = userRepository.findByEmail(email).orElse(null);
-            if (user != null && jwtService.isTokenValid(token, email)) {
-                List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
-                        .map(r -> new SimpleGrantedAuthority("ROLE_" + r.getRole().name()))
-                        .toList();
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                User user = userRepository.findByEmail(email).orElse(null);
+                if (user == null) {
+                    log.warn("Nie znaleziono użytkownika z tokenu JWT - email: {}", email);
+                } else if (!jwtService.isTokenValid(token, email)) {
+                    log.warn("Nieprawidłowy lub wygasły token JWT dla email: {}", email);
+                } else {
+                    List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
+                            .map(r -> new SimpleGrantedAuthority("ROLE_" + r.getRole().name()))
+                            .toList();
 
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(email, null, authorities);
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(email, null, authorities);
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    log.info("Uwierzytelnienie JWT pomyślne - email: {}, role: {}", email, authorities);
+                }
             }
+        } catch (Exception e) {
+            log.error("Błąd podczas przetwarzania tokenu JWT: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);

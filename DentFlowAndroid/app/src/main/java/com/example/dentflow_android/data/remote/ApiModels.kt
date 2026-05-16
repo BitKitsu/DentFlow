@@ -33,7 +33,9 @@ data class RegisterTenantRequest(
     val addressCountry: String
 )
 
-
+data class AssignTenantRequest(
+    val tenantId: Long
+)
 
 data class LocationRequest(
     val name: String,

@@ -16,6 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class TenantViewModel @Inject constructor(
     private val apiService: ApiService,
+    private val authService: AuthService,
     private val prefs: SharedPreferences
 ) : ViewModel() {
 
@@ -106,6 +107,7 @@ class TenantViewModel @Inject constructor(
                 if (response.isSuccessful && response.body() != null) {
                     val newTenant = response.body()!!
                     prefs.edit().putLong("tenant_id", newTenant.id).apply()
+                    assignTenantOnIdentityService(newTenant.id)
                     _tenantState.value = newTenant
                     loadAllTenantData()
                 } else {
@@ -156,7 +158,24 @@ class TenantViewModel @Inject constructor(
             }
         }
     }
-
+    private fun assignTenantOnIdentityService(tenantId: Long) {
+        viewModelScope.launch {
+            try {
+                val response = authService.assignTenant(AssignTenantRequest(tenantId = tenantId))
+                if (response.isSuccessful && response.body() != null) {
+                    val authResponse = response.body()!!
+                    prefs.edit().putString("jwt_token", authResponse.token)
+                        .putLong("tenant_id", authResponse.tenantId)
+                        .apply()
+                } else {
+                    // log error
+                }
+            } catch (e: Exception) {
+                // log error
+            }
+        }
+    }
+    
     fun loadServices(id: Long) {
         viewModelScope.launch {
             try {

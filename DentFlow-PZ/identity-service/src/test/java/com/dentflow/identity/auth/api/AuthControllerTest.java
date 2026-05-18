@@ -2,6 +2,7 @@ package com.dentflow.identity.auth.api;
 
 import com.dentflow.identity.auth.application.AuthService;
 import com.dentflow.identity.security.JwtService;
+import com.dentflow.identity.user.infrastructure.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,13 @@ class AuthControllerTest {
 
     @MockBean
     private JwtService jwtService;
+
+    /**
+     * UserRepository jest wymagane przez JwtAuthenticationFilter, który jest częścią
+     * kontekstu @WebMvcTest. Bez tego mocka Spring nie może zainicjalizować filtra.
+     */
+    @MockBean
+    private UserRepository userRepository;
 
     @Test
     @WithMockUser

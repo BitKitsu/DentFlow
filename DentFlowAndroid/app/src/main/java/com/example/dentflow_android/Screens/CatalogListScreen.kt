@@ -1,5 +1,6 @@
 package com.example.dentflow_android.Screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,6 +24,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.dentflow_android.data.ViewModel.TenantViewModel
 import com.example.dentflow_android.data.remote.ServiceCatalogItemDTO
 
+private const val UI_TAG = "DENTFLOW_DEBUG"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +39,7 @@ fun CatalogListScreen(
     var selectedService by remember { mutableStateOf<ServiceCatalogItemDTO?>(null) }
 
     LaunchedEffect(Unit) {
+        Log.d(UI_TAG, "CatalogListScreen -> LaunchedEffect: Żądanie załadowania usług.")
         tenantViewModel.loadServices()
     }
 
@@ -51,6 +54,7 @@ fun CatalogListScreen(
                 },
                 actions = {
                     IconButton(onClick = {
+                        Log.d(UI_TAG, "Kliknięto przycisk DODAJ nową usługę.")
                         selectedService = null
                         showAddEditDialog = true
                     }) {
@@ -87,10 +91,14 @@ fun CatalogListScreen(
                         ServiceItemCard(
                             service = service,
                             onEdit = {
+                                Log.d(UI_TAG, "Kliknięto EDYCJĘ usługi ID: ${service.id} (${service.name})")
                                 selectedService = service
                                 showAddEditDialog = true
                             },
-                            onDelete = { tenantViewModel.deleteService(service.id) }
+                            onDelete = {
+                                Log.d(UI_TAG, "Kliknięto USUNIĘCIE usługi ID: ${service.id}")
+                                tenantViewModel.deleteService(service.id)
+                            }
                         )
                     }
                 }
@@ -100,13 +108,16 @@ fun CatalogListScreen(
         if (showAddEditDialog) {
             ServiceAddEditDialog(
                 service = selectedService,
-                onDismiss = { showAddEditDialog = false },
+                onDismiss = {
+                    Log.d(UI_TAG, "Zamknięto okno dialogowe bez zapisu.")
+                    showAddEditDialog = false
+                },
                 onConfirm = { name, priceCents, duration, isActive ->
                     if (selectedService == null) {
-                        // Logika dodawania nowej usługi
+                        Log.d(UI_TAG, "Zatwierdzono formularz: Wywołuję addService.")
                         tenantViewModel.addService(name, priceCents, duration)
                     } else {
-                        // Logika edycji istniejącej usługi
+                        Log.d(UI_TAG, "Zatwierdzono formularz: Wywołuję updateService dla ID: ${selectedService!!.id}")
                         tenantViewModel.updateService(
                             serviceId = selectedService!!.id,
                             name = name,
@@ -206,6 +217,10 @@ fun ServiceAddEditDialog(
     var duration by remember { mutableStateOf(service?.durationMinutes?.toString() ?: "") }
     var isActive by remember { mutableStateOf(service?.active ?: true) }
 
+    val isPriceValid = price.isBlank() || price.toDoubleOrNull() != null
+    val isDurationValid = duration.isBlank() || (duration.toIntOrNull() != null && (duration.toIntOrNull() ?: 0) > 0)
+    val isFormReady = name.isNotBlank() && price.isNotBlank() && duration.isNotBlank() && isPriceValid && isDurationValid
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (service == null) "Dodaj nową usługę" else "Edytuj usługę") },
@@ -215,22 +230,38 @@ fun ServiceAddEditDialog(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text("Nazwa zabiegu") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    isError = name.isBlank()
                 )
+
                 OutlinedTextField(
                     value = price,
                     onValueChange = { price = it.replace(',', '.') },
                     label = { Text("Cena (zł)") },
                     modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    isError = !isPriceValid,
+                    supportingText = {
+                        if (!isPriceValid) {
+                            Text("Wprowadź poprawną cenę (np. 149.50)", color = MaterialTheme.colorScheme.error)
+                        }
+                    }
                 )
+
                 OutlinedTextField(
                     value = duration,
                     onValueChange = { duration = it },
                     label = { Text("Czas trwania (min)") },
                     modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = !isDurationValid,
+                    supportingText = {
+                        if (!isDurationValid) {
+                            Text("Czas musi być liczbą całkowitą większą od 0", color = MaterialTheme.colorScheme.error)
+                        }
+                    }
                 )
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -244,11 +275,13 @@ fun ServiceAddEditDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    val pCents = ((price.toDoubleOrNull() ?: 0.0) * 100).toInt()
+                    val pDouble = price.toDoubleOrNull() ?: 0.0
+                    val pCents = (pDouble * 100).toInt()
                     val dMinutes = duration.toIntOrNull() ?: 0
-                    onConfirm(name, pCents, dMinutes, isActive)
+                    Log.d(UI_TAG, "Kliknięto Zapisz w Dialogu. Walidacja OK. Przekazuję do onConfirm -> Cents: $pCents, Mins: $dMinutes")
+                    onConfirm(name.trim(), pCents, dMinutes, isActive)
                 },
-                enabled = name.isNotBlank() && price.isNotBlank() && duration.isNotBlank()
+                enabled = isFormReady
             ) {
                 Text("Zapisz")
             }

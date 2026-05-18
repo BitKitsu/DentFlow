@@ -41,7 +41,6 @@ fun ScheduleScreen(
     var isAdding by remember { mutableStateOf(false) }
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
 
-    // Mapy do zamiany ID na nazwy
     val locationMap = tenantData?.locations?.associate { it.id to it.name } ?: emptyMap()
     val roomMap = rooms.associate { it.id to it.name }
 
@@ -50,14 +49,16 @@ fun ScheduleScreen(
             .sortedBy { it.startAt }
     }
 
-    // Ładowanie danych przy starcie - ViewModel sam wie dla kogo i gdzie
-    LaunchedEffect(Unit) {
+    // Automatyczne dociąganie pokoi po załadowaniu danych kliniki (tenanta)
+    LaunchedEffect(tenantData?.id) {
         viewModel.loadSchedule()
+        tenantData?.id?.let { id ->
+            tenantViewModel.loadRooms(id)
+        }
     }
 
     Scaffold(
         floatingActionButton = {
-            // Zakładając, że logika uprawnień jest teraz wewnątrz ViewModelu lub sprawdzana przez sesję
             FloatingActionButton(
                 onClick = { isAdding = true },
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -66,8 +67,6 @@ fun ScheduleScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-
-            // --- KALENDARZ MIESIĘCZNY ---
             Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 4.dp) {
                 Column(modifier = Modifier.padding(bottom = 12.dp)) {
                     Row(
@@ -90,7 +89,6 @@ fun ScheduleScreen(
                         }
                     }
 
-                    // Dni tygodnia
                     val dayHeaders = listOf("Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd")
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
                         dayHeaders.forEach { day ->
@@ -100,7 +98,6 @@ fun ScheduleScreen(
 
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    // Siatka dni
                     val firstDay = currentMonth.atDay(1)
                     val startOffset = firstDay.dayOfWeek.value - 1
                     val daysInMonth = currentMonth.lengthOfMonth()
@@ -153,7 +150,6 @@ fun ScheduleScreen(
                 }
             }
 
-            // --- LISTA WIZYT ---
             LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (filteredSlots.isEmpty()) {
                     item { Text("Brak wizyt", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = Color.Gray) }
@@ -167,7 +163,7 @@ fun ScheduleScreen(
                                 Text("Lokalizacja: ${locationMap[slot.locationId] ?: "Lokalizacja ${slot.locationId}"}")
                                 Text("Gabinet: ${roomMap[slot.roomId] ?: "Pokój ${slot.roomId}"}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
                             }
-                            IconButton(onClick = { viewModel.deleteSlot(slot.id) }) { // Poprawione wywołanie
+                            IconButton(onClick = { viewModel.deleteSlot(slot.id) }) {
                                 Icon(Icons.Default.Delete, "Usuń", tint = MaterialTheme.colorScheme.error)
                             }
                         }
@@ -182,9 +178,10 @@ fun ScheduleScreen(
             initialSlot = selectedSlot,
             locationMap = locationMap,
             roomMap = roomMap,
+            // Przekazujemy rzeczywiste ID zalogowanej kliniki do okna dialogowego
+            currentTenantId = tenantData?.id ?: -1L,
             onDismiss = { isAdding = false; selectedSlot = null },
             onConfirm = { slotData ->
-                // Wywołania metod bez tenantId/userId/role
                 if (selectedSlot != null) {
                     viewModel.updateSlot(selectedSlot!!.id, slotData)
                 } else {
@@ -202,6 +199,7 @@ fun SlotEditDialog(
     initialSlot: ScheduleSlotDTO?,
     locationMap: Map<Long, String>,
     roomMap: Map<Long, String>,
+    currentTenantId: Long,
     onDismiss: () -> Unit,
     onConfirm: (ScheduleSlotDTO) -> Unit
 ) {
@@ -212,8 +210,13 @@ fun SlotEditDialog(
     var locExpanded by remember { mutableStateOf(false) }
     var roomExpanded by remember { mutableStateOf(false) }
 
-    var selectedLocId by remember { mutableStateOf(initialSlot?.locationId ?: locationMap.keys.firstOrNull() ?: 1L) }
-    var selectedRoomId by remember { mutableStateOf(initialSlot?.roomId ?: roomMap.keys.firstOrNull() ?: 1L) }
+    // Synchronizacja stanów z asynchronicznie ładowanymi mapami danych z API
+    var selectedLocId by remember(initialSlot, locationMap) {
+        mutableStateOf(initialSlot?.locationId ?: locationMap.keys.firstOrNull() ?: 1L)
+    }
+    var selectedRoomId by remember(initialSlot, roomMap) {
+        mutableStateOf(initialSlot?.roomId ?: roomMap.keys.firstOrNull() ?: 1L)
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -226,32 +229,58 @@ fun SlotEditDialog(
                     OutlinedTextField(value = endT, onValueChange = { endT = it }, label = { Text("Koniec") }, modifier = Modifier.weight(1f))
                 }
 
-                // Dropdown Lokalizacja
-                ExposedDropdownMenuBox(expanded = locExpanded, onExpandedChange = { locExpanded = !locExpanded }) {
+                ExposedDropdownMenuBox(
+                    expanded = locExpanded,
+                    onExpandedChange = { locExpanded = it }
+                ) {
                     OutlinedTextField(
                         value = locationMap[selectedLocId] ?: "Wybierz lokalizację",
-                        onValueChange = {}, readOnly = true, label = { Text("Lokalizacja") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(locExpanded) },
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Lokalizacja") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = locExpanded) },
                         modifier = Modifier.menuAnchor().fillMaxWidth()
                     )
-                    ExposedDropdownMenu(expanded = locExpanded, onDismissRequest = { locExpanded = false }) {
+                    ExposedDropdownMenu(
+                        expanded = locExpanded,
+                        onDismissRequest = { locExpanded = false }
+                    ) {
                         locationMap.forEach { (id, name) ->
-                            DropdownMenuItem(text = { Text(name) }, onClick = { selectedLocId = id; locExpanded = false })
+                            DropdownMenuItem(
+                                text = { Text(name) },
+                                onClick = {
+                                    selectedLocId = id
+                                    locExpanded = false
+                                }
+                            )
                         }
                     }
                 }
 
-                // Dropdown Pokój
-                ExposedDropdownMenuBox(expanded = roomExpanded, onExpandedChange = { roomExpanded = !roomExpanded }) {
+                ExposedDropdownMenuBox(
+                    expanded = roomExpanded,
+                    onExpandedChange = { roomExpanded = it }
+                ) {
                     OutlinedTextField(
                         value = roomMap[selectedRoomId] ?: "Wybierz pokój",
-                        onValueChange = {}, readOnly = true, label = { Text("Pokój") },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(roomExpanded) },
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Pokój") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = roomExpanded) },
                         modifier = Modifier.menuAnchor().fillMaxWidth()
                     )
-                    ExposedDropdownMenu(expanded = roomExpanded, onDismissRequest = { roomExpanded = false }) {
+                    ExposedDropdownMenu(
+                        expanded = roomExpanded,
+                        onDismissRequest = { roomExpanded = false }
+                    ) {
                         roomMap.forEach { (id, name) ->
-                            DropdownMenuItem(text = { Text(name) }, onClick = { selectedRoomId = id; roomExpanded = false })
+                            DropdownMenuItem(
+                                text = { Text(name) },
+                                onClick = {
+                                    selectedRoomId = id
+                                    roomExpanded = false
+                                }
+                            )
                         }
                     }
                 }
@@ -261,8 +290,9 @@ fun SlotEditDialog(
             Button(onClick = {
                 onConfirm(ScheduleSlotDTO(
                     id = initialSlot?.id ?: 0L,
-                    tenantId = 0L, // ViewModel sam to uzupełni
-                    staffId = initialSlot?.staffId ?: 0L, // ViewModel sam to uzupełni
+                    // Przekazujemy poprawne, odczytane ID kliniki zamiast 0L
+                    tenantId = if (initialSlot != null && initialSlot.tenantId > 0) initialSlot.tenantId else currentTenantId,
+                    staffId = initialSlot?.staffId ?: 1L, // Backend odrzuci 0L dla personelu. Jeśli tworzysz nowy, podaj poprawne ID pracownika
                     locationId = selectedLocId,
                     roomId = selectedRoomId,
                     startAt = "${date}T${startT}:00Z",

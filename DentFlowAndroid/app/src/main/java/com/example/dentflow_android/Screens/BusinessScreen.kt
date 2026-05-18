@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -22,6 +22,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.dentflow_android.data.ViewModel.CatalogViewModel
 import com.example.dentflow_android.data.ViewModel.PatientViewModel
 import com.example.dentflow_android.data.ViewModel.ScheduleViewModel
 import com.example.dentflow_android.data.ViewModel.TenantViewModel
@@ -31,7 +32,8 @@ import com.example.dentflow_android.data.remote.LocationResponse
 fun BusinessScreen(
     tenantViewModel: TenantViewModel = hiltViewModel(),
     patientViewModel: PatientViewModel = hiltViewModel(),
-    scheduleViewModel: ScheduleViewModel = hiltViewModel()
+    scheduleViewModel: ScheduleViewModel = hiltViewModel(),
+    catalogViewModel: CatalogViewModel = hiltViewModel() // Dodany nowy CatalogViewModel
 ) {
     var showStaffManagement by remember { mutableStateOf(false) }
     var showPatientScreen by remember { mutableStateOf(false) }
@@ -45,12 +47,13 @@ fun BusinessScreen(
         tenantViewModel.loadAllTenantData()
         patientViewModel.loadPatients()
         scheduleViewModel.loadSchedule()
+        catalogViewModel.loadServices() // Załadowanie usług z nowego ViewModelu
     }
 
     val tenantData by tenantViewModel.tenantState
     val patients by patientViewModel.patients.collectAsState()
     val slots by scheduleViewModel.slots.collectAsState()
-    val services by tenantViewModel.servicesState
+    val services by catalogViewModel.servicesState // Zmienione na odczyt z catalogViewModel
 
     val location = tenantData?.locations?.firstOrNull()
 
@@ -113,7 +116,7 @@ fun BusinessScreen(
                     StatCard(Modifier.weight(1f), "Pacjenci", patients.size.toString(), Icons.Default.Group, MaterialTheme.colorScheme.secondary) {
                         showPatientScreen = true
                     }
-                    StatCard(Modifier.weight(1f), "Cennik", services.size.toString(), Icons.Default.Payments, MaterialTheme.colorScheme.tertiary) {
+                    StatCard(Modifier.weight(1f), "Zabiegi", services.size.toString(), Icons.Default.MedicalServices, MaterialTheme.colorScheme.tertiary) {
                         showCatalogScreen = true
                     }
                 }

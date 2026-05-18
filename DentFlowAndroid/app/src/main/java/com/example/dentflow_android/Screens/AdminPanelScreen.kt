@@ -46,7 +46,7 @@ fun AdminPanelScreen(
             color = MaterialTheme.colorScheme.primary
         )
         Text(
-            text = "Zarządzaj swoją kliniką dynamicznie",
+            text = "Zarządzaj swoją kliniką",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

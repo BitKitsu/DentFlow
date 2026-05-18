@@ -21,7 +21,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.dentflow_android.data.ViewModel.TenantViewModel
+import com.example.dentflow_android.data.ViewModel.CatalogViewModel
 import com.example.dentflow_android.data.remote.ServiceCatalogItemDTO
 
 private const val UI_TAG = "DENTFLOW_DEBUG"
@@ -30,17 +30,17 @@ private const val UI_TAG = "DENTFLOW_DEBUG"
 @Composable
 fun CatalogListScreen(
     onBackClick: () -> Unit,
-    tenantViewModel: TenantViewModel = hiltViewModel()
+    catalogViewModel: CatalogViewModel = hiltViewModel() // Zamiana na CatalogViewModel
 ) {
-    val services by tenantViewModel.servicesState
-    val isLoading by tenantViewModel.isLoading
+    val services by catalogViewModel.servicesState // Odczyt z nowego ViewModelu
+    val isLoading by catalogViewModel.isLoading
 
     var showAddEditDialog by remember { mutableStateOf(false) }
     var selectedService by remember { mutableStateOf<ServiceCatalogItemDTO?>(null) }
 
     LaunchedEffect(Unit) {
-        Log.d(UI_TAG, "CatalogListScreen -> LaunchedEffect: Żądanie załadowania usług.")
-        tenantViewModel.loadServices()
+        Log.d(UI_TAG, "CatalogListScreen -> LaunchedEffect: Żądanie załadowania usług z CatalogViewModel.")
+        catalogViewModel.loadServices() // Wywołanie z nowego ViewModelu
     }
 
     Scaffold(
@@ -97,7 +97,7 @@ fun CatalogListScreen(
                             },
                             onDelete = {
                                 Log.d(UI_TAG, "Kliknięto USUNIĘCIE usługi ID: ${service.id}")
-                                tenantViewModel.deleteService(service.id)
+                                catalogViewModel.deleteService(service.id) // Wywołanie z nowego ViewModelu
                             }
                         )
                     }
@@ -115,10 +115,10 @@ fun CatalogListScreen(
                 onConfirm = { name, priceCents, duration, isActive ->
                     if (selectedService == null) {
                         Log.d(UI_TAG, "Zatwierdzono formularz: Wywołuję addService.")
-                        tenantViewModel.addService(name, priceCents, duration)
+                        catalogViewModel.addService(name, priceCents, duration) // Nowy ViewModel
                     } else {
                         Log.d(UI_TAG, "Zatwierdzono formularz: Wywołuję updateService dla ID: ${selectedService!!.id}")
-                        tenantViewModel.updateService(
+                        catalogViewModel.updateService( // Nowy ViewModel
                             serviceId = selectedService!!.id,
                             name = name,
                             priceCents = priceCents,

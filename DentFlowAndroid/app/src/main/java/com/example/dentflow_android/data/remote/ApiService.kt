@@ -1,5 +1,6 @@
 package com.example.dentflow_android.data.remote
 
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -104,7 +105,6 @@ interface ApiService {
         @Body request: CreateAppointmentRequest
     ): Response<AppointmentResponse>
 
-    // DODANE METODY:
     @GET("tenants/{tenantId}/appointments/{appointmentId}")
     suspend fun getAppointmentDetails(
         @Path("tenantId") tenantId: Long,
@@ -129,6 +129,7 @@ interface ApiService {
         @Path("tenantId") tenantId: Long,
         @Path("appointmentId") appointmentId: Long
     ): Response<AppointmentResponse>
+
     // --- CATALOG (USŁUGI) ---
     @GET("tenants/{tenantId}/catalog")
     suspend fun getServices(
@@ -154,6 +155,7 @@ interface ApiService {
         @Path("tenantId") tenantId: Long,
         @Path("id") id: Long
     ): Response<Unit>
+
     // --- SCHEDULE SLOTS (GRAFIK - TERMINY) ---
     @GET("tenants/{tenantId}/schedule/slots")
     suspend fun getSlots(
@@ -226,6 +228,7 @@ interface ApiService {
         @Path("userId") userId: Long
     ): Response<Unit>
 
+    // --- HISTORY (HISTORIA WIZYT PACJENTA) ---
     @GET("tenants/{tenantId}/patients/{patientId}/visits")
     suspend fun getPatientVisits(
         @Path("tenantId") tenantId: Long,
@@ -233,5 +236,21 @@ interface ApiService {
         @Query("status") status: String? = null
     ): Response<List<AppointmentResponse>>
 
+    // --- REPORTS (RAPORTY) ---
+    @Streaming
+    @GET("tenants/{tenantId}/reports/room-occupancy")
+    suspend fun getRoomOccupancyReport(
+        @Path("tenantId") tenantId: Long,
+        @Query("from") from: String,
+        @Query("to") to: String
+    ): Response<ResponseBody>
 
+    @Streaming
+    @GET("tenants/{tenantId}/reports/room-occupancy/{roomId}")
+    suspend fun getSingleRoomOccupancyReport(
+        @Path("tenantId") tenantId: Long,
+        @Path("roomId") roomId: Long,
+        @Query("from") from: String,
+        @Query("to") to: String
+    ): Response<ResponseBody>
 }

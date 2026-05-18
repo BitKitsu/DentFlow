@@ -23,9 +23,6 @@ class TenantViewModel @Inject constructor(
     private val _tenantState = mutableStateOf<TenantResponse?>(null)
     val tenantState: State<TenantResponse?> = _tenantState
 
-    private val _servicesState = mutableStateOf<List<ServiceCatalogItemDTO>>(emptyList())
-    val servicesState: State<List<ServiceCatalogItemDTO>> = _servicesState
-
     private val _rooms = MutableStateFlow<List<RoomResponse>>(emptyList())
     val rooms = _rooms.asStateFlow()
 
@@ -54,7 +51,6 @@ class TenantViewModel @Inject constructor(
             _isLoading.value = true
             try {
                 fetchTenantData(id)
-                fetchServices(id)
                 fetchRooms(id)
             } finally {
                 _isLoading.value = false
@@ -107,6 +103,7 @@ class TenantViewModel @Inject constructor(
                     val newTenant = response.body()!!
                     Log.d(TAG, "API -> Zarejestrowano klinikę. Nowe ID: ${newTenant.id}")
                     prefs.edit().putLong("tenant_id", newTenant.id).apply()
+
                     assignTenantOnIdentityService(newTenant.id)
                     _tenantState.value = newTenant
                     loadAllTenantData()
@@ -125,136 +122,24 @@ class TenantViewModel @Inject constructor(
         }
     }
 
-    private fun assignTenantOnIdentityService(tenantId: Long) {
-        viewModelScope.launch {
-            try {
-                Log.d(TAG, "API -> Przypisywanie kliniki w IdentityService dla ID: $tenantId")
-                val response = authService.assignTenant(AssignTenantRequest(tenantId = tenantId))
-                if (response.isSuccessful && response.body() != null) {
-                    val authResponse = response.body()!!
-                    Log.d(TAG, "API -> Przypisano klinikę. Nowy token JWT wygenerowany.")
-                    prefs.edit().putString("jwt_token", authResponse.token)
-                        .putLong("tenant_id", authResponse.tenantId)
-                        .apply()
-                } else {
-                    val errorMsg = response.errorBody()?.string()
-                    Log.e(TAG, "API BŁĄD -> assignTenant: Kod=${response.code()}, Body=$errorMsg")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "WYJĄTEK przy assignTenant: ${e.message}", e)
-            }
-        }
-    }
-
-    fun loadServices(id: Long = currentTenantId) {
-        if (id == -1L) {
-            Log.e(TAG, "loadServices anulowane: Brak poprawnego ID kliniki (-1L)")
-            return
-        }
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                fetchServices(id)
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    private suspend fun fetchServices(id: Long) {
+    private suspend fun assignTenantOnIdentityService(tenantId: Long) {
         try {
-            Log.d(TAG, "API -> Pobieranie listy usług (getServices) dla kliniki: $id")
-            val response = apiService.getServices(id)
-            if (response.isSuccessful) {
-                val list = response.body() ?: emptyList()
-                Log.d(TAG, "API -> Pobrano pomyślnie ${list.size} usług.")
-                _servicesState.value = list
+            Log.d(TAG, "API -> Przypisywanie kliniki w IdentityService dla ID: $tenantId")
+            val response = authService.assignTenant(AssignTenantRequest(tenantId = tenantId))
+            if (response.isSuccessful && response.body() != null) {
+                val authResponse = response.body()!!
+                Log.d(TAG, "API -> Przypisano klinikę. Nowy token JWT wygenerowany.")
+
+                prefs.edit()
+                    .putString("jwt_token", authResponse.token)
+                    .putLong("tenant_id", authResponse.tenantId)
+                    .commit()
             } else {
                 val errorMsg = response.errorBody()?.string()
-                Log.e(TAG, "API BŁĄD -> getServices: Kod=${response.code()}, Body=$errorMsg")
+                Log.e(TAG, "API BŁĄD -> assignTenant: Kod=${response.code()}, Body=$errorMsg")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "WYJĄTEK przy pobieraniu usług cennika: ${e.message}", e)
-        }
-    }
-
-    fun addService(name: String, priceCents: Int, duration: Int) {
-        val tId = currentTenantId
-        if (tId == -1L) {
-            Log.e(TAG, "addService anulowane: Nieprawidłowe ID kliniki (-1L)")
-            return
-        }
-
-        Log.d(TAG, "Żądanie DODANIA usługi -> Name: $name, PriceCents: $priceCents, Duration: $duration min, Tenant: $tId")
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                val request = ServiceCatalogRequest(name, duration, priceCents, true)
-                val response = apiService.createService(tId, request)
-                if (response.isSuccessful) {
-                    Log.d(TAG, "API -> Pomyślnie dodano usługę na backendzie. Odświeżam listę cennika.")
-                    fetchServices(tId)
-                } else {
-                    val errorMsg = response.errorBody()?.string()
-                    Log.e(TAG, "API BŁĄD -> createService: Kod=${response.code()}, Body=$errorMsg")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "WYJĄTEK przy dodawaniu usługi: ${e.message}", e)
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    fun updateService(serviceId: Long, name: String, priceCents: Int, duration: Int, active: Boolean) {
-        val tId = currentTenantId
-        if (tId == -1L) {
-            Log.e(TAG, "updateService anulowane: Nieprawidłowe ID kliniki (-1L)")
-            return
-        }
-
-        Log.d(TAG, "Żądanie EDYCJI usługi ID: $serviceId -> Name: $name, PriceCents: $priceCents, Duration: $duration min, Active: $active")
-        viewModelScope.launch {
-            _isLoading.value = true
-            try {
-                val request = ServiceCatalogRequest(name, duration, priceCents, active)
-                val response = apiService.updateService(tId, serviceId, request)
-                if (response.isSuccessful) {
-                    Log.d(TAG, "API -> Pomyślnie zaktualizowano usługę ID: $serviceId. Odświeżam listę.")
-                    fetchServices(tId)
-                } else {
-                    val errorMsg = response.errorBody()?.string()
-                    Log.e(TAG, "API BŁĄD -> updateService: Kod=${response.code()}, Body=$errorMsg")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "WYJĄTEK przy edycji usługi: ${e.message}", e)
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    fun deleteService(serviceId: Long) {
-        val tId = currentTenantId
-        if (tId == -1L) {
-            Log.e(TAG, "deleteService anulowane: Nieprawidłowe ID kliniki (-1L)")
-            return
-        }
-
-        Log.d(TAG, "Żądanie USUNIĘCIA usługi ID: $serviceId dla kliniki: $tId")
-        viewModelScope.launch {
-            try {
-                val response = apiService.deleteService(tId, serviceId)
-                if (response.isSuccessful) {
-                    Log.d(TAG, "API -> Usunięto pomyślnie z bazy. Usuwam z lokalnej listy stanów.")
-                    _servicesState.value = _servicesState.value.filter { it.id != serviceId }
-                } else {
-                    val errorMsg = response.errorBody()?.string()
-                    Log.e(TAG, "API BŁĄD -> deleteService: Kod=${response.code()}, Body=$errorMsg")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "WYJĄTEK przy usuwaniu usługi: ${e.message}", e)
-            }
+            Log.e(TAG, "WYJĄTEK przy assignTenant: ${e.message}", e)
         }
     }
 
@@ -301,7 +186,7 @@ class TenantViewModel @Inject constructor(
                     Log.d(TAG, "API -> Zaktualizowano dane biznesowe pomyślnie.")
                     _tenantState.value = response.body()
                     response.body()?.id?.let {
-                        prefs.edit().putLong("tenant_id", it).apply()
+                        prefs.edit().putLong("tenant_id", it).commit()
                     }
                 } else {
                     val errorMsg = response.errorBody()?.string()

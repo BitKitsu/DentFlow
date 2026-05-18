@@ -39,10 +39,15 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val tenantViewModel: TenantViewModel = hiltViewModel()
 
+                // Wyciągamy stan wybranego indeksu nawigacji na poziom MainActivity,
+                // dzięki czemu pod-ekrany nie niszczą i nie resetują zapamiętanej zakładki.
+                var currentDashboardTab by remember { mutableIntStateOf(0) }
+
                 NavHost(navController = navController, startDestination = "login") {
                     composable("login") {
                         LoginScreen(
                             onLoginSuccess = {
+                                currentDashboardTab = 0 // Reset do Home przy nowym logowaniu
                                 navController.navigate("main_dashboard") {
                                     popUpTo("login") { inclusive = true }
                                 }
@@ -63,20 +68,29 @@ class MainActivity : ComponentActivity() {
                             isDarkTheme = isDarkTheme,
                             onThemeChange = { isDarkTheme = it },
                             navController = navController,
-                            tenantViewModel = tenantViewModel
+                            tenantViewModel = tenantViewModel,
+                            selectedItem = currentDashboardTab,
+                            onTabChange = { currentDashboardTab = it }
                         )
                     }
 
+                    // Przeniesienie akcji powrotu do poprawnego stosu nawigacji
                     composable("staff_management") {
-                        StaffManagementScreen(onBackClick = { navController.popBackStack() })
+                        StaffManagementScreen(onBackClick = {
+                            navController.popBackStack()
+                        })
                     }
 
                     composable("patient_list") {
-                        PatientListScreen(onBackClick = { navController.popBackStack() })
+                        PatientListScreen(onBackClick = {
+                            navController.popBackStack()
+                        })
                     }
 
                     composable("catalog_management") {
-                        CatalogListScreen(onBackClick = { navController.popBackStack() })
+                        CatalogListScreen(onBackClick = {
+                            navController.popBackStack()
+                        })
                     }
 
                     composable("create_tenant_form") {
@@ -105,17 +119,19 @@ fun MainDashboard(
     isDarkTheme: Boolean,
     onThemeChange: (Boolean) -> Unit,
     navController: NavHostController,
+    selectedItem: Int, // Przekazywany stan z MainActivity
+    onTabChange: (Int) -> Unit, // Callback do zmiany stanu w MainActivity
     staffViewModel: StaffViewModel = hiltViewModel(),
     tenantViewModel: TenantViewModel = hiltViewModel(),
     notificationViewModel: NotificationViewModel = hiltViewModel(),
-    visitViewModel: VisitViewModel = hiltViewModel()
+    visitViewModel: VisitViewModel = hiltViewModel(),
+    catalogViewModel: CatalogViewModel = hiltViewModel()
 ) {
-    var selectedItem by remember { mutableIntStateOf(0) }
     var isShowingSettings by remember { mutableStateOf(false) }
 
     val staffList by staffViewModel.staffMembers.collectAsState()
     val tenantData by tenantViewModel.tenantState
-    val serviceList by tenantViewModel.servicesState
+    val serviceList by catalogViewModel.servicesState
 
     val currentTenant = tenantData
 
@@ -124,6 +140,7 @@ fun MainDashboard(
         tenantViewModel.loadAllTenantData()
         notificationViewModel.fetchNotifications()
         visitViewModel.refreshVisits()
+        catalogViewModel.loadServices()
     }
 
     val items = listOf("Home", "Firma", "Admin", "Wizyty", "Alarmy", "Konto")
@@ -154,7 +171,7 @@ fun MainDashboard(
                         label = { Text(item, fontSize = 10.sp) },
                         selected = selectedItem == index,
                         onClick = {
-                            selectedItem = index
+                            onTabChange(index)
                             if (index != 5) isShowingSettings = false
                         }
                     )
@@ -199,7 +216,7 @@ fun MainDashboard(
                                     popUpTo("main_dashboard") { inclusive = true }
                                 }
                             },
-                            onEditBusinessClick = { selectedItem = 1 }
+                            onEditBusinessClick = { onTabChange(1) }
                         )
                     } else {
                         SettingsScreen(

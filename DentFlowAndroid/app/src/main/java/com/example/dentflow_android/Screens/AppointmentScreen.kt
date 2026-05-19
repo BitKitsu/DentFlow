@@ -20,11 +20,12 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun CreateAppointmentScreen(
     viewModel: AppointmentViewModel = hiltViewModel(),
+    initialDoctorId: String = "",
     onSuccess: () -> Unit
 ) {
     var patientId by remember { mutableStateOf("") }
     var serviceId by remember { mutableStateOf("") }
-    var doctorId by remember { mutableStateOf("") }
+    var doctorId by remember { mutableStateOf(initialDoctorId) }
     var roomId by remember { mutableStateOf("") }
     var locationId by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }

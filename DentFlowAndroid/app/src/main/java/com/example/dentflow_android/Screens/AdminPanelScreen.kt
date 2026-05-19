@@ -24,6 +24,7 @@ fun AdminPanelScreen(
     onNavigateToStaff: () -> Unit,
     onNavigateToPatients: () -> Unit,
     onNavigateToCatalog: () -> Unit,
+    onNavigateToSchedule: () -> Unit,
     viewModel: AdminViewModel = hiltViewModel()
 ) {
     val visitCount by viewModel.visitCount.collectAsState()
@@ -101,6 +102,9 @@ fun AdminPanelScreen(
                 AdminActionCard("Ustawienia", Icons.Default.Settings, "Konfiguracja", {
                     Log.d("ADMIN_SCREEN", "Nawigacja do ustawień - stub")
                 })
+            }
+            item {
+                AdminActionCard("Grafik", Icons.Default.DateRange, "Harmonogram pracy", onNavigateToSchedule)
             }
         }
     }

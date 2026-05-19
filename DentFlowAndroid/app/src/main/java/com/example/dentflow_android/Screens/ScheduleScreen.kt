@@ -29,7 +29,7 @@ import java.util.Locale
 
 @Composable
 fun ScheduleScreen(
-    viewModel: ScheduleViewModel,
+    viewModel: ScheduleViewModel = hiltViewModel(),
     tenantViewModel: TenantViewModel = hiltViewModel()
 ) {
     val slots by viewModel.slots.collectAsState()

@@ -101,12 +101,15 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("appointment_setup/{staffId}") { backStackEntry ->
-                        val staffId = backStackEntry.arguments?.getString("staffId")?.toLongOrNull() ?: 0L
-                        Column(modifier = Modifier.fillMaxSize().padding(32.dp).statusBarsPadding()) {
-                            Text("Rezerwacja wizyty", style = MaterialTheme.typography.headlineMedium)
-                            Text("Wybrany lekarz ID: $staffId")
-                            Button(onClick = { navController.popBackStack() }) { Text("Wróć") }
-                        }
+                        val staffId = backStackEntry.arguments?.getString("staffId") ?: ""
+                        CreateAppointmentScreen(
+                            initialDoctorId = staffId,
+                            onSuccess = { navController.popBackStack() }
+                        )
+                    }
+
+                    composable("schedule") {
+                        ScheduleScreen()
                     }
                 }
             }
@@ -203,7 +206,8 @@ fun MainDashboard(
                 2 -> AdminPanelScreen(
                     onNavigateToStaff = { navController.navigate("staff_management") },
                     onNavigateToPatients = { navController.navigate("patient_list") },
-                    onNavigateToCatalog = { navController.navigate("catalog_management") }
+                    onNavigateToCatalog = { navController.navigate("catalog_management") },
+                    onNavigateToSchedule = { navController.navigate("schedule") }
                 )
                 3 -> VisitsScreen(viewModel = visitViewModel)
                 4 -> NotificationsScreen(viewModel = notificationViewModel)

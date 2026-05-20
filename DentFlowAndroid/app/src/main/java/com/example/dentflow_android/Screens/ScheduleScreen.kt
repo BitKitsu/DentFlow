@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -12,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -20,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.dentflow_android.data.ViewModel.ScheduleViewModel
 import com.example.dentflow_android.data.ViewModel.TenantViewModel
+import com.example.dentflow_android.data.ViewModel.VisitViewModel
 import com.example.dentflow_android.data.remote.ScheduleSlotDTO
 import java.time.LocalDate
 import java.time.YearMonth
@@ -30,9 +33,13 @@ import java.util.Locale
 @Composable
 fun ScheduleScreen(
     viewModel: ScheduleViewModel = hiltViewModel(),
-    tenantViewModel: TenantViewModel = hiltViewModel()
+    tenantViewModel: TenantViewModel = hiltViewModel(),
+    visitViewModel: VisitViewModel = hiltViewModel()
 ) {
     val slots by viewModel.slots.collectAsState()
+    val visits by visitViewModel.visits.collectAsState()
+    val isLoadingVisits by visitViewModel.isLoading.collectAsState()
+
     val tenantData by tenantViewModel.tenantState
     val rooms by tenantViewModel.rooms.collectAsState()
 
@@ -44,14 +51,14 @@ fun ScheduleScreen(
     val locationMap = tenantData?.locations?.associate { it.id to it.name } ?: emptyMap()
     val roomMap = rooms.associate { it.id to it.name }
 
-    val filteredSlots = remember(slots, selectedDate) {
-        slots.filter { it.startAt.take(10) == selectedDate.toString() }
-            .sortedBy { it.startAt }
+    val filteredVisits = remember(visits, selectedDate) {
+        visits.filter { it.visit.startAt.take(10) == selectedDate.toString() }
+            .sortedBy { it.visit.startAt }
     }
 
-    // Automatyczne dociąganie pokoi po załadowaniu danych kliniki (tenanta)
     LaunchedEffect(tenantData?.id) {
         viewModel.loadSchedule()
+        visitViewModel.refreshVisits()
         tenantData?.id?.let { id ->
             tenantViewModel.loadRooms(id)
         }
@@ -74,14 +81,20 @@ fun ScheduleScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("GRAFIK PRACY", fontWeight = FontWeight.Black, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
+                        Text(
+                            "GRAFIK PRACY",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 18.sp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             IconButton(onClick = { currentMonth = currentMonth.minusMonths(1) }) {
                                 Icon(Icons.Default.ArrowBack, "Poprzedni", tint = MaterialTheme.colorScheme.primary)
                             }
                             Text(
                                 text = "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale("pl")).uppercase()} ${currentMonth.year}",
-                                fontWeight = FontWeight.Bold, fontSize = 15.sp
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp
                             )
                             IconButton(onClick = { currentMonth = currentMonth.plusMonths(1) }) {
                                 Icon(Icons.Default.ArrowForward, "Następny", tint = MaterialTheme.colorScheme.primary)
@@ -92,7 +105,13 @@ fun ScheduleScreen(
                     val dayHeaders = listOf("Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd")
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
                         dayHeaders.forEach { day ->
-                            Text(day, Modifier.weight(1f), textAlign = TextAlign.Center, fontSize = 12.sp, color = Color.Gray)
+                            Text(
+                                day,
+                                Modifier.weight(1f),
+                                textAlign = TextAlign.Center,
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
                         }
                     }
 
@@ -143,28 +162,102 @@ fun ScheduleScreen(
                     }
 
                     Text(
-                        text = selectedDate.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale("pl"))).uppercase(),
+                        text = selectedDate.format(
+                            DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale("pl"))
+                        ).uppercase(),
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
 
-            LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (filteredSlots.isEmpty()) {
-                    item { Text("Brak wizyt", modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, color = Color.Gray) }
+            if (isLoadingVisits) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (filteredVisits.isEmpty()) {
+                        item {
+                            Text(
+                                "Brak wizyt na ten dzień",
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center,
+                                color = Color.Gray
+                            )
+                        }
+                    }
 
-                items(filteredSlots, key = { it.id }) { slot ->
-                    Card(modifier = Modifier.fillMaxWidth().clickable { selectedSlot = slot }) {
-                        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text("${slot.startAt.substringAfter("T").take(5)} - ${slot.endAt.substringAfter("T").take(5)}", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                                Text("Lokalizacja: ${locationMap[slot.locationId] ?: "Lokalizacja ${slot.locationId}"}")
-                                Text("Gabinet: ${roomMap[slot.roomId] ?: "Pokój ${slot.roomId}"}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
-                            }
-                            IconButton(onClick = { viewModel.deleteSlot(slot.id) }) {
-                                Icon(Icons.Default.Delete, "Usuń", tint = MaterialTheme.colorScheme.error)
+                    items(filteredVisits, key = { it.visit.id }) { item ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.width(70.dp)) {
+                                    Text(
+                                        text = try {
+                                            item.visit.startAt.substringAfter("T").take(5)
+                                        } catch (e: Exception) { "--:--" },
+                                        fontWeight = FontWeight.Bold,
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Text(
+                                        text = try {
+                                            item.visit.endAt.substringAfter("T").take(5)
+                                        } catch (e: Exception) { "--:--" },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.Gray
+                                    )
+                                }
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = item.patient?.let {
+                                            "${it.firstName} ${it.lastName}"
+                                        } ?: "Pacjent ID: ${item.visit.patientId}",
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Text(
+                                        text = "Zabieg ID: ${item.visit.serviceItemId}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.Gray
+                                    )
+                                    if (!item.visit.notes.isNullOrBlank()) {
+                                        Text(
+                                            text = item.visit.notes,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                val statusColor = when (item.visit.status.uppercase()) {
+                                    "CONFIRMED" -> Color(0xFF4CAF50)
+                                    "COMPLETED" -> Color.LightGray
+                                    "CANCELLED" -> Color.Red
+                                    else -> Color(0xFFFF9800)
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .size(12.dp)
+                                        .clip(CircleShape)
+                                        .background(statusColor)
+                                )
                             }
                         }
                     }
@@ -178,7 +271,6 @@ fun ScheduleScreen(
             initialSlot = selectedSlot,
             locationMap = locationMap,
             roomMap = roomMap,
-            // Przekazujemy rzeczywiste ID zalogowanej kliniki do okna dialogowego
             currentTenantId = tenantData?.id ?: -1L,
             onDismiss = { isAdding = false; selectedSlot = null },
             onConfirm = { slotData ->
@@ -210,7 +302,6 @@ fun SlotEditDialog(
     var locExpanded by remember { mutableStateOf(false) }
     var roomExpanded by remember { mutableStateOf(false) }
 
-    // Synchronizacja stanów z asynchronicznie ładowanymi mapami danych z API
     var selectedLocId by remember(initialSlot, locationMap) {
         mutableStateOf(initialSlot?.locationId ?: locationMap.keys.firstOrNull() ?: 1L)
     }
@@ -223,10 +314,25 @@ fun SlotEditDialog(
         title = { Text(if (initialSlot != null) "Edytuj Slot" else "Nowy Slot") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(value = date, onValueChange = { date = it }, label = { Text("Data") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    value = date,
+                    onValueChange = { date = it },
+                    label = { Text("Data") },
+                    modifier = Modifier.fillMaxWidth()
+                )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = startT, onValueChange = { startT = it }, label = { Text("Start") }, modifier = Modifier.weight(1f))
-                    OutlinedTextField(value = endT, onValueChange = { endT = it }, label = { Text("Koniec") }, modifier = Modifier.weight(1f))
+                    OutlinedTextField(
+                        value = startT,
+                        onValueChange = { startT = it },
+                        label = { Text("Start") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = endT,
+                        onValueChange = { endT = it },
+                        label = { Text("Koniec") },
+                        modifier = Modifier.weight(1f)
+                    )
                 }
 
                 ExposedDropdownMenuBox(
@@ -248,10 +354,7 @@ fun SlotEditDialog(
                         locationMap.forEach { (id, name) ->
                             DropdownMenuItem(
                                 text = { Text(name) },
-                                onClick = {
-                                    selectedLocId = id
-                                    locExpanded = false
-                                }
+                                onClick = { selectedLocId = id; locExpanded = false }
                             )
                         }
                     }
@@ -276,10 +379,7 @@ fun SlotEditDialog(
                         roomMap.forEach { (id, name) ->
                             DropdownMenuItem(
                                 text = { Text(name) },
-                                onClick = {
-                                    selectedRoomId = id
-                                    roomExpanded = false
-                                }
+                                onClick = { selectedRoomId = id; roomExpanded = false }
                             )
                         }
                     }
@@ -288,16 +388,17 @@ fun SlotEditDialog(
         },
         confirmButton = {
             Button(onClick = {
-                onConfirm(ScheduleSlotDTO(
-                    id = initialSlot?.id ?: 0L,
-                    // Przekazujemy poprawne, odczytane ID kliniki zamiast 0L
-                    tenantId = if (initialSlot != null && initialSlot.tenantId > 0) initialSlot.tenantId else currentTenantId,
-                    staffId = initialSlot?.staffId ?: 1L, // Backend odrzuci 0L dla personelu. Jeśli tworzysz nowy, podaj poprawne ID pracownika
-                    locationId = selectedLocId,
-                    roomId = selectedRoomId,
-                    startAt = "${date}T${startT}:00Z",
-                    endAt = "${date}T${endT}:00Z"
-                ))
+                onConfirm(
+                    ScheduleSlotDTO(
+                        id = initialSlot?.id ?: 0L,
+                        tenantId = if (initialSlot != null && initialSlot.tenantId > 0) initialSlot.tenantId else currentTenantId,
+                        staffId = initialSlot?.staffId ?: 1L,
+                        locationId = selectedLocId,
+                        roomId = selectedRoomId,
+                        startAt = "${date}T${startT}:00Z",
+                        endAt = "${date}T${endT}:00Z"
+                    )
+                )
             }) { Text("Zapisz") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Anuluj") } }

@@ -1,6 +1,5 @@
 package com.example.dentflow_android.Screens
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -25,6 +24,7 @@ fun AdminPanelScreen(
     onNavigateToPatients: () -> Unit,
     onNavigateToCatalog: () -> Unit,
     onNavigateToSchedule: () -> Unit,
+    onNavigateToSettings: () -> Unit,          // ← dodany parametr
     viewModel: AdminViewModel = hiltViewModel()
 ) {
     val visitCount by viewModel.visitCount.collectAsState()
@@ -90,21 +90,44 @@ fun AdminPanelScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             item {
-                AdminActionCard("Pracownicy", Icons.Default.Badge, "Lista personelu", onNavigateToStaff)
+                AdminActionCard(
+                    title = "Pracownicy",
+                    icon = Icons.Default.Badge,
+                    subtitle = "Lista personelu",
+                    onClick = onNavigateToStaff
+                )
             }
             item {
-                AdminActionCard("Pacjenci", Icons.Default.ContactPage, "Baza danych", onNavigateToPatients)
+                AdminActionCard(
+                    title = "Pacjenci",
+                    icon = Icons.Default.ContactPage,
+                    subtitle = "Baza danych",
+                    onClick = onNavigateToPatients
+                )
             }
             item {
-                AdminActionCard("Usługi", Icons.Default.ListAlt, "Cennik", onNavigateToCatalog)
+                AdminActionCard(
+                    title = "Usługi",
+                    icon = Icons.Default.ListAlt,
+                    subtitle = "Cennik",
+                    onClick = onNavigateToCatalog
+                )
             }
             item {
-                AdminActionCard("Ustawienia", Icons.Default.Settings, "Konfiguracja", {
-                    Log.d("ADMIN_SCREEN", "Nawigacja do ustawień - stub")
-                })
+                AdminActionCard(
+                    title = "Ustawienia",
+                    icon = Icons.Default.Settings,
+                    subtitle = "Konfiguracja",
+                    onClick = onNavigateToSettings   // ← poprawione
+                )
             }
             item {
-                AdminActionCard("Grafik", Icons.Default.DateRange, "Harmonogram pracy", onNavigateToSchedule)
+                AdminActionCard(
+                    title = "Grafik",
+                    icon = Icons.Default.DateRange,
+                    subtitle = "Harmonogram pracy",
+                    onClick = onNavigateToSchedule
+                )
             }
         }
     }

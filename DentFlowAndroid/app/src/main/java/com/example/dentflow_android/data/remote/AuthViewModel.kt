@@ -42,6 +42,7 @@ class AuthViewModel @Inject constructor(
                             apply()
                         }
                         Log.d("AUTH_DEBUG", "Zalogowano pomyślnie. TenantID: ${body.tenantId}")
+                        Log.d("AUTH_DEBUG", "PELNY TOKEN: $token")
                         onSuccess(body.tenantId)
                     } else {
                         _errorMessage.value = "Błąd: Serwer nie przesłał tokenu."

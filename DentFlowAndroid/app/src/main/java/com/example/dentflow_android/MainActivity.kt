@@ -24,7 +24,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.dentflow_android.Screens.*
 import com.example.dentflow_android.data.ViewModel.*
-import java.time.LocalDate
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -38,16 +37,13 @@ class MainActivity : ComponentActivity() {
             DentFlowAndroidTheme(darkTheme = isDarkTheme) {
                 val navController = rememberNavController()
                 val tenantViewModel: TenantViewModel = hiltViewModel()
-
-                // Wyciągamy stan wybranego indeksu nawigacji na poziom MainActivity,
-                // dzięki czemu pod-ekrany nie niszczą i nie resetują zapamiętanej zakładki.
                 var currentDashboardTab by remember { mutableIntStateOf(0) }
 
                 NavHost(navController = navController, startDestination = "login") {
                     composable("login") {
                         LoginScreen(
                             onLoginSuccess = {
-                                currentDashboardTab = 0 // Reset do Home przy nowym logowaniu
+                                currentDashboardTab = 0
                                 navController.navigate("main_dashboard") {
                                     popUpTo("login") { inclusive = true }
                                 }
@@ -74,23 +70,16 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    // Przeniesienie akcji powrotu do poprawnego stosu nawigacji
                     composable("staff_management") {
-                        StaffManagementScreen(onBackClick = {
-                            navController.popBackStack()
-                        })
+                        StaffManagementScreen(onBackClick = { navController.popBackStack() })
                     }
 
                     composable("patient_list") {
-                        PatientListScreen(onBackClick = {
-                            navController.popBackStack()
-                        })
+                        PatientListScreen(onBackClick = { navController.popBackStack() })
                     }
 
                     composable("catalog_management") {
-                        CatalogListScreen(onBackClick = {
-                            navController.popBackStack()
-                        })
+                        CatalogListScreen(onBackClick = { navController.popBackStack() })
                     }
 
                     composable("create_tenant_form") {
@@ -104,12 +93,21 @@ class MainActivity : ComponentActivity() {
                         val staffId = backStackEntry.arguments?.getString("staffId") ?: ""
                         CreateAppointmentScreen(
                             initialDoctorId = staffId,
-                            onSuccess = { navController.popBackStack() }
+                            onSuccess = { navController.popBackStack() },
+                            onBack = { navController.popBackStack() }
                         )
                     }
 
                     composable("schedule") {
                         ScheduleScreen()
+                    }
+
+                    composable("settings") {
+                        SettingsScreen(
+                            isDarkTheme = isDarkTheme,
+                            onThemeChange = { isDarkTheme = it },
+                            onBackClick = { navController.popBackStack() }
+                        )
                     }
                 }
             }
@@ -122,8 +120,8 @@ fun MainDashboard(
     isDarkTheme: Boolean,
     onThemeChange: (Boolean) -> Unit,
     navController: NavHostController,
-    selectedItem: Int, // Przekazywany stan z MainActivity
-    onTabChange: (Int) -> Unit, // Callback do zmiany stanu w MainActivity
+    selectedItem: Int,
+    onTabChange: (Int) -> Unit,
     staffViewModel: StaffViewModel = hiltViewModel(),
     tenantViewModel: TenantViewModel = hiltViewModel(),
     notificationViewModel: NotificationViewModel = hiltViewModel(),
@@ -204,10 +202,11 @@ fun MainDashboard(
                     }
                 }
                 2 -> AdminPanelScreen(
-                    onNavigateToStaff = { navController.navigate("staff_management") },
+                    onNavigateToStaff    = { navController.navigate("staff_management") },
                     onNavigateToPatients = { navController.navigate("patient_list") },
-                    onNavigateToCatalog = { navController.navigate("catalog_management") },
-                    onNavigateToSchedule = { navController.navigate("schedule") }
+                    onNavigateToCatalog  = { navController.navigate("catalog_management") },
+                    onNavigateToSchedule = { navController.navigate("schedule") },
+                    onNavigateToSettings = { navController.navigate("settings") }
                 )
                 3 -> VisitsScreen(viewModel = visitViewModel)
                 4 -> NotificationsScreen(viewModel = notificationViewModel)
@@ -238,7 +237,9 @@ fun MainDashboard(
 @Composable
 fun EmptyTenantView(onCreateClick: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(32.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {

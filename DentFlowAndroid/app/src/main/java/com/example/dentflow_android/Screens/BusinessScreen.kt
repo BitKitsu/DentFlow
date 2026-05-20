@@ -1,6 +1,5 @@
 package com.example.dentflow_android.Screens
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,6 +25,7 @@ import com.example.dentflow_android.data.ViewModel.CatalogViewModel
 import com.example.dentflow_android.data.ViewModel.PatientViewModel
 import com.example.dentflow_android.data.ViewModel.ScheduleViewModel
 import com.example.dentflow_android.data.ViewModel.TenantViewModel
+import com.example.dentflow_android.data.ViewModel.VisitViewModel
 import com.example.dentflow_android.data.remote.LocationResponse
 
 @Composable
@@ -33,27 +33,28 @@ fun BusinessScreen(
     tenantViewModel: TenantViewModel = hiltViewModel(),
     patientViewModel: PatientViewModel = hiltViewModel(),
     scheduleViewModel: ScheduleViewModel = hiltViewModel(),
-    catalogViewModel: CatalogViewModel = hiltViewModel() // Dodany nowy CatalogViewModel
+    catalogViewModel: CatalogViewModel = hiltViewModel(),
+    visitViewModel: VisitViewModel = hiltViewModel()
 ) {
     var showStaffManagement by remember { mutableStateOf(false) }
     var showPatientScreen by remember { mutableStateOf(false) }
     var showScheduleScreen by remember { mutableStateOf(false) }
+    var showVisitsScreen by remember { mutableStateOf(false) }
     var showCatalogScreen by remember { mutableStateOf(false) }
     var showEditDialog by remember { mutableStateOf(false) }
-
-    val TAG = "BUSINESS_SCREEN_DEBUG"
 
     LaunchedEffect(Unit) {
         tenantViewModel.loadAllTenantData()
         patientViewModel.loadPatients()
         scheduleViewModel.loadSchedule()
-        catalogViewModel.loadServices() // Załadowanie usług z nowego ViewModelu
+        catalogViewModel.loadServices()
+        visitViewModel.refreshVisits()
     }
 
     val tenantData by tenantViewModel.tenantState
     val patients by patientViewModel.patients.collectAsState()
-    val slots by scheduleViewModel.slots.collectAsState()
-    val services by catalogViewModel.servicesState // Zmienione na odczyt z catalogViewModel
+    val visits by visitViewModel.visits.collectAsState()
+    val services by catalogViewModel.servicesState
 
     val location = tenantData?.locations?.firstOrNull()
 
@@ -61,6 +62,21 @@ fun BusinessScreen(
         showStaffManagement -> StaffManagementScreen(onBackClick = { showStaffManagement = false })
         showPatientScreen -> PatientListScreen(onBackClick = { showPatientScreen = false })
         showCatalogScreen -> CatalogListScreen(onBackClick = { showCatalogScreen = false })
+
+        showVisitsScreen -> {
+            Box(modifier = Modifier.fillMaxSize()) {
+                VisitsScreen()
+                IconButton(
+                    onClick = { showVisitsScreen = false },
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .align(Alignment.TopStart)
+                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), RoundedCornerShape(50))
+                ) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                }
+            }
+        }
 
         showScheduleScreen -> {
             Box(modifier = Modifier.fillMaxSize()) {
@@ -110,15 +126,30 @@ fun BusinessScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    StatCard(Modifier.weight(1f), "Wizyty", slots.size.toString(), Icons.Default.Event, MaterialTheme.colorScheme.primary) {
-                        showScheduleScreen = true
-                    }
-                    StatCard(Modifier.weight(1f), "Pacjenci", patients.size.toString(), Icons.Default.Group, MaterialTheme.colorScheme.secondary) {
-                        showPatientScreen = true
-                    }
-                    StatCard(Modifier.weight(1f), "Zabiegi", services.size.toString(), Icons.Default.MedicalServices, MaterialTheme.colorScheme.tertiary) {
-                        showCatalogScreen = true
-                    }
+                    // Kafelek Wizyty — pokazuje liczbę wizyt i otwiera VisitsScreen
+                    StatCard(
+                        Modifier.weight(1f),
+                        "Wizyty",
+                        visits.size.toString(),
+                        Icons.Default.Event,
+                        MaterialTheme.colorScheme.primary
+                    ) { showVisitsScreen = true }
+
+                    StatCard(
+                        Modifier.weight(1f),
+                        "Pacjenci",
+                        patients.size.toString(),
+                        Icons.Default.Group,
+                        MaterialTheme.colorScheme.secondary
+                    ) { showPatientScreen = true }
+
+                    StatCard(
+                        Modifier.weight(1f),
+                        "Zabiegi",
+                        services.size.toString(),
+                        Icons.Default.MedicalServices,
+                        MaterialTheme.colorScheme.tertiary
+                    ) { showCatalogScreen = true }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -202,7 +233,11 @@ fun EditTenantDialog(
 
 @Composable
 fun StatCard(modifier: Modifier, title: String, value: String, icon: ImageVector, color: Color, onClick: () -> Unit = {}) {
-    Card(modifier = modifier.clickable { onClick() }, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)), shape = RoundedCornerShape(16.dp)) {
+    Card(
+        modifier = modifier.clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
+        shape = RoundedCornerShape(16.dp)
+    ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Icon(icon, contentDescription = null, tint = color)
             Spacer(modifier = Modifier.height(8.dp))
@@ -214,7 +249,11 @@ fun StatCard(modifier: Modifier, title: String, value: String, icon: ImageVector
 
 @Composable
 fun BusinessMenuItem(title: String, icon: ImageVector, onClick: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface), elevation = CardDefaults.cardElevation(2.dp)) {
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.width(16.dp))

@@ -93,8 +93,7 @@ class MainActivity : ComponentActivity() {
                         val staffId = backStackEntry.arguments?.getString("staffId") ?: ""
                         CreateAppointmentScreen(
                             initialDoctorId = staffId,
-                            onSuccess = { navController.popBackStack() },
-                            onBack = { navController.popBackStack() }
+                            onSuccess = { navController.popBackStack() }
                         )
                     }
 

@@ -1,5 +1,7 @@
 package com.example.dentflow_android.Screens
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -8,177 +10,319 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.example.dentflow_android.data.ViewModel.AppointmentViewModel
+import com.example.dentflow_android.data.ViewModel.*
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateAppointmentScreen(
     viewModel: AppointmentViewModel = hiltViewModel(),
+    patientViewModel: PatientViewModel = hiltViewModel(),
+    staffViewModel: StaffViewModel = hiltViewModel(),
+    catalogViewModel: CatalogViewModel = hiltViewModel(),
+    tenantViewModel: TenantViewModel = hiltViewModel(),
     initialDoctorId: String = "",
-    onSuccess: () -> Unit,
-    onBack: () -> Unit                          // ← nowy parametr
+    onSuccess: () -> Unit
 ) {
-    var patientId  by remember { mutableStateOf("") }
-    var serviceId  by remember { mutableStateOf("") }
-    var doctorId   by remember { mutableStateOf(initialDoctorId) }
-    var roomId     by remember { mutableStateOf("") }
-    var locationId by remember { mutableStateOf("") }
-    var notes      by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    
+    // Load data
+    LaunchedEffect(Unit) {
+        patientViewModel.loadPatients()
+        staffViewModel.loadStaff()
+        catalogViewModel.loadServices()
+        // rooms are loaded in tenantViewModel if tenantData is available
+    }
+
+    val patients by patientViewModel.patients.collectAsState()
+    val staff by staffViewModel.staffMembers.collectAsState()
+    val services by catalogViewModel.servicesState
+    val tenantData by tenantViewModel.tenantState
+    val rooms by tenantViewModel.rooms.collectAsState()
+    val locations = tenantData?.locations ?: emptyList()
+
+    var selectedPatientId by remember { mutableStateOf<Long?>(null) }
+    var selectedServiceId by remember { mutableStateOf<Long?>(null) }
+    var selectedDoctorId by remember { mutableStateOf(initialDoctorId.toLongOrNull()) }
+    var selectedRoomId by remember { mutableStateOf<Long?>(null) }
+    var selectedLocationId by remember { mutableStateOf<Long?>(null) }
+    var notes by remember { mutableStateOf("") }
 
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var selectedTime by remember { mutableStateOf(LocalTime.of(12, 0)) }
 
+    // Dropdown expanded states
+    var patientExpanded by remember { mutableStateOf(false) }
+    var serviceExpanded by remember { mutableStateOf(false) }
+    var doctorExpanded by remember { mutableStateOf(false) }
+    var roomExpanded by remember { mutableStateOf(false) }
+    var locationExpanded by remember { mutableStateOf(false) }
+
     val isLoading by viewModel.isLoading.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Nowa Rezerwacja",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+    val datePickerDialog = DatePickerDialog(
+        context,
+        { _, year, month, dayOfMonth ->
+            selectedDate = LocalDate.of(year, month + 1, dayOfMonth)
+        },
+        selectedDate.year,
+        selectedDate.monthValue - 1,
+        selectedDate.dayOfMonth
+    )
+
+    val timePickerDialog = TimePickerDialog(
+        context,
+        { _, hourOfDay, minute ->
+            selectedTime = LocalTime.of(hourOfDay, minute)
+        },
+        selectedTime.hour,
+        selectedTime.minute,
+        true
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        Text(
+            text = "Nowa Rezerwacja",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Patient Dropdown
+        ExposedDropdownMenuBox(
+            expanded = patientExpanded,
+            onExpandedChange = { patientExpanded = it }
+        ) {
+            val patientName = patients.find { it.id == selectedPatientId }?.let { "${it.firstName} ${it.lastName}" } ?: "Wybierz pacjenta"
+            OutlinedTextField(
+                value = patientName,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Pacjent") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = patientExpanded) },
+                leadingIcon = { Icon(Icons.Default.Person, null) },
+                modifier = Modifier.menuAnchor().fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = patientExpanded,
+                onDismissRequest = { patientExpanded = false }
+            ) {
+                patients.forEach { patient ->
+                    DropdownMenuItem(
+                        text = { Text("${patient.firstName} ${patient.lastName} (${patient.phone})") },
+                        onClick = {
+                            selectedPatientId = patient.id
+                            patientExpanded = false
+                        }
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Wróć",
-                            tint = MaterialTheme.colorScheme.primary
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Service Dropdown
+        ExposedDropdownMenuBox(
+            expanded = serviceExpanded,
+            onExpandedChange = { serviceExpanded = it }
+        ) {
+            val serviceName = services.find { it.id == selectedServiceId }?.name ?: "Wybierz usługę"
+            OutlinedTextField(
+                value = serviceName,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Usługa (zabieg)") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = serviceExpanded) },
+                leadingIcon = { Icon(Icons.Default.MedicalServices, null) },
+                modifier = Modifier.menuAnchor().fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = serviceExpanded,
+                onDismissRequest = { serviceExpanded = false }
+            ) {
+                services.filter { it.active }.forEach { service ->
+                    DropdownMenuItem(
+                        text = { Text(service.name) },
+                        onClick = {
+                            selectedServiceId = service.id
+                            serviceExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Doctor Dropdown
+        ExposedDropdownMenuBox(
+            expanded = doctorExpanded,
+            onExpandedChange = { doctorExpanded = it }
+        ) {
+            val doctorName = staff.find { it.id == selectedDoctorId }?.displayName ?: "Wybierz lekarza"
+            OutlinedTextField(
+                value = doctorName,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Lekarz") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = doctorExpanded) },
+                leadingIcon = { Icon(Icons.Default.Badge, null) },
+                modifier = Modifier.menuAnchor().fillMaxWidth()
+            )
+            ExposedDropdownMenu(
+                expanded = doctorExpanded,
+                onDismissRequest = { doctorExpanded = false }
+            ) {
+                staff.forEach { member ->
+                    DropdownMenuItem(
+                        text = { Text("${member.displayName} (${member.profession})") },
+                        onClick = {
+                            selectedDoctorId = member.id
+                            doctorExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Location Dropdown
+            ExposedDropdownMenuBox(
+                expanded = locationExpanded,
+                onExpandedChange = { locationExpanded = it },
+                modifier = Modifier.weight(1f)
+            ) {
+                val locName = locations.find { it.id == selectedLocationId }?.name ?: "Lokacja"
+                OutlinedTextField(
+                    value = locName,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Lokalizacja") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = locationExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = locationExpanded,
+                    onDismissRequest = { locationExpanded = false }
+                ) {
+                    locations.forEach { loc ->
+                        DropdownMenuItem(
+                            text = { Text(loc.name) },
+                            onClick = {
+                                selectedLocationId = loc.id
+                                locationExpanded = false
+                            }
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                }
+            }
+
+            // Room Dropdown
+            ExposedDropdownMenuBox(
+                expanded = roomExpanded,
+                onExpandedChange = { roomExpanded = it },
+                modifier = Modifier.weight(1f)
+            ) {
+                val roomName = rooms.find { it.id == selectedRoomId }?.name ?: "Pokój"
+                OutlinedTextField(
+                    value = roomName,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Gabinet") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = roomExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
                 )
-            )
+                ExposedDropdownMenu(
+                    expanded = roomExpanded,
+                    onDismissRequest = { roomExpanded = false }
+                ) {
+                    rooms.forEach { room ->
+                        DropdownMenuItem(
+                            text = { Text(room.name) },
+                            onClick = {
+                                selectedRoomId = room.id
+                                roomExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
         }
-    ) { innerPadding ->
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)          // respektuje TopAppBar
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text("Data i godzina wizyty", style = MaterialTheme.typography.labelLarge)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(
+                onClick = { datePickerDialog.show() },
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.Default.DateRange, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(selectedDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")))
+            }
+            OutlinedButton(
+                onClick = { timePickerDialog.show() },
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.Default.AccessTime, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(selectedTime.format(DateTimeFormatter.ofPattern("HH:mm")))
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(
+            value = notes,
+            onValueChange = { notes = it },
+            label = { Text("Notatki do wizyty") },
+            modifier = Modifier.fillMaxWidth().height(120.dp),
+            maxLines = 4
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = {
+                val duration = services.find { it.id == selectedServiceId }?.durationMinutes ?: 30
+                val startIso = "${selectedDate}T${selectedTime}:00Z"
+                val endIso = "${selectedDate}T${selectedTime.plusMinutes(duration.toLong())}:00Z"
+
+                viewModel.createAppointment(
+                    locId = selectedLocationId ?: 0L,
+                    room = selectedRoomId ?: 0L,
+                    docId = selectedDoctorId ?: 0L,
+                    patId = selectedPatientId ?: 0L,
+                    servId = selectedServiceId ?: 0L,
+                    start = startIso,
+                    end = endIso,
+                    note = notes,
+                    onSuccess = onSuccess
+                )
+            },
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            enabled = !isLoading && selectedPatientId != null && selectedServiceId != null && selectedDoctorId != null && selectedLocationId != null && selectedRoomId != null
         ) {
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
-                value = patientId,
-                onValueChange = { patientId = it },
-                label = { Text("ID Pacjenta") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Default.Person, null) }
-            )
-
-            OutlinedTextField(
-                value = serviceId,
-                onValueChange = { serviceId = it },
-                label = { Text("ID Usługi (np. Leczenie kanałowe)") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Default.MedicalServices, null) }
-            )
-
-            OutlinedTextField(
-                value = doctorId,
-                onValueChange = { doctorId = it },
-                label = { Text("ID Lekarza") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Default.Badge, null) }
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = roomId,
-                    onValueChange = { roomId = it },
-                    label = { Text("ID Pokoju") },
-                    modifier = Modifier.weight(1f)
-                )
-                OutlinedTextField(
-                    value = locationId,
-                    onValueChange = { locationId = it },
-                    label = { Text("ID Lokacji") },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            Text(
-                text = "Data i godzina wizyty",
-                style = MaterialTheme.typography.labelLarge
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Button(
-                    onClick = { /* DatePicker */ },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(selectedDate.toString())
-                }
-                Button(
-                    onClick = { /* TimePicker */ },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(selectedTime.toString())
-                }
-            }
-
-            OutlinedTextField(
-                value = notes,
-                onValueChange = { notes = it },
-                label = { Text("Notatki do wizyty") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp),
-                maxLines = 4
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Button(
-                onClick = {
-                    val startIso = "${selectedDate}T${selectedTime}:00Z"
-                    val endIso   = "${selectedDate}T${selectedTime.plusMinutes(30)}:00Z"
-
-                    viewModel.createAppointment(
-                        locId   = locationId.toLongOrNull() ?: 0L,
-                        room    = roomId.toLongOrNull()     ?: 0L,
-                        docId   = doctorId.toLongOrNull()   ?: 0L,
-                        patId   = patientId.toLongOrNull()  ?: 0L,
-                        servId  = serviceId.toLongOrNull()  ?: 0L,
-                        start   = startIso,
-                        end     = endIso,
-                        note    = notes,
-                        onSuccess = onSuccess
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                enabled = !isLoading && patientId.isNotEmpty() && serviceId.isNotEmpty()
-            ) {
-                if (isLoading)
-                    CircularProgressIndicator(color = androidx.compose.ui.graphics.Color.White)
-                else
-                    Text("ZAREZERWUJ WIZYTĘ")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
+            if (isLoading) CircularProgressIndicator(color = androidx.compose.ui.graphics.Color.White)
+            else Text("ZAREZERWUJ WIZYTĘ")
         }
     }
 }

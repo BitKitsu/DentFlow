@@ -84,7 +84,7 @@ class AuthViewModel @Inject constructor(
                 android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
             )
             val json = String(decoded, Charsets.UTF_8)
-            Log.d("AUTH_DEBUG", "JWT Payload: $json")
+            // JWT payload decoded (not logged for security)
             // Prosta ekstrakcja pola "roles" z JSON-a
             val rolesRegex = Regex("\"roles\":\\s*\\[\"([^\"]+)\"")
             val match = rolesRegex.find(json)

@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
@@ -21,6 +22,7 @@ public class AppointmentController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<List<AppointmentResponse>> getAppointments(
             @PathVariable Long tenantId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
@@ -36,6 +38,7 @@ public class AppointmentController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<AppointmentResponse> createAppointment(
             @PathVariable Long tenantId,
             @Valid @RequestBody CreateAppointmentRequest request) {
@@ -44,6 +47,7 @@ public class AppointmentController {
     }
 
     @PutMapping("/{appointmentId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<AppointmentResponse> updateAppointment(
             @PathVariable Long tenantId,
             @PathVariable Long appointmentId,
@@ -52,6 +56,7 @@ public class AppointmentController {
     }
 
     @PostMapping("/{appointmentId}/cancel")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<AppointmentResponse> cancelAppointment(
             @PathVariable Long tenantId,
             @PathVariable Long appointmentId) {
@@ -59,6 +64,7 @@ public class AppointmentController {
     }
 
     @PostMapping("/{appointmentId}/complete")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<AppointmentResponse> completeAppointment(
             @PathVariable Long tenantId,
             @PathVariable Long appointmentId) {

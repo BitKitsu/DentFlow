@@ -35,14 +35,15 @@ class AuthViewModel @Inject constructor(
                     val token = body.token
 
                     if (!token.isNullOrBlank()) {
+                        val role = decodeRoleFromJwt(token)
                         prefs.edit().apply {
                             putString("jwt_token", token)
                             putLong("tenant_id", body.tenantId)
                             putLong("user_id", body.userId)
+                            putString("user_role", role)
                             apply()
                         }
-                        Log.d("AUTH_DEBUG", "Zalogowano pomyślnie. TenantID: ${body.tenantId}")
-                        Log.d("AUTH_DEBUG", "PELNY TOKEN: $token")
+                        Log.d("AUTH_DEBUG", "Zalogowano pomyślnie. TenantID: ${body.tenantId}, Rola: $role")
                         onSuccess(body.tenantId)
                     } else {
                         _errorMessage.value = "Błąd: Serwer nie przesłał tokenu."
@@ -66,6 +67,34 @@ class AuthViewModel @Inject constructor(
             }
         }
     }
+
+    /**
+     * Dekoduje payload JWT (Base64) i wyciąga pierwszą rolę z pola "roles".
+     * Nie wymaga zewnętrznych bibliotek – JWT to po prostu Base64 JSON.
+     * Zwraca "UNKNOWN" jeśli parsowanie się nie powiedzie.
+     */
+    private fun decodeRoleFromJwt(token: String): String {
+        return try {
+            val parts = token.split(".")
+            if (parts.size < 2) return "UNKNOWN"
+            val payload = parts[1]
+            // Base64 URL decode (bez paddingu)
+            val decoded = android.util.Base64.decode(
+                payload.replace('-', '+').replace('_', '/'),
+                android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+            )
+            val json = String(decoded, Charsets.UTF_8)
+            Log.d("AUTH_DEBUG", "JWT Payload: $json")
+            // Prosta ekstrakcja pola "roles" z JSON-a
+            val rolesRegex = Regex("\"roles\":\\s*\\[\"([^\"]+)\"")
+            val match = rolesRegex.find(json)
+            match?.groupValues?.get(1) ?: "USER"
+        } catch (e: Exception) {
+            Log.e("AUTH_DEBUG", "Błąd dekodowania JWT: ${e.message}")
+            "UNKNOWN"
+        }
+    }
+
 
     fun register(request: RegisterRequest, onSuccess: () -> Unit) {
         viewModelScope.launch {

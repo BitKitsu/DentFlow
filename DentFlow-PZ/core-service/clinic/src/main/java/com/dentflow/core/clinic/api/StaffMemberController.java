@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,6 +39,7 @@ public class StaffMemberController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Dodanie pracownika do gabinetu")
     public ResponseEntity<StaffMemberResponse> addStaffMember(
             @PathVariable Long tenantId,
@@ -47,6 +49,7 @@ public class StaffMemberController {
     }
 
     @PutMapping("/{staffId}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Zaktualizowanie danych pracownika")
     public ResponseEntity<StaffMemberResponse> updateStaffMember(
             @PathVariable Long tenantId,
@@ -56,6 +59,7 @@ public class StaffMemberController {
     }
 
     @DeleteMapping("/{staffId}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Usunięcie pracownika")
     public ResponseEntity<Void> deleteStaffMember(
             @PathVariable Long tenantId,

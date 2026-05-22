@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class PatientController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     @Operation(summary = "Lista pacjentów lub wyszukiwanie po imieniu/nazwisku/telefonie")
     public ResponseEntity<List<PatientResponse>> getPatients(
             @PathVariable Long tenantId,
@@ -40,6 +42,7 @@ public class PatientController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     @Operation(summary = "Dodanie pacjenta")
     public ResponseEntity<PatientResponse> addPatient(
             @PathVariable Long tenantId,
@@ -49,6 +52,7 @@ public class PatientController {
     }
 
     @PutMapping("/{patientId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     @Operation(summary = "Aktualizacja pacjenta")
     public ResponseEntity<PatientResponse> updatePatient(
             @PathVariable Long tenantId,
@@ -58,6 +62,7 @@ public class PatientController {
     }
 
     @DeleteMapping("/{patientId}")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Usunięcie pacjenta")
     public ResponseEntity<Void> deletePatient(
             @PathVariable Long tenantId,

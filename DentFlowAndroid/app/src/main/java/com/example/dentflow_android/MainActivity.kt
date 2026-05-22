@@ -1,5 +1,6 @@
 package com.example.dentflow_android
 
+import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -24,6 +25,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.dentflow_android.Screens.*
 import com.example.dentflow_android.data.ViewModel.*
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -60,13 +62,16 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("main_dashboard") {
+                        val ctx = androidx.compose.ui.platform.LocalContext.current
+                        val prefs = ctx.getSharedPreferences("dentflow_prefs", android.content.Context.MODE_PRIVATE)
                         MainDashboard(
                             isDarkTheme = isDarkTheme,
                             onThemeChange = { isDarkTheme = it },
                             navController = navController,
                             tenantViewModel = tenantViewModel,
                             selectedItem = currentDashboardTab,
-                            onTabChange = { currentDashboardTab = it }
+                            onTabChange = { currentDashboardTab = it },
+                            prefs = prefs
                         )
                     }
 
@@ -121,6 +126,7 @@ fun MainDashboard(
     navController: NavHostController,
     selectedItem: Int,
     onTabChange: (Int) -> Unit,
+    prefs: SharedPreferences,
     staffViewModel: StaffViewModel = hiltViewModel(),
     tenantViewModel: TenantViewModel = hiltViewModel(),
     notificationViewModel: NotificationViewModel = hiltViewModel(),
@@ -134,6 +140,20 @@ fun MainDashboard(
     val serviceList by catalogViewModel.servicesState
 
     val currentTenant = tenantData
+    val userRole = prefs.getString("user_role", "USER") ?: "USER"
+    val isAdmin = userRole == "ADMIN"
+    val isDoctor = userRole == "DOCTOR"
+
+    // Budujemy listę kart nawigacyjnych na podstawie roli
+    data class NavItem(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector, val tabIndex: Int)
+    val navItems = buildList {
+        add(NavItem("Home", Icons.Default.Home, 0))
+        if (isAdmin) add(NavItem("Firma", Icons.Default.Business, 1))
+        if (isAdmin) add(NavItem("Admin", Icons.Default.AdminPanelSettings, 2))
+        if (isAdmin || isDoctor) add(NavItem("Wizyty", Icons.Default.CalendarMonth, 3))
+        add(NavItem("Alarmy", Icons.Default.Notifications, 4))
+        add(NavItem("Konto", Icons.Default.AccountCircle, 5))
+    }
 
     LaunchedEffect(Unit) {
         staffViewModel.loadStaff()
@@ -143,36 +163,27 @@ fun MainDashboard(
         catalogViewModel.loadServices()
     }
 
-    val items = listOf("Home", "Firma", "Admin", "Wizyty", "Alarmy", "Konto")
-    val icons = listOf(
-        Icons.Default.Home,
-        Icons.Default.Business,
-        Icons.Default.AdminPanelSettings,
-        Icons.Default.CalendarMonth,
-        Icons.Default.Notifications,
-        Icons.Default.AccountCircle
-    )
 
     Scaffold(
         bottomBar = {
             NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-                items.forEachIndexed { index, item ->
+                navItems.forEach { navItem ->
                     NavigationBarItem(
                         icon = {
                             BadgedBox(badge = {
-                                if (index == 4) {
+                                if (navItem.tabIndex == 4) {
                                     val unreadCount by notificationViewModel.unreadCount.collectAsState()
                                     if (unreadCount > 0) Badge { Text(unreadCount.toString()) }
                                 }
                             }) {
-                                Icon(icons[index], contentDescription = item)
+                                Icon(navItem.icon, contentDescription = navItem.label)
                             }
                         },
-                        label = { Text(item, fontSize = 10.sp) },
-                        selected = selectedItem == index,
+                        label = { Text(navItem.label, fontSize = 10.sp) },
+                        selected = selectedItem == navItem.tabIndex,
                         onClick = {
-                            onTabChange(index)
-                            if (index != 5) isShowingSettings = false
+                            onTabChange(navItem.tabIndex)
+                            if (navItem.tabIndex != 5) isShowingSettings = false
                         }
                     )
                 }

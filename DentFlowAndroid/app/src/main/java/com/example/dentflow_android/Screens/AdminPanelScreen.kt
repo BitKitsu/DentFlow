@@ -22,15 +22,16 @@ import com.example.dentflow_android.data.ViewModel.AdminViewModel
 fun AdminPanelScreen(
     onNavigateToStaff: () -> Unit,
     onNavigateToPatients: () -> Unit,
+    onNavigateToCatalog: () -> Unit,
+    onNavigateToSchedule: () -> Unit,
+    onNavigateToSettings: () -> Unit,          // ← dodany parametr
     viewModel: AdminViewModel = hiltViewModel()
 ) {
-    // Obserwujemy dynamiczne dane z ViewModelu
     val visitCount by viewModel.visitCount.collectAsState()
     val patientCount by viewModel.patientCount.collectAsState()
 
-    // Pobieramy dane przy starcie ekranu
     LaunchedEffect(Unit) {
-        viewModel.loadStats(1L)
+        viewModel.loadStats()
     }
 
     Column(
@@ -46,20 +47,19 @@ fun AdminPanelScreen(
             color = MaterialTheme.colorScheme.primary
         )
         Text(
-            text = "Zarządzaj swoją kliniką dynamicznie",
+            text = "Zarządzaj swoją kliniką",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // --- STATYSTYKI ---
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             StatCard(
-                label = "Dzisiejsze wizyty",
+                label = "Wizyty (łącznie)",
                 value = visitCount,
                 icon = Icons.Default.Event,
                 modifier = Modifier.weight(1f),
@@ -90,22 +90,48 @@ fun AdminPanelScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             item {
-                AdminActionCard("Pracownicy", Icons.Default.Badge, "Lista personelu", onNavigateToStaff)
+                AdminActionCard(
+                    title = "Pracownicy",
+                    icon = Icons.Default.Badge,
+                    subtitle = "Lista personelu",
+                    onClick = onNavigateToStaff
+                )
             }
             item {
-                AdminActionCard("Pacjenci", Icons.Default.ContactPage, "Baza danych", onNavigateToPatients)
+                AdminActionCard(
+                    title = "Pacjenci",
+                    icon = Icons.Default.ContactPage,
+                    subtitle = "Baza danych",
+                    onClick = onNavigateToPatients
+                )
             }
             item {
-                AdminActionCard("Usługi", Icons.Default.ListAlt, "Cennik", {})
+                AdminActionCard(
+                    title = "Usługi",
+                    icon = Icons.Default.ListAlt,
+                    subtitle = "Cennik",
+                    onClick = onNavigateToCatalog
+                )
             }
             item {
-                AdminActionCard("Ustawienia", Icons.Default.Settings, "Konfiguracja", {})
+                AdminActionCard(
+                    title = "Ustawienia",
+                    icon = Icons.Default.Settings,
+                    subtitle = "Konfiguracja",
+                    onClick = onNavigateToSettings   // ← poprawione
+                )
+            }
+            item {
+                AdminActionCard(
+                    title = "Grafik",
+                    icon = Icons.Default.DateRange,
+                    subtitle = "Harmonogram pracy",
+                    onClick = onNavigateToSchedule
+                )
             }
         }
     }
 }
-
-// --- FUNKCJE POMOCNICZE (KOMPONENTY) ---
 
 @Composable
 fun StatCard(
@@ -139,14 +165,18 @@ fun AdminActionCard(
 ) {
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(120.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(120.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp).fillMaxSize(),
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxSize(),
             verticalArrangement = Arrangement.Center
         ) {
             Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)

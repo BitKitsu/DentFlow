@@ -98,4 +98,14 @@ public class AuthService {
         log.info("Logowanie zakończone sukcesem - userId: {}, email: {}, tenantId: {}", user.getId(), user.getEmail(), user.getTenantId());
         return new AuthResponse(token, user.getId(), user.getEmail(), user.getTenantId());
     }
+    @Transactional
+    public AuthResponse assignTenantToCurrentUser(String email, Long tenantId) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Użytkownik nie istnieje"));
+        user.setTenantId(tenantId);
+        User saved = userRepository.save(user);
+        String token = jwtService.generateToken(saved);
+        return new AuthResponse(token, saved.getId(), saved.getEmail(), saved.getTenantId());
+}
 }

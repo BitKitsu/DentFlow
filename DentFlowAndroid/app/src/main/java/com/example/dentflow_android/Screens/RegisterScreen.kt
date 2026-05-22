@@ -2,20 +2,24 @@ package com.example.dentflow_android.Screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.dentflow_android.data.remote.RegisterRequest
-import com.example.dentflow_android.ui.viewmodels.AuthViewModel
-
+import com.example.dentflow_android.data.remote.*
+import androidx.compose.foundation.background
 @Composable
 fun RegisterScreen(
     onRegisterSuccess: () -> Unit,
@@ -27,7 +31,7 @@ fun RegisterScreen(
     var phone by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") } // NOWE: Powtórz hasło
+    var confirmPassword by remember { mutableStateOf("") }
 
     val isLoading by viewModel.isLoading.collectAsState()
     val serverErrorMessage by viewModel.errorMessage.collectAsState()
@@ -37,26 +41,21 @@ fun RegisterScreen(
     // Walidacja
     val isEmailValid = email.contains("@") && email.contains(".")
     val isPasswordValid = password.length >= 6
-    val passwordsMatch = password == confirmPassword && password.isNotEmpty() // NOWE: Czy hasła są takie same
+    val passwordsMatch = password == confirmPassword && password.isNotEmpty()
     val isPhoneValid = phone.length >= 9
     val areFieldsNotEmpty = firstname.isNotBlank() && lastname.isNotBlank()
 
+    // Styl pól tekstowych
     val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = MaterialTheme.colorScheme.secondary,
-        unfocusedTextColor = MaterialTheme.colorScheme.secondary,
-        focusedLabelColor = MaterialTheme.colorScheme.secondary,
-        unfocusedLabelColor = MaterialTheme.colorScheme.secondary,
         focusedBorderColor = MaterialTheme.colorScheme.primary,
-        cursorColor = MaterialTheme.colorScheme.secondary,
-        errorBorderColor = MaterialTheme.colorScheme.error,
-        errorLabelColor = MaterialTheme.colorScheme.error
+        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+        cursorColor = MaterialTheme.colorScheme.primary
     )
-
-    val textFieldTextStyle = TextStyle(color = MaterialTheme.colorScheme.secondary)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
             .padding(24.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -70,33 +69,40 @@ fun RegisterScreen(
             fontWeight = FontWeight.Bold
         )
 
+        Text(
+            text = "Zarządzaj swoją kliniką z łatwością",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Imię
-        OutlinedTextField(
-            value = firstname,
-            onValueChange = { firstname = it; showError = false },
-            label = { Text("Imię") },
-            enabled = !isLoading,
-            isError = showError && firstname.isBlank(),
-            modifier = Modifier.fillMaxWidth(),
-            textStyle = textFieldTextStyle,
-            colors = textFieldColors
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        // Nazwisko
-        OutlinedTextField(
-            value = lastname,
-            onValueChange = { lastname = it; showError = false },
-            label = { Text("Nazwisko") },
-            enabled = !isLoading,
-            isError = showError && lastname.isBlank(),
-            modifier = Modifier.fillMaxWidth(),
-            textStyle = textFieldTextStyle,
-            colors = textFieldColors
-        )
+        // Imię i Nazwisko w jednym rzędzie
+        Row(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = firstname,
+                onValueChange = { firstname = it; showError = false },
+                label = { Text("Imię") },
+                enabled = !isLoading,
+                isError = showError && firstname.isBlank(),
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp),
+                colors = textFieldColors,
+                singleLine = true
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            OutlinedTextField(
+                value = lastname,
+                onValueChange = { lastname = it; showError = false },
+                label = { Text("Nazwisko") },
+                enabled = !isLoading,
+                isError = showError && lastname.isBlank(),
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp),
+                colors = textFieldColors,
+                singleLine = true
+            )
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -105,11 +111,14 @@ fun RegisterScreen(
             value = phone,
             onValueChange = { phone = it; showError = false },
             label = { Text("Numer telefonu") },
+            leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
             enabled = !isLoading,
             isError = showError && !isPhoneValid,
             modifier = Modifier.fillMaxWidth(),
-            textStyle = textFieldTextStyle,
-            colors = textFieldColors
+            shape = RoundedCornerShape(12.dp),
+            colors = textFieldColors,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -119,44 +128,51 @@ fun RegisterScreen(
             value = email,
             onValueChange = { email = it; showError = false },
             label = { Text("E-mail") },
+            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
             enabled = !isLoading,
             isError = showError && !isEmailValid,
             modifier = Modifier.fillMaxWidth(),
-            textStyle = textFieldTextStyle,
-            colors = textFieldColors
+            shape = RoundedCornerShape(12.dp),
+            colors = textFieldColors,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Hasło (Z GWIAZDKAMI)
+        // Hasło
         OutlinedTextField(
             value = password,
             onValueChange = { password = it; showError = false },
-            label = { Text("Hasło") },
+            label = { Text("Hasło (min. 6 znaków)") },
+            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
             enabled = !isLoading,
             isError = showError && !isPasswordValid,
-            visualTransformation = PasswordVisualTransformation(), // GWIAZDKI
+            visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
-            textStyle = textFieldTextStyle,
-            colors = textFieldColors
+            shape = RoundedCornerShape(12.dp),
+            colors = textFieldColors,
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Powtórz hasło (NOWE POLE)
+        // Powtórz hasło
         OutlinedTextField(
             value = confirmPassword,
             onValueChange = { confirmPassword = it; showError = false },
             label = { Text("Powtórz hasło") },
+            leadingIcon = { Icon(Icons.Default.LockReset, contentDescription = null) },
             enabled = !isLoading,
             isError = showError && !passwordsMatch,
-            visualTransformation = PasswordVisualTransformation(), // GWIAZDKI
+            visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
-            textStyle = textFieldTextStyle,
+            shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
+            singleLine = true,
             supportingText = {
                 if (showError && !passwordsMatch && confirmPassword.isNotEmpty()) {
-                    Text("Hasła muszą być identyczne")
+                    Text("Hasła muszą być identyczne", color = MaterialTheme.colorScheme.error)
                 }
             }
         )
@@ -172,6 +188,7 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
+        // Przycisk Rejestracji
         Button(
             onClick = {
                 if (areFieldsNotEmpty && isEmailValid && isPasswordValid && isPhoneValid && passwordsMatch) {
@@ -189,12 +206,13 @@ fun RegisterScreen(
             },
             enabled = !isLoading,
             modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(12.dp),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
             if (isLoading) {
                 CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
             } else {
-                Text("ZAREJESTRUJ SIĘ", color = Color.White, fontWeight = FontWeight.Bold)
+                Text("ZAREJESTRUJ SIĘ", fontWeight = FontWeight.Bold)
             }
         }
 
@@ -205,5 +223,7 @@ fun RegisterScreen(
                 fontWeight = FontWeight.Bold
             )
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }

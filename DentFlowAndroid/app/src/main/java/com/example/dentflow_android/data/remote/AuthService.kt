@@ -14,4 +14,7 @@ interface AuthService {
 
     @POST("auth/logout")
     suspend fun logout(): Response<Unit>
+
+    @POST("auth/tenant")
+    suspend fun assignTenant(@Body request: AssignTenantRequest): Response<AuthResponse>
 }

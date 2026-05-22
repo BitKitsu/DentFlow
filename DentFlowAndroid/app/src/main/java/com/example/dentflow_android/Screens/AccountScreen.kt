@@ -1,6 +1,7 @@
 package com.example.dentflow_android.Screens
 
 import android.net.Uri
+import android.content.SharedPreferences
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -21,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -35,15 +37,21 @@ fun AccountScreen(
     onEditBusinessClick: () -> Unit
 ) {
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
+
+    // Pobieramy dane sesji bezpośrednio z preferencji (tymczasowo, docelowo z UserViewModel)
+    val prefs = remember { context.getSharedPreferences("dentflow_prefs", android.content.Context.MODE_PRIVATE) }
+    val userEmail = remember { prefs.getString("user_email", "uzytkownik@dentflow.pl") ?: "" }
+    val userRole = remember { prefs.getString("user_role", "STAFF") ?: "STAFF" }
+    val isOwner = userRole == "OWNER" || userRole == "ADMIN"
 
     // --- WCZYTYWANIE DANYCH ---
     LaunchedEffect(Unit) {
-        tenantViewModel.loadTenantData(1L)
+        // Używamy nowej metody, która sama bierze ID z SharedPreferences
+        tenantViewModel.loadAllTenantData()
     }
 
     val tenantData by tenantViewModel.tenantState
-
-    val isOwner = true
 
     // --- LOGIKA WYBORU ZDJĘĆ ---
     var profileImageUri by remember { mutableStateOf<Uri?>(null) }
@@ -115,7 +123,17 @@ fun AccountScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(text = if (isOwner) "Właściciel Kliniki" else "Pracownik", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+        // DANE UŻYTKOWNIKA (Dynamiczne)
+        Text(
+            text = userEmail,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = if (isOwner) "Właściciel Kliniki" else "Pracownik",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary
+        )
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -155,8 +173,8 @@ fun AccountScreen(
                         }
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
-                            val businessName = tenantData?.name ?: "Pobieranie danych..."
-                            val cityName = tenantData?.locations?.firstOrNull()?.addressCity ?: "Brak adresu"
+                            val businessName = tenantData?.name ?: "Brak przypisanej kliniki"
+                            val cityName = tenantData?.locations?.firstOrNull()?.addressCity ?: "Skonfiguruj adres"
 
                             Text(businessName, fontWeight = FontWeight.Bold)
                             Text(cityName, style = MaterialTheme.typography.bodySmall)
@@ -173,7 +191,7 @@ fun AccountScreen(
                     ) {
                         Icon(Icons.Default.Business, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("ZARZĄDZAJ KLINIKĄ")
+                        Text(if (tenantData == null) "UTWÓRZ KLINIKĘ" else "ZARZĄDZAJ KLINIKĄ")
                     }
                 }
             }

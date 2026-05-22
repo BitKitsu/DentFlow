@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.dentflow.identity.auth.api.AssignTenantRequest;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/auth")
@@ -54,4 +56,17 @@ public class AuthController {
         log.info("Otrzymano żądanie wylogowania");
         return ResponseEntity.noContent().build();
     }
+
+
+    @PostMapping("/tenant")
+    @Operation(summary = "Przypisz tenantId aktualnemu użytkownikowi")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<AuthResponse> assignTenant(
+            @Valid @RequestBody AssignTenantRequest request,
+            Authentication authentication) {
+        AuthResponse response = authService.assignTenantToCurrentUser(
+                authentication.getName(), request.tenantId());
+        return ResponseEntity.ok(response);
+    }
+    
 }

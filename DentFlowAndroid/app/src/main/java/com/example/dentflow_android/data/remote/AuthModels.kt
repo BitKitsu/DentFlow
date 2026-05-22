@@ -8,6 +8,7 @@ data class LoginRequest(
 
 // Odpowiedź po logowaniu
 data class AuthResponse(
+    val id: Long,
     val token: String,
     val userId: Long,
     val email: String,

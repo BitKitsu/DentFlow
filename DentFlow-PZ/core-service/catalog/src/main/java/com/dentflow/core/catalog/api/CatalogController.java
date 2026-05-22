@@ -4,6 +4,7 @@ import com.dentflow.core.catalog.application.CatalogService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -49,6 +50,7 @@ public class CatalogController {
      * Tworzy nową pozycję w cenniku.
      */
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<ServiceCatalogItemDTO> createService(
             @PathVariable Long tenantId,
             @Valid @RequestBody CreateServiceCatalogItemRequest request) {
@@ -61,6 +63,7 @@ public class CatalogController {
      * Aktualizuje istniejącą pozycję w cenniku.
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<ServiceCatalogItemDTO> updateService(
             @PathVariable Long tenantId,
             @PathVariable Long id,
@@ -73,6 +76,7 @@ public class CatalogController {
      * Usuwa pozycję z cennika.
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<Void> deleteService(
             @PathVariable Long tenantId,
             @PathVariable Long id) {

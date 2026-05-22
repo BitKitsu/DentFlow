@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
@@ -31,6 +32,7 @@ public class SchedulingController {
     }
 
     @PostMapping("/slots")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<WorkScheduleSlotResponse> addSlot(
             @PathVariable Long tenantId,
             @Valid @RequestBody CreateWorkScheduleSlotRequest request) {
@@ -39,6 +41,7 @@ public class SchedulingController {
     }
 
     @DeleteMapping("/slots/{slotId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<Void> deleteSlot(
             @PathVariable Long tenantId,
             @PathVariable Long slotId) {
@@ -54,6 +57,7 @@ public class SchedulingController {
     }
 
     @PostMapping("/blockers")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<BlockerResponse> addBlocker(
             @PathVariable Long tenantId,
             @Valid @RequestBody CreateBlockerRequest request) {
@@ -62,6 +66,7 @@ public class SchedulingController {
     }
 
     @DeleteMapping("/blockers/{blockerId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
     public ResponseEntity<Void> deleteBlocker(
             @PathVariable Long tenantId,
             @PathVariable Long blockerId) {

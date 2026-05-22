@@ -13,40 +13,58 @@ import java.util.Optional;
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
 
-    List<Appointment> findByTenantId(Long tenantId);
+       List<Appointment> findByTenantId(Long tenantId);
 
-    Optional<Appointment> findByIdAndTenantId(Long id, Long tenantId);
+       Optional<Appointment> findByIdAndTenantId(Long id, Long tenantId);
 
-    List<Appointment> findByPatientId(Long patientId);
+       List<Appointment> findByPatientId(Long patientId);
 
-    List<Appointment> findByDentistStaffId(Long dentistStaffId);
+       List<Appointment> findByDentistStaffId(Long dentistStaffId);
 
-    @Query("SELECT a FROM Appointment a WHERE a.tenantId = :tenantId " +
-           "AND a.startAt >= :from AND a.startAt < :to " +
-           "ORDER BY a.startAt")
-    List<Appointment> findByTenantIdAndDateRange(
-            @Param("tenantId") Long tenantId,
-            @Param("from") OffsetDateTime from,
-            @Param("to") OffsetDateTime to);
+       @Query("SELECT a FROM Appointment a WHERE a.tenantId = :tenantId " +
+                     "AND a.startAt >= :from AND a.startAt < :to " +
+                     "ORDER BY a.startAt")
+       List<Appointment> findByTenantIdAndDateRange(
+                     @Param("tenantId") Long tenantId,
+                     @Param("from") OffsetDateTime from,
+                     @Param("to") OffsetDateTime to);
 
-    @Query("SELECT a FROM Appointment a WHERE a.tenantId = :tenantId " +
-           "AND a.dentistStaffId = :dentistStaffId " +
-           "AND a.status NOT IN ('CANCELLED') " +
-           "AND a.startAt < :end AND a.endAt > :start")
-    List<Appointment> findConflicting(
-            @Param("tenantId") Long tenantId,
-            @Param("dentistStaffId") Long dentistStaffId,
-            @Param("start") OffsetDateTime start,
-            @Param("end") OffsetDateTime end);
+       @Query("SELECT a FROM Appointment a WHERE a.tenantId = :tenantId " +
+                     "AND a.dentistStaffId = :dentistStaffId " +
+                     "AND a.status NOT IN ('CANCELLED') " +
+                     "AND a.startAt < :end AND a.endAt > :start")
+       List<Appointment> findConflicting(
+                     @Param("tenantId") Long tenantId,
+                     @Param("dentistStaffId") Long dentistStaffId,
+                     @Param("start") OffsetDateTime start,
+                     @Param("end") OffsetDateTime end);
 
-    @Query("SELECT a FROM Appointment a WHERE a.tenantId = :tenantId " +
-           "AND a.patientId = :patientId " +
-           "ORDER BY a.startAt DESC")
-    List<Appointment> findByTenantIdAndPatientIdOrderByStartAtDesc(
-            @Param("tenantId") Long tenantId,
-            @Param("patientId") Long patientId);
+       @Query("SELECT a FROM Appointment a WHERE a.tenantId = :tenantId " +
+                     "AND a.patientId = :patientId " +
+                     "ORDER BY a.startAt DESC")
+       List<Appointment> findByTenantIdAndPatientIdOrderByStartAtDesc(
+                     @Param("tenantId") Long tenantId,
+                     @Param("patientId") Long patientId);
 
-    List<Appointment> findByTenantIdAndStatus(Long tenantId, String status);
+       List<Appointment> findByTenantIdAndStatus(Long tenantId, String status);
+
+       @Query("SELECT a FROM Appointment a WHERE a.tenantId = :tenantId " +
+                     "AND a.roomId = :roomId " +
+                     "AND a.status NOT IN ('CANCELLED') " +
+                     "AND a.startAt >= :from AND a.startAt < :to")
+       List<Appointment> findByTenantIdAndRoomIdAndDateRange(
+                     @Param("tenantId") Long tenantId,
+                     @Param("roomId") Long roomId,
+                     @Param("from") OffsetDateTime from,
+                     @Param("to") OffsetDateTime to);
+
+       @Query("SELECT DISTINCT a.roomId FROM Appointment a WHERE a.tenantId = :tenantId " +
+                     "AND a.status NOT IN ('CANCELLED') " +
+                     "AND a.startAt >= :from AND a.startAt < :to")
+       List<Long> findDistinctRoomIdsByTenantIdAndDateRange(
+                     @Param("tenantId") Long tenantId,
+                     @Param("from") OffsetDateTime from,
+                     @Param("to") OffsetDateTime to);
 
     @Query(value = """
             SELECT 

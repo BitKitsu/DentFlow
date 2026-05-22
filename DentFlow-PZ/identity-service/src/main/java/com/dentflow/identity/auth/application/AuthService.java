@@ -8,6 +8,8 @@ import com.dentflow.identity.user.domain.Role;
 import com.dentflow.identity.user.domain.User;
 import com.dentflow.identity.user.domain.UserRole;
 import com.dentflow.identity.user.infrastructure.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,8 @@ import java.util.List;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -39,7 +43,10 @@ public class AuthService {
      */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+        log.info("Rozpoczęcie rejestracji użytkownika z email: {}", request.email());
+
         if (userRepository.existsByEmail(request.email())) {
+            log.warn("Próba rejestracji z istniejącym adresem email: {}", request.email());
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "Użytkownik z tym adresem email już istnieje");
         }
@@ -58,26 +65,47 @@ public class AuthService {
         user.getRoles().add(ownerRole);
 
         User saved = userRepository.save(user);
+        log.info("Użytkownik zarejestrowany pomyślnie - id: {}, email: {}, rola: OWNER", saved.getId(), saved.getEmail());
+
         String token = jwtService.generateToken(saved);
+        log.info("Token JWT wygenerowany dla nowego użytkownika id: {}", saved.getId());
 
         return new AuthResponse(token, saved.getId(), saved.getEmail(), saved.getTenantId());
     }
 
     public AuthResponse login(LoginRequest request) {
+        log.info("Próba logowania dla email: {}", request.email());
+
         User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                        "Nieprawidłowy email lub hasło"));
+                .orElseThrow(() -> {
+                    log.error("Nieudane logowanie - nie znaleziono użytkownika z email: {}", request.email());
+                    return new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                            "Nieprawidłowy email lub hasło");
+                });
 
         if (!"ACTIVE".equals(user.getStatus())) {
+            log.warn("Próba logowania na nieaktywne konto - userId: {}, email: {}, status: {}", user.getId(), user.getEmail(), user.getStatus());
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Konto jest nieaktywne");
         }
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            log.error("Nieudane logowanie - nieprawidłowe hasło dla email: {}", request.email());
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                     "Nieprawidłowy email lub hasło");
         }
 
         String token = jwtService.generateToken(user);
+        log.info("Logowanie zakończone sukcesem - userId: {}, email: {}, tenantId: {}", user.getId(), user.getEmail(), user.getTenantId());
         return new AuthResponse(token, user.getId(), user.getEmail(), user.getTenantId());
     }
+    @Transactional
+    public AuthResponse assignTenantToCurrentUser(String email, Long tenantId) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Użytkownik nie istnieje"));
+        user.setTenantId(tenantId);
+        User saved = userRepository.save(user);
+        String token = jwtService.generateToken(saved);
+        return new AuthResponse(token, saved.getId(), saved.getEmail(), saved.getTenantId());
+}
 }

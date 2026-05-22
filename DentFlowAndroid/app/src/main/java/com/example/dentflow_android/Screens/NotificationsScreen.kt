@@ -1,7 +1,8 @@
 package com.example.dentflow_android.Screens
 
-import androidx.compose.foundation.BorderStroke // Import dla ramki
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,35 +11,31 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-
-data class NotificationItem(
-    val id: Int,
-    val title: String,
-    val description: String,
-    val time: String,
-    val type: NotificationType,
-    val isRead: Boolean
-)
-
-enum class NotificationType {
-    NEW_APPOINTMENT, CANCELLED, REMINDER, SYSTEM
-}
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.dentflow_android.data.ViewModel.NotificationViewModel
+import com.example.dentflow_android.data.remote.NotificationDTO
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
-fun NotificationsScreen() {
-    val notifications = listOf(
-        NotificationItem(1, "Nowa wizyta", "Pacjent Anna Nowak zapisała się na jutro o 10:30.", "10 min temu", NotificationType.NEW_APPOINTMENT, false),
-        NotificationItem(2, "Wizyta odwołana", "Marek Wiśniewski odwołał wizytę (14:00).", "1 godz. temu", NotificationType.CANCELLED, false),
-        NotificationItem(3, "Przypomnienie", "Pamiętaj o uzupełnieniu grafiku na przyszły tydzień.", "3 godz. temu", NotificationType.REMINDER, true),
-        NotificationItem(4, "Aktualizacja systemu", "Wprowadzono nowe funkcje w panelu rozliczeń.", "Wczoraj", NotificationType.SYSTEM, true)
-    )
+fun NotificationsScreen(
+    viewModel: NotificationViewModel = hiltViewModel()
+) {
+    // Obserwujemy stan powiadomień
+    val notifications by viewModel.notifications.collectAsState()
+
+    // Ładowanie powiadomień przy wejściu na ekran - ViewModel sam wie, jakie jest ID użytkownika
+    LaunchedEffect(Unit) {
+        viewModel.fetchNotifications()
+    }
 
     Column(
         modifier = Modifier
@@ -46,57 +43,93 @@ fun NotificationsScreen() {
             .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
-        Text(
-            text = "Powiadomienia",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Powiadomienia",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            // Przycisk "Oznacz wszystkie" - wywołanie bez parametrów
+            TextButton(onClick = { viewModel.markAllAsRead() }) {
+                Text("Oznacz wszystkie")
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            contentPadding = PaddingValues(bottom = 16.dp)
-        ) {
-            items(notifications) { notification ->
-                NotificationCard(notification)
+        if (notifications.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Brak nowych powiadomień", color = Color.Gray)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
+                items(notifications, key = { it.id }) { notification ->
+                    NotificationCard(
+                        notification = notification,
+                        onClick = {
+                            if (!notification.read) {
+                                viewModel.markRead(notification.id)
+                            }
+                        }
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun NotificationCard(notification: NotificationItem) {
-    // Logika wyboru ikony i koloru bez zmian...
+fun NotificationCard(
+    notification: NotificationDTO,
+    onClick: () -> Unit
+) {
     val icon = when (notification.type) {
-        NotificationType.NEW_APPOINTMENT -> Icons.Default.AddCircle
-        NotificationType.CANCELLED -> Icons.Default.Cancel
-        NotificationType.REMINDER -> Icons.Default.NotificationsActive
-        NotificationType.SYSTEM -> Icons.Default.Info
+        "NEW_APPOINTMENT" -> Icons.Default.AddCircle
+        "CANCELLED" -> Icons.Default.Cancel
+        "REMINDER" -> Icons.Default.NotificationsActive
+        else -> Icons.Default.Info
     }
 
     val iconColor = when (notification.type) {
-        NotificationType.NEW_APPOINTMENT -> Color(0xFF4CAF50)
-        NotificationType.CANCELLED -> MaterialTheme.colorScheme.error
-        NotificationType.REMINDER -> Color(0xFFFF9800)
-        NotificationType.SYSTEM -> MaterialTheme.colorScheme.primary
+        "NEW_APPOINTMENT" -> Color(0xFF4CAF50)
+        "CANCELLED" -> MaterialTheme.colorScheme.error
+        "REMINDER" -> Color(0xFFFF9800)
+        else -> MaterialTheme.colorScheme.primary
+    }
+
+    val formattedTime = remember(notification.createdAt) {
+        try {
+            val zdt = ZonedDateTime.parse(notification.createdAt)
+            zdt.format(DateTimeFormatter.ofPattern("HH:mm, dd MMM", Locale("pl")))
+        } catch (e: Exception) {
+            notification.createdAt.take(16).replace("T", " ")
+        }
     }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (notification.isRead)
+            containerColor = if (notification.read)
                 MaterialTheme.colorScheme.surface
             else
-                MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
         ),
-
-        elevation = CardDefaults.cardElevation(0.dp),
-        border = if (!notification.isRead)
-            BorderStroke(2.dp, MaterialTheme.colorScheme.secondary)
+        elevation = CardDefaults.cardElevation(if (notification.read) 0.dp else 4.dp),
+        border = if (!notification.read)
+            BorderStroke(2.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f))
         else
             null
     ) {
@@ -106,7 +139,6 @@ fun NotificationCard(notification: NotificationItem) {
                 .fillMaxWidth(),
             verticalAlignment = Alignment.Top
         ) {
-            // Ikona typu powiadomienia
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -125,16 +157,20 @@ fun NotificationCard(notification: NotificationItem) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = notification.title,
-                        fontWeight = if (notification.isRead) FontWeight.Medium else FontWeight.Bold,
+                        text = when(notification.type) {
+                            "NEW_APPOINTMENT" -> "Nowa wizyta"
+                            "CANCELLED" -> "Wizyta odwołana"
+                            "REMINDER" -> "Przypomnienie"
+                            else -> "System"
+                        },
+                        fontWeight = if (notification.read) FontWeight.Medium else FontWeight.Bold,
                         style = MaterialTheme.typography.bodyLarge,
-                        // Zmieniamy kolor tytułu nowych na Secondary
-                        color = if (notification.isRead)
+                        color = if (notification.read)
                             MaterialTheme.colorScheme.onSurface
                         else
                             MaterialTheme.colorScheme.secondary
                     )
-                    if (!notification.isRead) {
+                    if (!notification.read) {
                         Box(
                             modifier = Modifier
                                 .size(8.dp)
@@ -146,7 +182,7 @@ fun NotificationCard(notification: NotificationItem) {
                 }
 
                 Text(
-                    text = notification.description,
+                    text = notification.message,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -154,7 +190,7 @@ fun NotificationCard(notification: NotificationItem) {
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = notification.time,
+                    text = formattedTime,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline
                 )

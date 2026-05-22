@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     // Używamy aliasów, które już masz w projekcie
     alias(libs.plugins.android.application)
@@ -7,6 +9,12 @@ plugins {
     // Dodajemy wsparcie dla adnotacji i Dagger Hilt
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
+}
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
 }
 
 android {
@@ -24,6 +32,11 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        
+        val authUrl = localProperties.getProperty("API_AUTH_URL") ?: "\"http://10.0.2.2:8081/\""
+        val coreUrl = localProperties.getProperty("API_CORE_URL") ?: "\"http://10.0.2.2:8080/\""
+        buildConfigField("String", "API_AUTH_URL", authUrl)
+        buildConfigField("String", "API_CORE_URL", coreUrl)
     }
 
     buildTypes {
@@ -48,6 +61,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     packaging {
@@ -67,6 +81,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("androidx.compose.material:material-icons-extended:1.7.0")
 // Dodaj to w sekcji dependencies:

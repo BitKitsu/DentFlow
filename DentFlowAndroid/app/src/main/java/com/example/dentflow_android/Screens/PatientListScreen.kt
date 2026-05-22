@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.dentflow_android.data.ViewModel.PatientViewModel
 import com.example.dentflow_android.data.remote.PatientResponse
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,8 +31,10 @@ fun PatientListScreen(
     var showDialog by remember { mutableStateOf(false) }
     var selectedPatient by remember { mutableStateOf<PatientResponse?>(null) }
 
+    // --- DYNAMICZNE ŁADOWANIE ---
+    // ViewModel sam pobiera tenantId ze SharedPreferences
     LaunchedEffect(Unit) {
-        viewModel.loadPatients(1L)
+        viewModel.fetchPatients()
     }
 
     Scaffold(
@@ -41,7 +45,10 @@ fun PatientListScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Powrót")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
         },
         floatingActionButton = {
@@ -68,7 +75,7 @@ fun PatientListScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(patients) { patient ->
+                    items(patients, key = { it.id }) { patient ->
                         PatientItem(
                             patient = patient,
                             onEdit = {
@@ -109,6 +116,7 @@ fun PatientItem(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onEdit() },
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -116,12 +124,18 @@ fun PatientItem(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                Icons.Default.AccountCircle,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(48.dp)
-            )
+            Surface(
+                modifier = Modifier.size(48.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Icon(
+                    Icons.Default.AccountCircle,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -129,14 +143,15 @@ fun PatientItem(
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium
                 )
-                // POPRAWKA: Zmieniono z patient.phoneNumber na patient.phone
                 Text(
                     text = "Tel: ${patient.phone ?: "Brak"}",
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = patient.email ?: "Brak email",
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.outline
                 )
             }
             IconButton(onClick = onDelete) {
@@ -159,12 +174,11 @@ fun PatientDialog(
     var firstName by remember { mutableStateOf(patient?.firstName ?: "") }
     var lastName by remember { mutableStateOf(patient?.lastName ?: "") }
     var email by remember { mutableStateOf(patient?.email ?: "") }
-    // POPRAWKA: Zmieniono inicjalizację z patient?.phoneNumber na patient?.phone
     var phone by remember { mutableStateOf(patient?.phone ?: "") }
 
-    val isEmailValid = email.contains("@") && email.contains(".")
+    val isEmailValid = email.isEmpty() || (email.contains("@") && email.contains("."))
     val isPhoneValid = phone.length >= 9
-    val areFieldsValid = firstName.isNotBlank() && lastName.isNotBlank() && isEmailValid && isPhoneValid
+    val areFieldsValid = firstName.isNotBlank() && lastName.isNotBlank() && isPhoneValid
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -175,32 +189,38 @@ fun PatientDialog(
                     value = firstName,
                     onValueChange = { firstName = it },
                     label = { Text("Imię") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
                 )
                 OutlinedTextField(
                     value = lastName,
                     onValueChange = { lastName = it },
                     label = { Text("Nazwisko") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
                 )
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it },
                     label = { Text("Telefon") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
                 )
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
                     label = { Text("E-mail") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    isError = !isEmailValid && email.isNotEmpty()
                 )
             }
         },
         confirmButton = {
             Button(
                 onClick = { onConfirm(firstName, lastName, email, phone) },
-                enabled = areFieldsValid
+                enabled = areFieldsValid,
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text("Zapisz")
             }

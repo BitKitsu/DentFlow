@@ -3,6 +3,7 @@ package com.example.dentflow_android.di
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import com.example.dentflow_android.BuildConfig
 import com.example.dentflow_android.data.remote.ApiService
 import com.example.dentflow_android.data.remote.AuthService
 import dagger.Module
@@ -33,25 +34,15 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    @Named("auth_interceptor")
     fun provideAuthInterceptor(prefs: SharedPreferences): Interceptor {
         return Interceptor { chain ->
-            val original = chain.request()
-
-            // Pobieramy token i sprawdzamy co tam siedzi
             val token = prefs.getString(TOKEN_KEY, "")
-
-            // LOGOWANIE DLA CIEBIE (Sprawdź to w Logcat!)
-            if (token.isNullOrBlank()) {
-                Log.e("DENTFLOW_AUTH", "ALARM: Interceptor nie znalazł tokenu w SharedPreferences!")
-            } else {
-                Log.d("DENTFLOW_AUTH", "Interceptor dodał token: Bearer ${token.take(10)}...")
-            }
-
-            val requestBuilder = original.newBuilder()
+            Log.d("AUTH_DEBUG", "Token z prefs: '${token?.take(20)}...' (długość: ${token?.length})")
+            val requestBuilder = chain.request().newBuilder()
             if (!token.isNullOrBlank()) {
                 requestBuilder.header("Authorization", "Bearer $token")
             }
-
             chain.proceed(requestBuilder.build())
         }
     }
@@ -59,28 +50,36 @@ object NetworkModule {
     @Provides
     @Singleton
     @Named("auth_retrofit")
-    fun provideAuthRetrofit(): Retrofit = Retrofit.Builder()
-        .baseUrl("http://10.0.2.2:8081/")
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-
-    @Provides
-    @Singleton
-    @Named("core_retrofit")
-    fun provideCoreRetrofit(authInterceptor: Interceptor): Retrofit {
-        val logging = HttpLoggingInterceptor { message ->
-            Log.d("OKHTTP_CORE", message)
-        }.apply {
-            level = HttpLoggingInterceptor.Level.HEADERS
+    fun provideAuthRetrofit(@Named("auth_interceptor") authInterceptor: Interceptor): Retrofit {
+        val logging = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
         }
-
         val client = OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
             .addInterceptor(logging)
             .build()
 
         return Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080/")
+            .baseUrl(BuildConfig.API_AUTH_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    @Named("core_retrofit")
+    fun provideCoreRetrofit(@Named("auth_interceptor") authInterceptor: Interceptor): Retrofit {
+        val logging = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+        val client = OkHttpClient.Builder()
+            .addInterceptor(authInterceptor)
+            .addInterceptor(logging)
+            .build()
+
+        return Retrofit.Builder()
+            .baseUrl(BuildConfig.API_CORE_URL)
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -95,4 +94,5 @@ object NetworkModule {
     @Singleton
     fun provideApiService(@Named("core_retrofit") retrofit: Retrofit): ApiService =
         retrofit.create(ApiService::class.java)
+
 }

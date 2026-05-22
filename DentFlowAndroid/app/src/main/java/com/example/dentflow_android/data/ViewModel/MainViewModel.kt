@@ -15,7 +15,7 @@ class MainViewModel @Inject constructor(
     fun fetchData(tenantId: Long) {
         viewModelScope.launch {
             try {
-                val response = apiService.getStaff(tenantId)
+                val response = apiService.getStaffMembers(tenantId)
 
                 if (response.isSuccessful) {
                     val staffMembers = response.body()

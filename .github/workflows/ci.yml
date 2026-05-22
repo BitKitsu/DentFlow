@@ -50,6 +50,10 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Install pdf-generator
+        working-directory: pdf-generator
+        run: mvn clean install -DskipTests -q
+
       - name: Compile
         run: mvn compile -q
 

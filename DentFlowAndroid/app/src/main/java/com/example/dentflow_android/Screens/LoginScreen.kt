@@ -1,36 +1,44 @@
 package com.example.dentflow_android.Screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.dentflow_android.data.remote.LoginRequest
-import com.example.dentflow_android.ui.viewmodels.AuthViewModel
+import com.example.dentflow_android.data.remote.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 @Composable
 fun LoginScreen(
-    onLoginSuccess: (Long) -> Unit,
+    onLoginSuccess: () -> Unit,
     onRegisterClick: () -> Unit,
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
 
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
 
-    // Wspólna konfiguracja kolorów dla pól tekstowych
+    // Styl pól tekstowych
     val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = MaterialTheme.colorScheme.onSurface,
-        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-        focusedLabelColor = MaterialTheme.colorScheme.primary,
-        unfocusedLabelColor = MaterialTheme.colorScheme.outline,
         focusedBorderColor = MaterialTheme.colorScheme.primary,
+        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
         cursorColor = MaterialTheme.colorScheme.primary
     )
 
@@ -40,14 +48,14 @@ fun LoginScreen(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(60.dp))
 
-        // --- LOGO / NAZWA ---
+        // --- LOGO ---
         Text(
             text = "DentFlow",
             style = MaterialTheme.typography.displayMedium,
             color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.ExtraBold
         )
 
         Column(
@@ -56,10 +64,10 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Logowanie",
+                text = "Witaj ponownie",
                 style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 24.dp)
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 32.dp)
             )
 
             // --- POLE EMAIL ---
@@ -67,10 +75,12 @@ fun LoginScreen(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("Email") },
+                leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isLoading,
                 colors = textFieldColors,
-                singleLine = true
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -80,20 +90,30 @@ fun LoginScreen(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Hasło") },
-                visualTransformation = PasswordVisualTransformation(),
+                leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = null
+                        )
+                    }
+                },
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isLoading,
                 colors = textFieldColors,
-                singleLine = true
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
 
-            // Wyświetlanie błędu z ViewModelu
-            if (errorMessage != null) {
+            // Wyświetlanie błędu
+            errorMessage?.let {
                 Text(
-                    text = errorMessage!!,
+                    text = it,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier.padding(top = 12.dp)
                 )
             }
 
@@ -102,42 +122,44 @@ fun LoginScreen(
             // --- PRZYCISK LOGOWANIA ---
             Button(
                 onClick = {
-                    viewModel.login(LoginRequest(email, password)) { tenantId ->
-                        onLoginSuccess(tenantId)
+                    viewModel.login(LoginRequest(email, password)) {
+                        // Wywoływane tylko przy sukcesie
+                        onLoginSuccess()
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
-                shape = MaterialTheme.shapes.medium
+                shape = RoundedCornerShape(12.dp)
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = Color.White,
                         modifier = Modifier.size(24.dp),
                         strokeWidth = 2.dp
                     )
                 } else {
                     Text(
-                        text = "Zaloguj się",
+                        text = "ZALOGUJ SIĘ",
                         fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.labelLarge
+                        style = MaterialTheme.typography.titleMedium
                     )
                 }
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
             // --- PRZEJŚCIE DO REJESTRACJI ---
-            TextButton(
-                onClick = onRegisterClick,
-                enabled = !isLoading,
-                modifier = Modifier.padding(top = 8.dp)
-            ) {
-                Text(
-                    text = "Nie masz konta? Zarejestruj się!",
-                    color = MaterialTheme.colorScheme.secondary,
-                    fontWeight = FontWeight.SemiBold
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Nie masz konta?", style = MaterialTheme.typography.bodyMedium)
+                TextButton(onClick = onRegisterClick, enabled = !isLoading) {
+                    Text(
+                        text = "Zarejestruj się",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
         }
     }

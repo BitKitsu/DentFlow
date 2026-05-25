@@ -34,6 +34,14 @@ public class AppointmentService {
         return result.stream().map(AppointmentResponse::from).toList();
     }
 
+    public List<AppointmentResponse> getMyAppointments(Long tenantId, Long userId) {
+        return appointmentRepository
+                .findByTenantIdAndCreatedByUserIdOrderByStartAtDesc(tenantId, userId)
+                .stream()
+                .map(AppointmentResponse::from)
+                .toList();
+    }
+
     public AppointmentResponse getAppointment(Long tenantId, Long appointmentId) {
         return AppointmentResponse.from(findOrThrow(tenantId, appointmentId));
     }

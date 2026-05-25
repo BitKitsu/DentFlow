@@ -6,6 +6,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
@@ -28,6 +29,22 @@ public class AppointmentController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to) {
         return ResponseEntity.ok(appointmentService.getAppointments(tenantId, from, to));
+    }
+
+    /**
+     * Endpoint dla zalogowanego pacjenta — zwraca wyłącznie jego własne wizyty.
+     * Dostępny dla każdego uwierzytelnionego użytkownika.
+     * userId jest wyciągany z tokenu JWT (claim "userId") przekazanego jako credentials.
+     */
+    @GetMapping("/my")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<AppointmentResponse>> getMyAppointments(
+            @PathVariable Long tenantId,
+            Authentication authentication) {
+        Long userId = authentication.getCredentials() instanceof Long
+                ? (Long) authentication.getCredentials()
+                : 0L;
+        return ResponseEntity.ok(appointmentService.getMyAppointments(tenantId, userId));
     }
 
     @GetMapping("/{appointmentId}")

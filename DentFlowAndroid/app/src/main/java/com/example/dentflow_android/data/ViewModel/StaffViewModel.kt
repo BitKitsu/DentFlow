@@ -28,6 +28,9 @@ class StaffViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage
+
     private val TAG = "STAFF_VM_DEBUG"
 
     // Dynamiczne pobieranie tenantId z sesji
@@ -61,6 +64,9 @@ class StaffViewModel @Inject constructor(
                 if (sRes.isSuccessful) {
                     _staffMembers.value = sRes.body() ?: emptyList()
                     Log.d(TAG, "Pobrano pracowników: ${sRes.body()?.size}")
+                } else if (sRes.code() == 403) {
+                    _errorMessage.value = "Brak uprawnień do przeglądania personelu."
+                    Log.e(TAG, "403 Forbidden: getStaffMembers")
                 } else {
                     Log.e(TAG, "Błąd pobierania pracowników: ${sRes.code()}")
                 }
@@ -82,13 +88,22 @@ class StaffViewModel @Inject constructor(
         if (!hasValidSession()) return
         viewModelScope.launch {
             _isLoading.value = true
+            _errorMessage.value = null
             try {
                 val response = apiService.getStaffMembers(currentTenantId)
-                if (response.isSuccessful) {
-                    _staffMembers.value = response.body() ?: emptyList()
-                    Log.d(TAG, "Odświeżono listę personelu")
+                when {
+                    response.isSuccessful -> {
+                        _staffMembers.value = response.body() ?: emptyList()
+                        Log.d(TAG, "Odświeżono listę personelu")
+                    }
+                    response.code() == 403 -> {
+                        _errorMessage.value = "Brak uprawnień do zarządzania personelem."
+                        Log.e(TAG, "403 Forbidden: loadStaff")
+                    }
+                    else -> Log.e(TAG, "Błąd loadStaff: ${response.code()}")
                 }
             } catch (e: Exception) {
+                _errorMessage.value = "Brak połączenia z serwerem."
                 Log.e(TAG, "Exception loadStaff: ${e.message}")
             } finally {
                 _isLoading.value = false

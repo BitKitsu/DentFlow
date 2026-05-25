@@ -99,6 +99,11 @@ interface ApiService {
         @Query("to") to: String? = null
     ): Response<List<AppointmentResponse>>
 
+    @GET("tenants/{tenantId}/appointments/my")
+    suspend fun getMyAppointments(
+        @Path("tenantId") tenantId: Long
+    ): Response<List<AppointmentResponse>>
+
     @POST("tenants/{tenantId}/appointments")
     suspend fun createAppointment(
         @Path("tenantId") tenantId: Long,

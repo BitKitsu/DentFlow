@@ -32,15 +32,21 @@ fun CatalogListScreen(
     onBackClick: () -> Unit,
     catalogViewModel: CatalogViewModel = hiltViewModel() // Zamiana na CatalogViewModel
 ) {
-    val services by catalogViewModel.servicesState // Odczyt z nowego ViewModelu
+    val services by catalogViewModel.servicesState
     val isLoading by catalogViewModel.isLoading
+    val errorMessage by catalogViewModel.errorMessage
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var showAddEditDialog by remember { mutableStateOf(false) }
     var selectedService by remember { mutableStateOf<ServiceCatalogItemDTO?>(null) }
 
     LaunchedEffect(Unit) {
         Log.d(UI_TAG, "CatalogListScreen -> LaunchedEffect: Żądanie załadowania usług z CatalogViewModel.")
-        catalogViewModel.loadServices() // Wywołanie z nowego ViewModelu
+        catalogViewModel.loadServices()
+    }
+
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let { snackbarHostState.showSnackbar(it) }
     }
 
     Scaffold(
@@ -62,7 +68,8 @@ fun CatalogListScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Box(
             modifier = Modifier

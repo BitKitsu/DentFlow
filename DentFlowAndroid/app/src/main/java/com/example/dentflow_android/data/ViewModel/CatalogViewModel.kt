@@ -25,6 +25,9 @@ class CatalogViewModel @Inject constructor(
     private val _isLoading = mutableStateOf(false)
     val isLoading: State<Boolean> = _isLoading
 
+    private val _errorMessage = mutableStateOf<String?>(null)
+    val errorMessage: State<String?> = _errorMessage
+
     private val TAG = "DENTFLOW_CATALOG_DEBUG"
 
     private val currentTenantId: Long
@@ -37,12 +40,19 @@ class CatalogViewModel @Inject constructor(
         if (id == -1L) return
         viewModelScope.launch {
             _isLoading.value = true
+            _errorMessage.value = null
             try {
                 val response = apiService.getServices(id)
-                if (response.isSuccessful) {
-                    _servicesState.value = response.body() ?: emptyList()
+                when {
+                    response.isSuccessful -> _servicesState.value = response.body() ?: emptyList()
+                    response.code() == 403 -> {
+                        _errorMessage.value = "Brak uprawnień do przeglądania usług."
+                        Log.e(TAG, "403 Forbidden: loadServices")
+                    }
+                    else -> Log.e(TAG, "Błąd pobierania usług: ${response.code()}")
                 }
             } catch (e: Exception) {
+                _errorMessage.value = "Brak połączenia z serwerem."
                 Log.e(TAG, "Błąd pobierania usług: ${e.message}")
             } finally {
                 _isLoading.value = false

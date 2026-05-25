@@ -150,10 +150,15 @@ fun StaffManagementScreen(
 
     val staffList by viewModel.staffMembers.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    // --- POPRAWKA: Ładowanie bez 1L ---
     LaunchedEffect(Unit) {
         viewModel.loadStaff()
+    }
+
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let { snackbarHostState.showSnackbar(it) }
     }
 
     Scaffold(
@@ -170,7 +175,8 @@ fun StaffManagementScreen(
             ) {
                 Icon(Icons.Default.PersonAdd, contentDescription = null, tint = Color.White)
             }
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding).background(MaterialTheme.colorScheme.background)) {
             if (isLoading && staffList.isEmpty()) {

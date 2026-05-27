@@ -32,7 +32,7 @@ public class SchedulingController {
     }
 
     @PostMapping("/slots")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
     public ResponseEntity<WorkScheduleSlotResponse> addSlot(
             @PathVariable Long tenantId,
             @Valid @RequestBody CreateWorkScheduleSlotRequest request) {
@@ -41,7 +41,7 @@ public class SchedulingController {
     }
 
     @DeleteMapping("/slots/{slotId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
     public ResponseEntity<Void> deleteSlot(
             @PathVariable Long tenantId,
             @PathVariable Long slotId) {
@@ -57,7 +57,7 @@ public class SchedulingController {
     }
 
     @PostMapping("/blockers")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
     public ResponseEntity<BlockerResponse> addBlocker(
             @PathVariable Long tenantId,
             @Valid @RequestBody CreateBlockerRequest request) {
@@ -66,7 +66,7 @@ public class SchedulingController {
     }
 
     @DeleteMapping("/blockers/{blockerId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
     public ResponseEntity<Void> deleteBlocker(
             @PathVariable Long tenantId,
             @PathVariable Long blockerId) {

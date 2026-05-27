@@ -23,7 +23,7 @@ public class AppointmentController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
     public ResponseEntity<List<AppointmentResponse>> getAppointments(
             @PathVariable Long tenantId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
@@ -55,7 +55,7 @@ public class AppointmentController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
     public ResponseEntity<AppointmentResponse> createAppointment(
             @PathVariable Long tenantId,
             @Valid @RequestBody CreateAppointmentRequest request) {
@@ -64,7 +64,7 @@ public class AppointmentController {
     }
 
     @PutMapping("/{appointmentId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
     public ResponseEntity<AppointmentResponse> updateAppointment(
             @PathVariable Long tenantId,
             @PathVariable Long appointmentId,
@@ -73,7 +73,7 @@ public class AppointmentController {
     }
 
     @PostMapping("/{appointmentId}/cancel")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
     public ResponseEntity<AppointmentResponse> cancelAppointment(
             @PathVariable Long tenantId,
             @PathVariable Long appointmentId) {
@@ -81,7 +81,7 @@ public class AppointmentController {
     }
 
     @PostMapping("/{appointmentId}/complete")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
     public ResponseEntity<AppointmentResponse> completeAppointment(
             @PathVariable Long tenantId,
             @PathVariable Long appointmentId) {

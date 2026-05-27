@@ -39,7 +39,7 @@ public class StaffMemberController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
     @Operation(summary = "Dodanie pracownika do gabinetu")
     public ResponseEntity<StaffMemberResponse> addStaffMember(
             @PathVariable Long tenantId,
@@ -49,7 +49,7 @@ public class StaffMemberController {
     }
 
     @PutMapping("/{staffId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
     @Operation(summary = "Zaktualizowanie danych pracownika")
     public ResponseEntity<StaffMemberResponse> updateStaffMember(
             @PathVariable Long tenantId,
@@ -59,7 +59,7 @@ public class StaffMemberController {
     }
 
     @DeleteMapping("/{staffId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
     @Operation(summary = "Usunięcie pracownika")
     public ResponseEntity<Void> deleteStaffMember(
             @PathVariable Long tenantId,

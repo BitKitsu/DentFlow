@@ -50,7 +50,7 @@ public class CatalogController {
      * Tworzy nową pozycję w cenniku.
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
     public ResponseEntity<ServiceCatalogItemDTO> createService(
             @PathVariable Long tenantId,
             @Valid @RequestBody CreateServiceCatalogItemRequest request) {
@@ -63,7 +63,7 @@ public class CatalogController {
      * Aktualizuje istniejącą pozycję w cenniku.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
     public ResponseEntity<ServiceCatalogItemDTO> updateService(
             @PathVariable Long tenantId,
             @PathVariable Long id,
@@ -76,7 +76,7 @@ public class CatalogController {
      * Usuwa pozycję z cennika.
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
     public ResponseEntity<Void> deleteService(
             @PathVariable Long tenantId,
             @PathVariable Long id) {

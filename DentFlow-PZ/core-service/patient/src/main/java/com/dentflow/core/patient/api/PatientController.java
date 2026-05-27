@@ -25,7 +25,7 @@ public class PatientController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
     @Operation(summary = "Lista pacjentów lub wyszukiwanie po imieniu/nazwisku/telefonie")
     public ResponseEntity<List<PatientResponse>> getPatients(
             @PathVariable Long tenantId,
@@ -42,7 +42,7 @@ public class PatientController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
     @Operation(summary = "Dodanie pacjenta")
     public ResponseEntity<PatientResponse> addPatient(
             @PathVariable Long tenantId,
@@ -52,7 +52,7 @@ public class PatientController {
     }
 
     @PutMapping("/{patientId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
     @Operation(summary = "Aktualizacja pacjenta")
     public ResponseEntity<PatientResponse> updatePatient(
             @PathVariable Long tenantId,
@@ -62,7 +62,7 @@ public class PatientController {
     }
 
     @DeleteMapping("/{patientId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
     @Operation(summary = "Usunięcie pacjenta")
     public ResponseEntity<Void> deletePatient(
             @PathVariable Long tenantId,

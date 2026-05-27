@@ -119,6 +119,12 @@ class MainActivity : ComponentActivity() {
                             onBackClick = { navController.popBackStack() }
                         )
                     }
+
+                    composable("account_data") {
+                        AccountDataScreen(
+                            onBackClick = { navController.popBackStack() }
+                        )
+                    }
                 }
             }
         }
@@ -235,7 +241,8 @@ fun MainDashboard(
                                     popUpTo("main_dashboard") { inclusive = true }
                                 }
                             },
-                            onEditBusinessClick = { onTabChange(1) }
+                            onEditBusinessClick = { onTabChange(1) },
+                            onAccountDataClick = { navController.navigate("account_data") }
                         )
                     } else {
                         SettingsScreen(

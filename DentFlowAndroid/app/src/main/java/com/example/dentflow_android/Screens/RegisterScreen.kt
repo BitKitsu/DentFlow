@@ -40,7 +40,7 @@ fun RegisterScreen(
 
     // Walidacja
     val isEmailValid = email.contains("@") && email.contains(".")
-    val isPasswordValid = password.length >= 6
+    val isPasswordValid = password.length >= 8
     val passwordsMatch = password == confirmPassword && password.isNotEmpty()
     val isPhoneValid = phone.length >= 9
     val areFieldsNotEmpty = firstname.isNotBlank() && lastname.isNotBlank()
@@ -144,7 +144,7 @@ fun RegisterScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it; showError = false },
-            label = { Text("Hasło (min. 6 znaków)") },
+            label = { Text("Hasło (min. 8 znaków)") },
             leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
             enabled = !isLoading,
             isError = showError && !isPasswordValid,

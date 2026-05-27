@@ -41,7 +41,13 @@ class MainActivity : ComponentActivity() {
                 val tenantViewModel: TenantViewModel = hiltViewModel()
                 var currentDashboardTab by remember { mutableIntStateOf(0) }
 
-                NavHost(navController = navController, startDestination = "login") {
+                // Sprawdzamy czy użytkownik jest już zalogowany (token w prefs)
+                val ctx = androidx.compose.ui.platform.LocalContext.current
+                val startPrefs = ctx.getSharedPreferences("dentflow_prefs", android.content.Context.MODE_PRIVATE)
+                val savedToken = startPrefs.getString("jwt_token", null)
+                val startDestination = if (!savedToken.isNullOrBlank()) "main_dashboard" else "login"
+
+                NavHost(navController = navController, startDestination = startDestination) {
                     composable("login") {
                         LoginScreen(
                             onLoginSuccess = {

@@ -21,6 +21,7 @@
     <modules>
         <module>identity-service</module>
         <module>core-service</module>
+        <module>pdf-generator</module>
     </modules>
 
     <properties>

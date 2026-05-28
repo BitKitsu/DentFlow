@@ -21,6 +21,9 @@ interface AuthService {
 
     @PUT("auth/change-password")
     suspend fun changePassword(@Body request: ChangePasswordRequest): Response<Unit>
+
+    @PUT("auth/profile")
+    suspend fun updateProfile(@Body request: UpdateProfileRequest): Response<AuthResponse>
 }
 
 data class ChangePasswordRequest(

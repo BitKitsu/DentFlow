@@ -70,12 +70,16 @@ fun AccountDataScreen(
     val lastNameError  = lastName.isNotBlank()  && !NAME_REGEX.matches(lastName)
     val emailError     = email.isNotBlank()     && !EMAIL_REGEX.matches(email)
     val phoneError     = phone.isNotBlank()     && !PHONE_REGEX.matches(phone)
+    val zipError       = addressZip.isNotBlank() && !Regex("^[0-9]{2}-[0-9]{3}$").matches(addressZip)
+    val streetError    = addressStreet.isNotBlank() && addressStreet.length < 3
+    val cityError      = addressCity.isNotBlank() && addressCity.length < 2
+    val countryError   = addressCountry.isNotBlank() && addressCountry.length < 2
 
     val anyProfileField = firstName.isNotBlank() || lastName.isNotBlank() || email.isNotBlank()
             || phone.isNotBlank() || addressStreet.isNotBlank() || addressCity.isNotBlank()
             || addressZip.isNotBlank() || addressCountry.isNotBlank()
     val profileFormValid = !firstNameError && !lastNameError && !emailError && !phoneError
-            && anyProfileField
+            && !zipError && !streetError && !cityError && !countryError && anyProfileField
 
     val sameAsOld      = currentPassword.isNotBlank() && newPassword == currentPassword
     val passwordsMatch = newPassword == confirmPassword
@@ -178,6 +182,10 @@ fun AccountDataScreen(
                 onValueChange = { addressStreet = it; profileError = null; profileSuccess = null },
                 label = { Text("Ulica i numer") },
                 leadingIcon = { Icon(Icons.Default.Place, null) },
+                isError = streetError,
+                supportingText = {
+                    if (streetError) Text("Min. 3 znaki", color = MaterialTheme.colorScheme.error)
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
@@ -189,6 +197,10 @@ fun AccountDataScreen(
                     value = addressCity,
                     onValueChange = { addressCity = it; profileError = null; profileSuccess = null },
                     label = { Text("Miasto") },
+                    isError = cityError,
+                    supportingText = {
+                        if (cityError) Text("Min. 2 znaki", color = MaterialTheme.colorScheme.error)
+                    },
                     modifier = Modifier.weight(2f),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true
@@ -204,6 +216,10 @@ fun AccountDataScreen(
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                     },
+                    isError = zipError,
+                    supportingText = {
+                        if (zipError) Text("00-000", color = MaterialTheme.colorScheme.error)
+                    },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
@@ -216,6 +232,10 @@ fun AccountDataScreen(
                 onValueChange = { addressCountry = it; profileError = null; profileSuccess = null },
                 label = { Text("Kraj") },
                 leadingIcon = { Icon(Icons.Default.Flag, null) },
+                isError = countryError,
+                supportingText = {
+                    if (countryError) Text("Min. 2 znaki", color = MaterialTheme.colorScheme.error)
+                },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true

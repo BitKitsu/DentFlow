@@ -38,6 +38,10 @@ fun RegisterScreen(
     var email     by remember { mutableStateOf("") }
     var password  by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var addressStreet by remember { mutableStateOf("") }
+    var addressCity   by remember { mutableStateOf("") }
+    var addressZip    by remember { mutableStateOf("") }
+    var addressCountry by remember { mutableStateOf("") }
 
     val isLoading         by viewModel.isLoading.collectAsState()
     val serverErrorMessage by viewModel.errorMessage.collectAsState()
@@ -48,11 +52,27 @@ fun RegisterScreen(
     val isLastNameValid  = REG_NAME_REGEX.matches(lastname)
     val isEmailValid     = REG_EMAIL_REGEX.matches(email)
     val isPhoneValid     = REG_PHONE_REGEX.matches(phone)
+    val isZipValid       = Regex("^[0-9]{2}-[0-9]{3}$").matches(addressZip)
+    val isStreetValid    = addressStreet.length >= 3
+    val isCityValid      = addressCity.length >= 2
+    val isCountryValid   = addressCountry.length >= 2
     val isPasswordValid  = password.length >= 8
     val passwordsMatch   = password == confirmPassword && password.isNotEmpty()
 
+    val firstNameError = (showError && firstname.isBlank()) || (firstname.isNotBlank() && !isFirstNameValid)
+    val lastNameError  = (showError && lastname.isBlank())  || (lastname.isNotBlank()  && !isLastNameValid)
+    val emailError     = (showError && email.isBlank())     || (email.isNotBlank()     && !isEmailValid)
+    val phoneError     = (showError && phone.isBlank())     || (phone.isNotBlank()     && !isPhoneValid)
+    val zipError       = (showError && addressZip.isBlank()) || (addressZip.isNotBlank() && !isZipValid)
+    val streetError    = (showError && addressStreet.isBlank()) || (addressStreet.isNotBlank() && !isStreetValid)
+    val cityError      = (showError && addressCity.isBlank()) || (addressCity.isNotBlank() && !isCityValid)
+    val countryError   = (showError && addressCountry.isBlank()) || (addressCountry.isNotBlank() && !isCountryValid)
+    val passwordError  = (showError && password.isBlank())  || (password.isNotBlank()  && !isPasswordValid)
+    val confirmError   = (showError && confirmPassword.isBlank()) || (confirmPassword.isNotBlank() && !passwordsMatch)
+
     val canSubmit = isFirstNameValid && isLastNameValid && isEmailValid
-            && isPhoneValid && isPasswordValid && passwordsMatch
+            && isPhoneValid && isZipValid && isStreetValid && isCityValid && isCountryValid 
+            && isPasswordValid && passwordsMatch
 
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor   = MaterialTheme.colorScheme.primary,
@@ -88,9 +108,9 @@ fun RegisterScreen(
                 onValueChange = { firstname = it; showError = false },
                 label = { Text("Imię") },
                 enabled = !isLoading,
-                isError = showError && !isFirstNameValid,
+                isError = firstNameError,
                 supportingText = {
-                    if (showError && !isFirstNameValid)
+                    if (firstNameError)
                         Text("Min. 2 znaki, tylko litery",
                             color = MaterialTheme.colorScheme.error)
                 },
@@ -105,9 +125,9 @@ fun RegisterScreen(
                 onValueChange = { lastname = it; showError = false },
                 label = { Text("Nazwisko") },
                 enabled = !isLoading,
-                isError = showError && !isLastNameValid,
+                isError = lastNameError,
                 supportingText = {
-                    if (showError && !isLastNameValid)
+                    if (lastNameError)
                         Text("Min. 2 znaki, tylko litery",
                             color = MaterialTheme.colorScheme.error)
                 },
@@ -126,9 +146,9 @@ fun RegisterScreen(
             label = { Text("Numer telefonu") },
             leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
             enabled = !isLoading,
-            isError = showError && !isPhoneValid,
+            isError = phoneError,
             supportingText = {
-                if (showError && !isPhoneValid)
+                if (phoneError)
                     Text("Nieprawidłowy numer (np. +48 123 456 789)",
                         color = MaterialTheme.colorScheme.error)
             },
@@ -147,9 +167,9 @@ fun RegisterScreen(
             label = { Text("E-mail") },
             leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
             enabled = !isLoading,
-            isError = showError && !isEmailValid,
+            isError = emailError,
             supportingText = {
-                if (showError && !isEmailValid)
+                if (emailError)
                     Text("Nieprawidłowy adres e-mail (np. jan@example.com)",
                         color = MaterialTheme.colorScheme.error)
             },
@@ -163,14 +183,88 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.height(4.dp))
 
         OutlinedTextField(
+            value = addressStreet,
+            onValueChange = { addressStreet = it; showError = false },
+            label = { Text("Ulica i numer") },
+            leadingIcon = { Icon(Icons.Default.Place, null) },
+            enabled = !isLoading,
+            isError = streetError,
+            supportingText = {
+                if (streetError) Text("Min. 3 znaki", color = MaterialTheme.colorScheme.error)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = textFieldColors,
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+        )
+
+        Row(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = addressCity,
+                onValueChange = { addressCity = it; showError = false },
+                label = { Text("Miasto") },
+                enabled = !isLoading,
+                isError = cityError,
+                supportingText = {
+                    if (cityError) Text("Min. 2 znaki", color = MaterialTheme.colorScheme.error)
+                },
+                modifier = Modifier.weight(2f),
+                shape = RoundedCornerShape(12.dp),
+                colors = textFieldColors,
+                singleLine = true
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            OutlinedTextField(
+                value = addressZip,
+                onValueChange = { addressZip = it; showError = false },
+                label = { 
+                    Text(
+                        text = "Kod pocztowy",
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                },
+                enabled = !isLoading,
+                isError = zipError,
+                supportingText = {
+                    if (zipError) Text("00-000", color = MaterialTheme.colorScheme.error)
+                },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp),
+                colors = textFieldColors,
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+        }
+
+        OutlinedTextField(
+            value = addressCountry,
+            onValueChange = { addressCountry = it; showError = false },
+            label = { Text("Kraj") },
+            leadingIcon = { Icon(Icons.Default.Flag, null) },
+            enabled = !isLoading,
+            isError = countryError,
+            supportingText = {
+                if (countryError) Text("Min. 2 znaki", color = MaterialTheme.colorScheme.error)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            colors = textFieldColors,
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        OutlinedTextField(
             value = password,
             onValueChange = { password = it; showError = false },
             label = { Text("Hasło (min. 8 znaków)") },
             leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
             enabled = !isLoading,
-            isError = showError && !isPasswordValid,
+            isError = passwordError,
             supportingText = {
-                if (showError && !isPasswordValid)
+                if (passwordError)
                     Text("Hasło musi mieć co najmniej 8 znaków",
                         color = MaterialTheme.colorScheme.error)
             },
@@ -189,14 +283,14 @@ fun RegisterScreen(
             label = { Text("Powtórz hasło") },
             leadingIcon = { Icon(Icons.Default.LockReset, contentDescription = null) },
             enabled = !isLoading,
-            isError = showError && !passwordsMatch,
+            isError = confirmError,
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             colors = textFieldColors,
             singleLine = true,
             supportingText = {
-                if (showError && !passwordsMatch && confirmPassword.isNotEmpty())
+                if (confirmError)
                     Text("Hasła muszą być identyczne",
                         color = MaterialTheme.colorScheme.error)
             }
@@ -219,11 +313,15 @@ fun RegisterScreen(
                 if (canSubmit) {
                     viewModel.register(
                         RegisterRequest(
-                            firstName = firstname,
-                            lastName  = lastname,
-                            email     = email,
-                            password  = password,
-                            phone     = phone
+                            firstName      = firstname,
+                            lastName       = lastname,
+                            email          = email,
+                            password       = password,
+                            phone          = phone,
+                            addressStreet  = addressStreet,
+                            addressCity    = addressCity,
+                            addressZip     = addressZip,
+                            addressCountry = addressCountry
                         ),
                         onRegisterSuccess
                     )

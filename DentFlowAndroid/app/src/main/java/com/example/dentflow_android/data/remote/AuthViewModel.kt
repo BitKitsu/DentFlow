@@ -89,14 +89,13 @@ class AuthViewModel @Inject constructor(
     }
 
     fun logout() {
+        prefs.edit().clear().apply()
+        Log.d("AUTH_DEBUG", "Logged out, session data cleared locally.")
         viewModelScope.launch {
             try {
                 authService.logout()
             } catch (e: Exception) {
                 Log.e("AUTH_DEBUG", "Logout API error: ${e.message}")
-            } finally {
-                prefs.edit().clear().apply()
-                Log.d("AUTH_DEBUG", "Logged out, session data cleared.")
             }
         }
     }

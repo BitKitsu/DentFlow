@@ -262,7 +262,10 @@ fun AccountScreen(
 
         // --- PRZYCISK WYLOGUJ ---
         Button(
-            onClick = onLogoutClick,
+            onClick = {
+                authViewModel.logout()
+                onLogoutClick()
+            },
             modifier = Modifier.fillMaxWidth().height(56.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.error,

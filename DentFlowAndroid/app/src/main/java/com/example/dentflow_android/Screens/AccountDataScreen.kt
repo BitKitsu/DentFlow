@@ -46,7 +46,7 @@ fun AccountDataScreen(
     // Address (structured, like location table)
     var addressStreet  by remember { mutableStateOf(prefs.getString("user_addr_street",  "") ?: "") }
     var addressCity    by remember { mutableStateOf(prefs.getString("user_addr_city",    "") ?: "") }
-    var addressZip     by remember { mutableStateOf(prefs.getString("user_addr_zip",     "") ?: "") }
+    var addressZip     by remember { mutableStateOf(prefs.getString("user_addr_zip",     "")?.replace("-", "") ?: "") }
     var addressCountry by remember { mutableStateOf(prefs.getString("user_addr_country", "") ?: "") }
 
     // Password
@@ -70,7 +70,7 @@ fun AccountDataScreen(
     val lastNameError  = lastName.isNotBlank()  && !NAME_REGEX.matches(lastName)
     val emailError     = email.isNotBlank()     && !EMAIL_REGEX.matches(email)
     val phoneError     = phone.isNotBlank()     && !PHONE_REGEX.matches(phone)
-    val zipError       = addressZip.isNotBlank() && !Regex("^[0-9]{2}-[0-9]{3}$").matches(addressZip)
+    val zipError       = addressZip.isNotBlank() && !Regex("^[0-9]{5}$").matches(addressZip)
     val streetError    = addressStreet.isNotBlank() && addressStreet.length < 3
     val cityError      = addressCity.isNotBlank() && addressCity.length < 2
     val countryError   = addressCountry.isNotBlank() && addressCountry.length < 2
@@ -208,7 +208,32 @@ fun AccountDataScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 OutlinedTextField(
                     value = addressZip,
-                    onValueChange = { addressZip = it; profileError = null; profileSuccess = null },
+                    onValueChange = { input -> 
+                        addressZip = input.filter { it.isDigit() }.take(5)
+                        profileError = null
+                        profileSuccess = null 
+                    },
+                    visualTransformation = { text ->
+                        val trimmed = if (text.text.length >= 5) text.text.substring(0..4) else text.text
+                        var out = ""
+                        for (i in trimmed.indices) {
+                            out += trimmed[i]
+                            if (i == 1) out += "-"
+                        }
+                        val offsetMapping = object : androidx.compose.ui.text.input.OffsetMapping {
+                            override fun originalToTransformed(offset: Int): Int {
+                                if (offset <= 1) return offset
+                                if (offset <= 5) return offset + 1
+                                return 6
+                            }
+                            override fun transformedToOriginal(offset: Int): Int {
+                                if (offset <= 2) return offset
+                                if (offset <= 6) return offset - 1
+                                return 5
+                            }
+                        }
+                        androidx.compose.ui.text.input.TransformedText(androidx.compose.ui.text.AnnotatedString(out), offsetMapping)
+                    },
                     label = { 
                         Text(
                             text = "Kod pocztowy",
@@ -260,7 +285,7 @@ fun AccountDataScreen(
                         email          = email.takeIf          { it.isNotBlank() },
                         addressStreet  = addressStreet.takeIf  { it.isNotBlank() },
                         addressCity    = addressCity.takeIf    { it.isNotBlank() },
-                        addressZip     = addressZip.takeIf     { it.isNotBlank() },
+                        addressZip     = addressZip.takeIf     { it.isNotBlank() }?.let { if (it.length == 5) "${it.take(2)}-${it.drop(2)}" else it },
                         addressCountry = addressCountry.takeIf { it.isNotBlank() },
                         onSuccess = { profileSuccess = "Dane zostały zapisane." },
                         onError   = { profileError   = it }

@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.dentflow.identity.auth.api.AssignTenantRequest;
 import com.dentflow.identity.auth.api.ChangePasswordRequest;
+import com.dentflow.identity.auth.api.UpdateProfileRequest;
 import org.springframework.security.core.Authentication;
 
 @RestController
@@ -78,6 +79,16 @@ public class AuthController {
             Authentication authentication) {
         authService.changePassword(authentication.getName(), request);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/profile")
+    @Operation(summary = "Aktualizacja danych profilowych zalogowanego użytkownika")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<AuthResponse> updateProfile(
+            @Valid @RequestBody UpdateProfileRequest request,
+            Authentication authentication) {
+        AuthResponse response = authService.updateProfile(authentication.getName(), request);
+        return ResponseEntity.ok(response);
     }
 
 }

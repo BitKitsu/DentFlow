@@ -25,7 +25,7 @@ class RegisterRequestValidationTest {
     @Test
     void shouldHaveViolationsWhenEmailIsFake() {
         // Given
-        RegisterRequest request = new RegisterRequest("fake-email", "password123");
+        RegisterRequest request = new RegisterRequest("fake-email", "password123", null, null, null, null, null, null, null);
 
         // When
         Set<ConstraintViolation<RegisterRequest>> violations = validator.validate(request);
@@ -38,7 +38,7 @@ class RegisterRequestValidationTest {
     @Test
     void shouldNotHaveViolationsWhenEmailIsValid() {
         // Given
-        RegisterRequest request = new RegisterRequest("valid@example.com", "password123");
+        RegisterRequest request = new RegisterRequest("valid@example.com", "password123", null, null, null, null, null, null, null);
 
         // When
         Set<ConstraintViolation<RegisterRequest>> violations = validator.validate(request);

@@ -42,7 +42,7 @@ class AuthControllerTest {
     @WithMockUser
     void shouldReturnBadRequestWhenEmailIsInvalid() throws Exception {
         // Given
-        RegisterRequest invalidRequest = new RegisterRequest("fake-email", "password123");
+        RegisterRequest invalidRequest = new RegisterRequest("fake-email", "password123", null, null, null, null, null, null, null);
 
         // When & Then
         mockMvc.perform(post("/auth/register")
@@ -56,7 +56,7 @@ class AuthControllerTest {
     @WithMockUser
     void shouldReturnBadRequestWhenEmailIsEmpty() throws Exception {
         // Given
-        RegisterRequest invalidRequest = new RegisterRequest("", "password123");
+        RegisterRequest invalidRequest = new RegisterRequest("", "password123", null, null, null, null, null, null, null);
 
         // When & Then
         mockMvc.perform(post("/auth/register")

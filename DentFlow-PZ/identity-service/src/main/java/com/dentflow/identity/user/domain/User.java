@@ -25,6 +25,27 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(name = "first_name", length = 100)
+    private String firstName;
+
+    @Column(name = "last_name", length = 100)
+    private String lastName;
+
+    @Column(length = 20)
+    private String phone;
+
+    @Column(name = "address_street", length = 100)
+    private String addressStreet;
+
+    @Column(name = "address_city", length = 100)
+    private String addressCity;
+
+    @Column(name = "address_zip", length = 20)
+    private String addressZip;
+
+    @Column(name = "address_country", length = 50)
+    private String addressCountry;
+
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 

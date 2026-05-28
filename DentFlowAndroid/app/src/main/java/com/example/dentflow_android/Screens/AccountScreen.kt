@@ -243,7 +243,9 @@ fun AccountScreen(
                                     authViewModel.logout()
                                     onLogoutClick()
                                 },
-                                onError = { /* Opcjonalnie obsługa błędu */ }
+                                onError = { errorMsg ->
+                                    android.widget.Toast.makeText(context, errorMsg, android.widget.Toast.LENGTH_LONG).show()
+                                }
                             )
                         }
                     ) {

@@ -52,7 +52,7 @@ fun RegisterScreen(
     val isLastNameValid  = REG_NAME_REGEX.matches(lastname)
     val isEmailValid     = REG_EMAIL_REGEX.matches(email)
     val isPhoneValid     = REG_PHONE_REGEX.matches(phone)
-    val isZipValid       = Regex("^[0-9]{2}-[0-9]{3}$").matches(addressZip)
+    val isZipValid       = Regex("^[0-9]{5}$").matches(addressZip)
     val isStreetValid    = addressStreet.length >= 3
     val isCityValid      = addressCity.length >= 2
     val isCountryValid   = addressCountry.length >= 2
@@ -217,7 +217,31 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.width(8.dp))
             OutlinedTextField(
                 value = addressZip,
-                onValueChange = { addressZip = it; showError = false },
+                onValueChange = { input -> 
+                    addressZip = input.filter { it.isDigit() }.take(5)
+                    showError = false 
+                },
+                visualTransformation = { text ->
+                    val trimmed = if (text.text.length >= 5) text.text.substring(0..4) else text.text
+                    var out = ""
+                    for (i in trimmed.indices) {
+                        out += trimmed[i]
+                        if (i == 1) out += "-"
+                    }
+                    val offsetMapping = object : androidx.compose.ui.text.input.OffsetMapping {
+                        override fun originalToTransformed(offset: Int): Int {
+                            if (offset <= 1) return offset
+                            if (offset <= 5) return offset + 1
+                            return 6
+                        }
+                        override fun transformedToOriginal(offset: Int): Int {
+                            if (offset <= 2) return offset
+                            if (offset <= 6) return offset - 1
+                            return 5
+                        }
+                    }
+                    androidx.compose.ui.text.input.TransformedText(androidx.compose.ui.text.AnnotatedString(out), offsetMapping)
+                },
                 label = { 
                     Text(
                         text = "Kod pocztowy",
@@ -320,7 +344,7 @@ fun RegisterScreen(
                             phone          = phone,
                             addressStreet  = addressStreet,
                             addressCity    = addressCity,
-                            addressZip     = addressZip,
+                            addressZip     = if (addressZip.length == 5) "${addressZip.take(2)}-${addressZip.drop(2)}" else addressZip,
                             addressCountry = addressCountry
                         ),
                         onRegisterSuccess

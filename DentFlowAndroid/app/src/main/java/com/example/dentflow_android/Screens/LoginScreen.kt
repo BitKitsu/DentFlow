@@ -35,10 +35,17 @@ fun LoginScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
 
-    // Styl pól tekstowych
     val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = Color.Black,
+        unfocusedTextColor = Color.Black,
         focusedBorderColor = MaterialTheme.colorScheme.primary,
-        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+        unfocusedBorderColor = Color.Gray,
+        focusedLabelColor = MaterialTheme.colorScheme.primary,
+        unfocusedLabelColor = Color.DarkGray,
+        focusedLeadingIconColor = MaterialTheme.colorScheme.primary,
+        unfocusedLeadingIconColor = Color.DarkGray,
+        focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
+        unfocusedTrailingIconColor = Color.DarkGray,
         cursorColor = MaterialTheme.colorScheme.primary
     )
 
@@ -131,7 +138,11 @@ fun LoginScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    disabledContainerColor = Color.LightGray,
+                    disabledContentColor = Color.DarkGray
+                )
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(

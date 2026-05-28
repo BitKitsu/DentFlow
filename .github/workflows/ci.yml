@@ -51,7 +51,7 @@ jobs:
           cache: maven
 
       - name: Install pdf-generator
-        working-directory: pdf-generator
+        working-directory: DentFlow-PZ/pdf-generator
         run: mvn clean install -DskipTests -q
 
       - name: Compile

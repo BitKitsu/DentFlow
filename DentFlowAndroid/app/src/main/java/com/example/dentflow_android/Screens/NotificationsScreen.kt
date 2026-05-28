@@ -1,5 +1,8 @@
 package com.example.dentflow_android.Screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,47 +28,171 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Ekran powiadomień
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
 fun NotificationsScreen(
     viewModel: NotificationViewModel = hiltViewModel()
 ) {
-    // Obserwujemy stan powiadomień
-    val notifications by viewModel.notifications.collectAsState()
+    val notifications  by viewModel.notifications.collectAsState()
+    val isLoading      by viewModel.isLoading.collectAsState()
+    val errorMessage   by viewModel.errorMessage.collectAsState()
+    val unreadCount    by viewModel.unreadCount.collectAsState()
 
-    // Ładowanie powiadomień przy wejściu na ekran - ViewModel sam wie, jakie jest ID użytkownika
+    // Filtr: 0 = Wszystkie, 1 = Nieprzeczytane
+    var selectedFilter by remember { mutableIntStateOf(0) }
+
     LaunchedEffect(Unit) {
         viewModel.fetchNotifications()
+    }
+
+    val displayed = remember(notifications, selectedFilter) {
+        if (selectedFilter == 1) notifications.filter { !it.read } else notifications
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
+            .padding(horizontal = 16.dp)
     ) {
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // ── Nagłówek ──────────────────────────────────────────────────────────
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "Powiadomienia",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Powiadomienia",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                if (unreadCount > 0) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Badge(
+                        containerColor = MaterialTheme.colorScheme.error
+                    ) {
+                        Text(
+                            text = unreadCount.toString(),
+                            color = MaterialTheme.colorScheme.onError,
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
+                }
+            }
 
-            // Przycisk "Oznacz wszystkie" - wywołanie bez parametrów
-            TextButton(onClick = { viewModel.markAllAsRead() }) {
-                Text("Oznacz wszystkie")
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Odśwież
+                IconButton(onClick = { viewModel.fetchNotifications() }) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Odśwież",
+                        tint = MaterialTheme.colorScheme.primary)
+                }
+                // Oznacz wszystkie
+                if (unreadCount > 0) {
+                    TextButton(onClick = { viewModel.markAllAsRead() }) {
+                        Text("Oznacz wszystkie")
+                    }
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        if (notifications.isEmpty()) {
+        // ── Filtry (chips) ────────────────────────────────────────────────────
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(
+                selected = selectedFilter == 0,
+                onClick  = { selectedFilter = 0 },
+                label    = { Text("Wszystkie (${notifications.size})") },
+                leadingIcon = {
+                    if (selectedFilter == 0)
+                        Icon(Icons.Default.Check, contentDescription = null,
+                            modifier = Modifier.size(16.dp))
+                }
+            )
+            FilterChip(
+                selected = selectedFilter == 1,
+                onClick  = { selectedFilter = 1 },
+                label    = { Text("Nieprzeczytane ($unreadCount)") },
+                leadingIcon = {
+                    if (selectedFilter == 1)
+                        Icon(Icons.Default.Check, contentDescription = null,
+                            modifier = Modifier.size(16.dp))
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // ── Błąd sieci ────────────────────────────────────────────────────────
+        AnimatedVisibility(visible = errorMessage != null, enter = fadeIn(), exit = fadeOut()) {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.errorContainer
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.WifiOff, contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = errorMessage ?: "",
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    TextButton(onClick = { viewModel.fetchNotifications() }) {
+                        Text("Ponów")
+                    }
+                }
+            }
+        }
+
+        // ── Spinner ───────────────────────────────────────────────────────────
+        if (isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Brak nowych powiadomień", color = Color.Gray)
+                CircularProgressIndicator()
+            }
+            return@Column
+        }
+
+        // ── Lista / pusty stan ────────────────────────────────────────────────
+        if (displayed.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = if (selectedFilter == 1)
+                            Icons.Default.MarkEmailRead
+                        else
+                            Icons.Default.NotificationsNone,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.outline
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = if (selectedFilter == 1)
+                            "Brak nieprzeczytanych powiadomień"
+                        else
+                            "Brak powiadomień",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
             }
         } else {
             LazyColumn(
@@ -73,7 +200,7 @@ fun NotificationsScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = PaddingValues(bottom = 16.dp)
             ) {
-                items(notifications, key = { it.id }) { notification ->
+                items(displayed, key = { it.id }) { notification ->
                     NotificationCard(
                         notification = notification,
                         onClick = {
@@ -88,29 +215,46 @@ fun NotificationsScreen(
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Karta powiadomienia
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
 fun NotificationCard(
     notification: NotificationDTO,
     onClick: () -> Unit
 ) {
     val icon = when (notification.type) {
-        "NEW_APPOINTMENT" -> Icons.Default.AddCircle
-        "CANCELLED" -> Icons.Default.Cancel
-        "REMINDER" -> Icons.Default.NotificationsActive
-        else -> Icons.Default.Info
+        "NEW_APPOINTMENT"  -> Icons.Default.AddCircle
+        "CANCELLED"        -> Icons.Default.Cancel
+        "REMINDER"         -> Icons.Default.NotificationsActive
+        "EMAIL"            -> Icons.Default.Email
+        "IN_APP"           -> Icons.Default.Notifications
+        else               -> Icons.Default.Info
     }
 
     val iconColor = when (notification.type) {
-        "NEW_APPOINTMENT" -> Color(0xFF4CAF50)
-        "CANCELLED" -> MaterialTheme.colorScheme.error
-        "REMINDER" -> Color(0xFFFF9800)
-        else -> MaterialTheme.colorScheme.primary
+        "NEW_APPOINTMENT"  -> Color(0xFF4CAF50)
+        "CANCELLED"        -> MaterialTheme.colorScheme.error
+        "REMINDER"         -> Color(0xFFFF9800)
+        "EMAIL"            -> Color(0xFF2196F3)
+        "IN_APP"           -> MaterialTheme.colorScheme.primary
+        else               -> MaterialTheme.colorScheme.primary
+    }
+
+    val typeLabel = when (notification.type) {
+        "NEW_APPOINTMENT"  -> "Nowa wizyta"
+        "CANCELLED"        -> "Wizyta odwołana"
+        "REMINDER"         -> "Przypomnienie"
+        "EMAIL"            -> "E-mail"
+        "IN_APP"           -> "Powiadomienie"
+        else               -> "System"
     }
 
     val formattedTime = remember(notification.createdAt) {
         try {
             val zdt = ZonedDateTime.parse(notification.createdAt)
-            zdt.format(DateTimeFormatter.ofPattern("HH:mm, dd MMM", Locale("pl")))
+            zdt.format(DateTimeFormatter.ofPattern("HH:mm, dd MMM yyyy", Locale.forLanguageTag("pl")))
         } catch (e: Exception) {
             notification.createdAt.take(16).replace("T", " ")
         }
@@ -125,11 +269,11 @@ fun NotificationCard(
             containerColor = if (notification.read)
                 MaterialTheme.colorScheme.surface
             else
-                MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f)
         ),
-        elevation = CardDefaults.cardElevation(if (notification.read) 0.dp else 4.dp),
+        elevation = CardDefaults.cardElevation(if (notification.read) 0.dp else 3.dp),
         border = if (!notification.read)
-            BorderStroke(2.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f))
+            BorderStroke(1.5.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f))
         else
             null
     ) {
@@ -139,30 +283,28 @@ fun NotificationCard(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.Top
         ) {
+            // Ikona z kółkiem
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(42.dp)
                     .clip(CircleShape)
-                    .background(iconColor.copy(alpha = 0.1f)),
+                    .background(iconColor.copy(alpha = 0.12f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(24.dp))
+                Icon(icon, contentDescription = null,
+                    tint = iconColor, modifier = Modifier.size(22.dp))
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(14.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = when(notification.type) {
-                            "NEW_APPOINTMENT" -> "Nowa wizyta"
-                            "CANCELLED" -> "Wizyta odwołana"
-                            "REMINDER" -> "Przypomnienie"
-                            else -> "System"
-                        },
+                        text = typeLabel,
                         fontWeight = if (notification.read) FontWeight.Medium else FontWeight.Bold,
                         style = MaterialTheme.typography.bodyLarge,
                         color = if (notification.read)
@@ -170,16 +312,18 @@ fun NotificationCard(
                         else
                             MaterialTheme.colorScheme.secondary
                     )
+                    // Dot badge dla nieprzeczytanych
                     if (!notification.read) {
                         Box(
                             modifier = Modifier
-                                .size(8.dp)
+                                .size(9.dp)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.primary)
-                                .align(Alignment.CenterVertically)
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(2.dp))
 
                 Text(
                     text = notification.message,
@@ -187,7 +331,7 @@ fun NotificationCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
                     text = formattedTime,

@@ -3,6 +3,7 @@ package com.example.dentflow_android.data.remote
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
+import retrofit2.http.PUT
 
 interface AuthService {
 
@@ -17,4 +18,12 @@ interface AuthService {
 
     @POST("auth/tenant")
     suspend fun assignTenant(@Body request: AssignTenantRequest): Response<AuthResponse>
+
+    @PUT("auth/change-password")
+    suspend fun changePassword(@Body request: ChangePasswordRequest): Response<Unit>
 }
+
+data class ChangePasswordRequest(
+    val currentPassword: String,
+    val newPassword: String
+)

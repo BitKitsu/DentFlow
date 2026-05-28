@@ -34,7 +34,8 @@ fun AccountScreen(
     tenantViewModel: TenantViewModel = hiltViewModel(),
     onSettingsClick: () -> Unit,
     onLogoutClick: () -> Unit,
-    onEditBusinessClick: () -> Unit
+    onEditBusinessClick: () -> Unit,
+    onAccountDataClick: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -43,7 +44,7 @@ fun AccountScreen(
     val prefs = remember { context.getSharedPreferences("dentflow_prefs", android.content.Context.MODE_PRIVATE) }
     val userEmail = remember { prefs.getString("user_email", "uzytkownik@dentflow.pl") ?: "" }
     val userRole = remember { prefs.getString("user_role", "STAFF") ?: "STAFF" }
-    val isOwner = userRole == "OWNER" || userRole == "ADMIN"
+    val isOwner = userRole == "OWNER"
 
     // --- WCZYTYWANIE DANYCH ---
     LaunchedEffect(Unit) {
@@ -212,13 +213,14 @@ fun AccountScreen(
             onClick = onSettingsClick
         )
 
+        var showComingSoon by remember { mutableStateOf(false) }
         AccountMenuItem(
             title = "Dane konta",
             icon = Icons.Default.ManageAccounts,
-            onClick = { /* Ekran edycji danych */ }
+            onClick = onAccountDataClick
         )
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(60.dp))
 
         // --- PRZYCISK WYLOGUJ ---
         Button(

@@ -97,4 +97,10 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             @Param("dentistId") Long dentistId,
             @Param("patientId") Long patientId
     );
+
+    @Query("SELECT a FROM Appointment a WHERE a.status = 'SCHEDULED' " +
+           "AND a.startAt >= :from AND a.startAt < :to")
+    List<Appointment> findUpcomingScheduled(
+            @Param("from") OffsetDateTime from,
+            @Param("to") OffsetDateTime to);
 }

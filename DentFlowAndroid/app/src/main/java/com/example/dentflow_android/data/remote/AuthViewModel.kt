@@ -41,6 +41,7 @@ class AuthViewModel @Inject constructor(
                             putLong("tenant_id", body.tenantId)
                             putLong("user_id", body.userId)
                             putString("user_role", role)
+                            putString("user_email", body.email)
                             apply()
                         }
                         Log.d("AUTH_DEBUG", "Zalogowano pomyślnie. TenantID: ${body.tenantId}, Rola: $role")
@@ -138,6 +139,31 @@ class AuthViewModel @Inject constructor(
                     apply()
                 }
                 Log.d("AUTH_DEBUG", "Wylogowano lokalnie i wyczyszczono dane sesji.")
+            }
+        }
+    }
+
+    fun changePassword(currentPassword: String, newPassword: String,
+                       onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val response = authService.changePassword(
+                    ChangePasswordRequest(currentPassword, newPassword)
+                )
+                if (response.isSuccessful) {
+                    onSuccess()
+                } else {
+                    onError(when (response.code()) {
+                        401 -> "Obecne hasło jest nieprawidłowe."
+                        400 -> "Nowe hasło musi mieć co najmniej 8 znaków."
+                        else -> "Błąd zmiany hasła (${response.code()})"
+                    })
+                }
+            } catch (e: Exception) {
+                onError("Błąd połączenia z serwerem.")
+            } finally {
+                _isLoading.value = false
             }
         }
     }

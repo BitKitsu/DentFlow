@@ -4,6 +4,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.DELETE
 
 interface AuthService {
 
@@ -24,6 +25,9 @@ interface AuthService {
 
     @PUT("auth/profile")
     suspend fun updateProfile(@Body request: UpdateProfileRequest): Response<AuthResponse>
+
+    @DELETE("auth/account")
+    suspend fun deleteAccount(): Response<Unit>
 }
 
 data class ChangePasswordRequest(

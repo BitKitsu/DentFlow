@@ -126,6 +126,24 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun deleteAccount(onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val response = authService.deleteAccount()
+                if (response.isSuccessful) {
+                    onSuccess()
+                } else {
+                    onError("Błąd usuwania konta (${response.code()})")
+                }
+            } catch (e: Exception) {
+                onError("Błąd połączenia z serwerem.")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
     fun updateProfile(
         firstName: String?,
         lastName: String?,
@@ -143,14 +161,14 @@ class AuthViewModel @Inject constructor(
             try {
                 val response = authService.updateProfile(
                     UpdateProfileRequest(
-                        email          = email?.takeIf          { it.isNotBlank() },
-                        firstName      = firstName?.takeIf      { it.isNotBlank() },
-                        lastName       = lastName?.takeIf       { it.isNotBlank() },
-                        phone          = phone?.takeIf          { it.isNotBlank() },
-                        addressStreet  = addressStreet?.takeIf  { it.isNotBlank() },
-                        addressCity    = addressCity?.takeIf    { it.isNotBlank() },
-                        addressZip     = addressZip?.takeIf     { it.isNotBlank() },
-                        addressCountry = addressCountry?.takeIf { it.isNotBlank() }
+                        email          = email?.takeIf { it.isNotBlank() },
+                        firstName      = firstName,
+                        lastName       = lastName,
+                        phone          = phone,
+                        addressStreet  = addressStreet,
+                        addressCity    = addressCity,
+                        addressZip     = addressZip,
+                        addressCountry = addressCountry
                     )
                 )
                 if (response.isSuccessful && response.body() != null) {

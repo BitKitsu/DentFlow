@@ -91,4 +91,12 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @DeleteMapping("/account")
+    @Operation(summary = "Usunięcie konta zalogowanego użytkownika")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<Void> deleteAccount(Authentication authentication) {
+        authService.deleteAccount(authentication.getName());
+        return ResponseEntity.noContent().build();
+    }
+
 }

@@ -176,6 +176,19 @@ public class AuthService {
     }
 
     // -------------------------------------------------------------------------
+    // Account deletion
+    // -------------------------------------------------------------------------
+
+    @Transactional
+    public void deleteAccount(String currentEmail) {
+        User user = userRepository.findByEmail(currentEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Użytkownik nie istnieje"));
+        userRepository.delete(user);
+        log.info("Account deleted for userId: {}", user.getId());
+    }
+
+    // -------------------------------------------------------------------------
     // Helper
     // -------------------------------------------------------------------------
 

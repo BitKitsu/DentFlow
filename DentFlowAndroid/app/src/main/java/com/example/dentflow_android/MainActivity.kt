@@ -196,7 +196,7 @@ fun MainDashboard(
                                 Icon(navItem.icon, contentDescription = navItem.label)
                             }
                         },
-                        label = { Text(navItem.label, fontSize = 10.sp) },
+                        label = { Text(navItem.label, fontSize = 10.sp, maxLines = 1, softWrap = false) },
                         selected = selectedItem == navItem.tabIndex,
                         onClick = {
                             onTabChange(navItem.tabIndex)

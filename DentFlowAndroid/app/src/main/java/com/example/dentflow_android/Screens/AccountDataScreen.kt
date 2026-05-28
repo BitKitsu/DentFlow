@@ -31,6 +31,8 @@ fun AccountDataScreen(
     val context = LocalContext.current
     val prefs = remember { context.getSharedPreferences("dentflow_prefs", android.content.Context.MODE_PRIVATE) }
     val userEmail = remember { prefs.getString("user_email", "") ?: "" }
+    val userRole  = remember { prefs.getString("user_role",  "") ?: "" }
+    val userId    = remember { prefs.getLong("user_id", -1L) }
 
     var currentPassword by remember { mutableStateOf("") }
     var newPassword     by remember { mutableStateOf("") }
@@ -45,9 +47,11 @@ fun AccountDataScreen(
 
     val isLoading by authViewModel.isLoading.collectAsState()
 
+    val sameAsOld    = currentPassword.isNotBlank() && newPassword == currentPassword
     val isFormValid = currentPassword.isNotBlank()
             && newPassword.length >= 8
             && newPassword == confirmPassword
+            && !sameAsOld
 
     Scaffold(
         topBar = {
@@ -85,7 +89,8 @@ fun AccountDataScreen(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                 )
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // E-mail
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Email, contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
@@ -94,6 +99,41 @@ fun AccountDataScreen(
                             Text("Adres e-mail", style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(userEmail.ifBlank { "Brak danych" }, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    // Rola
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Badge, contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text("Rola w systemie", style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                text = when (userRole) {
+                                    "OWNER"  -> "Właściciel kliniki"
+                                    "DOCTOR" -> "Lekarz / Dentysta"
+                                    "USER"   -> "Użytkownik"
+                                    else     -> userRole.ifBlank { "Brak danych" }
+                                },
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    // ID użytkownika
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Tag, contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text("ID użytkownika", style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(
+                                text = if (userId >= 0) "#$userId" else "Brak danych",
+                                fontWeight = FontWeight.SemiBold
+                            )
                         }
                     }
                 }
@@ -141,7 +181,18 @@ fun AccountDataScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                isError = newPassword.isNotBlank() && newPassword.length < 8,
+                isError = (newPassword.isNotBlank() && newPassword.length < 8)
+                       || (newPassword.isNotBlank() && sameAsOld),
+                supportingText = {
+                    when {
+                        newPassword.isNotBlank() && sameAsOld ->
+                            Text("Nowe hasło nie może być takie samo jak obecne",
+                                color = MaterialTheme.colorScheme.error)
+                        newPassword.isNotBlank() && newPassword.length < 8 ->
+                            Text("Hasło musi mieć co najmniej 8 znaków",
+                                color = MaterialTheme.colorScheme.error)
+                    }
+                },
                 singleLine = true
             )
 

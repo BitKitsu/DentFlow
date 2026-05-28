@@ -44,7 +44,7 @@ fun AccountScreen(
     val prefs = remember { context.getSharedPreferences("dentflow_prefs", android.content.Context.MODE_PRIVATE) }
     val userEmail = remember { prefs.getString("user_email", "uzytkownik@dentflow.pl") ?: "" }
     val userRole = remember { prefs.getString("user_role", "STAFF") ?: "STAFF" }
-    val isOwner = userRole == "OWNER" || userRole == "ADMIN"
+    val isOwner = userRole == "OWNER"
 
     // --- WCZYTYWANIE DANYCH ---
     LaunchedEffect(Unit) {

@@ -42,7 +42,7 @@ class VisitViewModel @Inject constructor(
         get() = prefs.getString("user_role", "USER") ?: "USER"
 
     private val isPatient: Boolean
-        get() = userRole != "ADMIN" && userRole != "DOCTOR"
+        get() = userRole != "OWNER" && userRole != "DOCTOR"
 
     init {
         refreshVisits()

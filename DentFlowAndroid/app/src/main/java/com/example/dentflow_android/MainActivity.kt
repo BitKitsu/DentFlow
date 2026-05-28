@@ -122,7 +122,12 @@ class MainActivity : ComponentActivity() {
 
                     composable("account_data") {
                         AccountDataScreen(
-                            onBackClick = { navController.popBackStack() }
+                            onBackClick = {
+                                navController.navigate("main_dashboard") {
+                                    popUpTo("main_dashboard") { inclusive = false }
+                                    launchSingleTop = true
+                                }
+                            }
                         )
                     }
                 }
@@ -153,16 +158,16 @@ fun MainDashboard(
 
     val currentTenant = tenantData
     val userRole = prefs.getString("user_role", "USER") ?: "USER"
-    val isAdmin = userRole == "ADMIN"
+    val isOwner  = userRole == "OWNER"
     val isDoctor = userRole == "DOCTOR"
 
     // Budujemy listę kart nawigacyjnych na podstawie roli
     data class NavItem(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector, val tabIndex: Int)
     val navItems = buildList {
         add(NavItem("Home", Icons.Default.Home, 0))
-        if (isAdmin) add(NavItem("Firma", Icons.Default.Business, 1))
-        if (isAdmin) add(NavItem("Admin", Icons.Default.AdminPanelSettings, 2))
-        if (isAdmin || isDoctor) add(NavItem("Wizyty", Icons.Default.CalendarMonth, 3))
+        if (isOwner) add(NavItem("Firma", Icons.Default.Business, 1))
+        if (isOwner) add(NavItem("Admin", Icons.Default.AdminPanelSettings, 2))
+        if (isOwner || isDoctor) add(NavItem("Wizyty", Icons.Default.CalendarMonth, 3))
         add(NavItem("Alarmy", Icons.Default.Notifications, 4))
         add(NavItem("Konto", Icons.Default.AccountCircle, 5))
     }

@@ -28,7 +28,11 @@ data class RegisterRequest(
     val lastName: String,
     val email: String,
     val password: String,
-    val phone: String
+    val phone: String,
+    val addressStreet: String? = null,
+    val addressCity: String? = null,
+    val addressZip: String? = null,
+    val addressCountry: String? = null
 )
 
 // Profile update — all fields optional

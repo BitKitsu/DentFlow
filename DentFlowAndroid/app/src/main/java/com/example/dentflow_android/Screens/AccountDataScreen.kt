@@ -197,7 +197,13 @@ fun AccountDataScreen(
                 OutlinedTextField(
                     value = addressZip,
                     onValueChange = { addressZip = it; profileError = null; profileSuccess = null },
-                    label = { Text("Kod pocztowy") },
+                    label = { 
+                        Text(
+                            text = "Kod pocztowy",
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                    },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,

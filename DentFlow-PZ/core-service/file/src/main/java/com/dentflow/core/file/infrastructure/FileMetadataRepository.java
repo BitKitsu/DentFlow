@@ -10,6 +10,7 @@ import java.util.Optional;
 @Repository
 public interface FileMetadataRepository extends JpaRepository<FileMetadata, Long> {
     List<FileMetadata> findByTenantId(Long tenantId);
+    List<FileMetadata> findByTenantIdIsNull();
     Optional<FileMetadata> findByIdAndTenantId(Long id, Long tenantId);
     List<FileMetadata> findByUploadedBy(Long uploadedBy);
 }

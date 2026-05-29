@@ -73,7 +73,7 @@ fun HomeScreen(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = { Text("Zabieg, miasto lub nazwisko...") },
+            placeholder = { Text("Szukaj usług lub specjalisty...", maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
             leadingIcon = { Icon(Icons.Default.Search, null, tint = MaterialTheme.colorScheme.primary) },
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {

@@ -6,6 +6,7 @@ import android.util.Log
 import com.example.dentflow_android.BuildConfig
 import com.example.dentflow_android.data.remote.ApiService
 import com.example.dentflow_android.data.remote.AuthService
+import com.example.dentflow_android.data.remote.FileApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -94,5 +95,10 @@ object NetworkModule {
     @Singleton
     fun provideApiService(@Named("core_retrofit") retrofit: Retrofit): ApiService =
         retrofit.create(ApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideFileApiService(@Named("core_retrofit") retrofit: Retrofit): FileApiService =
+        retrofit.create(FileApiService::class.java)
 
 }

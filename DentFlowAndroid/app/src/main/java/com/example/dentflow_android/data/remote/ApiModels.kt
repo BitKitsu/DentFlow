@@ -8,6 +8,7 @@ data class TenantResponse(
     val id: Long,
     val name: String,
     val status: String? = null,
+    val logoUrl: String? = null,
     val locations: List<LocationResponse>? = emptyList()
 )
 data class ServiceCatalogRequest(

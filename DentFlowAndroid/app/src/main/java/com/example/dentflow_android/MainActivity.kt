@@ -25,6 +25,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.dentflow_android.Screens.*
 import com.example.dentflow_android.data.ViewModel.*
+import com.example.dentflow_android.data.remote.AuthViewModel
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -68,16 +69,13 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("main_dashboard") {
-                        val ctx = androidx.compose.ui.platform.LocalContext.current
-                        val prefs = ctx.getSharedPreferences("dentflow_prefs", android.content.Context.MODE_PRIVATE)
                         MainDashboard(
                             isDarkTheme = isDarkTheme,
                             onThemeChange = { isDarkTheme = it },
                             navController = navController,
                             tenantViewModel = tenantViewModel,
                             selectedItem = currentDashboardTab,
-                            onTabChange = { currentDashboardTab = it },
-                            prefs = prefs
+                            onTabChange = { currentDashboardTab = it }
                         )
                     }
 
@@ -143,21 +141,22 @@ fun MainDashboard(
     navController: NavHostController,
     selectedItem: Int,
     onTabChange: (Int) -> Unit,
-    prefs: SharedPreferences,
     staffViewModel: StaffViewModel = hiltViewModel(),
     tenantViewModel: TenantViewModel = hiltViewModel(),
     notificationViewModel: NotificationViewModel = hiltViewModel(),
     visitViewModel: VisitViewModel = hiltViewModel(),
-    catalogViewModel: CatalogViewModel = hiltViewModel()
+    catalogViewModel: CatalogViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     var isShowingSettings by remember { mutableStateOf(false) }
 
     val staffList by staffViewModel.staffMembers.collectAsState()
     val tenantData by tenantViewModel.tenantState
     val serviceList by catalogViewModel.servicesState
+    val sessionState by authViewModel.sessionState.collectAsState()
 
     val currentTenant = tenantData
-    val userRole = prefs.getString("user_role", "USER") ?: "USER"
+    val userRole = sessionState.role
     val isOwner  = userRole == "OWNER"
     val isDoctor = userRole == "DOCTOR"
 

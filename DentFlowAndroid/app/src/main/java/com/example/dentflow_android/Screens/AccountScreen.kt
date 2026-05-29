@@ -48,11 +48,12 @@ fun AccountScreen(
     val scrollState = rememberScrollState()
     val context = LocalContext.current
 
-    // Pobieramy dane sesji bezpośrednio z preferencji (tymczasowo, docelowo z UserViewModel)
-    val prefs = remember { context.getSharedPreferences("dentflow_prefs", android.content.Context.MODE_PRIVATE) }
-    val userEmail = remember { prefs.getString("user_email", "uzytkownik@dentflow.pl") ?: "" }
-    val userRole = remember { prefs.getString("user_role", "STAFF") ?: "STAFF" }
+    val sessionState by authViewModel.sessionState.collectAsState()
+    val userEmail = sessionState.email.takeIf { it.isNotBlank() } ?: "uzytkownik@dentflow.pl"
+    val userRole = sessionState.role
     val isOwner = userRole == "OWNER"
+    val avatarUrl = sessionState.avatarUrl
+    val tenantId = sessionState.tenantId
 
     // Read data
     LaunchedEffect(Unit) {
@@ -61,10 +62,6 @@ fun AccountScreen(
 
     val tenantData by tenantViewModel.tenantState
     val isUploading by fileViewModel.isUploading.collectAsState()
-    val tenantId = remember { prefs.getLong("tenant_id", 0L) }
-
-    // Avatar saved in SharedPrefs or updated after upload
-    var avatarUrl by remember { mutableStateOf(prefs.getString("user_avatar_url", "") ?: "") }
     // Clonic logo downloaded from tenantState
     var logoUrl by remember(tenantData) { mutableStateOf(tenantData?.logoUrl ?: "") }
 
@@ -75,12 +72,11 @@ fun AccountScreen(
             fileViewModel.uploadImage(
                 context = context, tenantId = tenantId, uri = uri,
                 onSuccess = { url ->
-                    avatarUrl = url
                     authViewModel.updateProfile(
                         firstName = null, lastName = null, phone = null,
                         email = null, addressStreet = null, addressCity = null,
                         addressZip = null, addressCountry = null, avatarUrl = url,
-                        onSuccess = { prefs.edit().putString("user_avatar_url", url).apply() },
+                        onSuccess = {},
                         onError = {}
                     )
                 },

@@ -35,6 +35,7 @@ import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
+import com.example.dentflow_android.data.remote.AuthViewModel
 import com.example.dentflow_android.data.ViewModel.CatalogViewModel
 import com.example.dentflow_android.data.ViewModel.FileViewModel
 import com.example.dentflow_android.data.ViewModel.PatientViewModel
@@ -52,11 +53,12 @@ fun BusinessScreen(
     patientViewModel: PatientViewModel = hiltViewModel(),
     scheduleViewModel: ScheduleViewModel = hiltViewModel(),
     catalogViewModel: CatalogViewModel = hiltViewModel(),
-    visitViewModel: VisitViewModel = hiltViewModel()
+    visitViewModel: VisitViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val prefs = remember { context.getSharedPreferences("dentflow_prefs", android.content.Context.MODE_PRIVATE) }
-    val tenantId = remember { prefs.getLong("tenant_id", 0L) }
+    val sessionState by authViewModel.sessionState.collectAsState()
+    val tenantId = sessionState.tenantId
 
     var showStaffManagement by remember { mutableStateOf(false) }
     var showPatientScreen by remember { mutableStateOf(false) }

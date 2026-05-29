@@ -46,24 +46,22 @@ fun AccountDataScreen(
     fileViewModel: FileViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val prefs = remember {
-        context.getSharedPreferences("dentflow_prefs", android.content.Context.MODE_PRIVATE)
-    }
+    val sessionState by viewModel.sessionState.collectAsState()
 
     // Personal data
-    var firstName      by remember { mutableStateOf(prefs.getString("user_first_name",  "") ?: "") }
-    var lastName       by remember { mutableStateOf(prefs.getString("user_last_name",   "") ?: "") }
-    var phone          by remember { mutableStateOf(prefs.getString("user_phone",        "") ?: "") }
-    var email          by remember { mutableStateOf(prefs.getString("user_email",        "") ?: "") }
+    var firstName      by remember { mutableStateOf(sessionState.firstName) }
+    var lastName       by remember { mutableStateOf(sessionState.lastName) }
+    var phone          by remember { mutableStateOf(sessionState.phone) }
+    var email          by remember { mutableStateOf(sessionState.email) }
 
     // Address (structured, like location table)
-    var addressStreet  by remember { mutableStateOf(prefs.getString("user_addr_street",  "") ?: "") }
-    var addressCity    by remember { mutableStateOf(prefs.getString("user_addr_city",    "") ?: "") }
-    var addressZip     by remember { mutableStateOf(prefs.getString("user_addr_zip",     "")?.replace("-", "") ?: "") }
-    var addressCountry by remember { mutableStateOf(prefs.getString("user_addr_country", "") ?: "") }
-    var avatarUrl      by remember { mutableStateOf(prefs.getString("user_avatar_url", "") ?: "") }
+    var addressStreet  by remember { mutableStateOf(sessionState.addressStreet) }
+    var addressCity    by remember { mutableStateOf(sessionState.addressCity) }
+    var addressZip     by remember { mutableStateOf(sessionState.addressZip.replace("-", "")) }
+    var addressCountry by remember { mutableStateOf(sessionState.addressCountry) }
+    var avatarUrl      by remember { mutableStateOf(sessionState.avatarUrl) }
 
-    val tenantId = remember { prefs.getLong("tenant_id", 0L) }
+    val tenantId = sessionState.tenantId
     val isUploading by fileViewModel.isUploading.collectAsState()
 
     val cropLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
@@ -82,7 +80,7 @@ fun AccountDataScreen(
                         addressZip = null, addressCountry = null,
                         avatarUrl = url,
                         onSuccess = {
-                            prefs.edit().putString("user_avatar_url", url).apply()
+                            // State updated by AuthViewModel
                         },
                         onError = {}
                     )

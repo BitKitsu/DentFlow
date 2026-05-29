@@ -28,7 +28,12 @@ data class AddLocationRequest(
 
 data class TenantRequest(
     val name: String,
-    val location: LocationRequest
+    val logoUrl: String? = null,
+    val locationName: String? = null,
+    val addressStreet: String? = null,
+    val addressCity: String? = null,
+    val addressZip: String? = null,
+    val addressCountry: String? = null
 )
 
 data class RegisterTenantRequest(

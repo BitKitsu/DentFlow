@@ -30,8 +30,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Publiczne: rejestracja gabinetu i Swagger
-                        .requestMatchers("/tenants/register", "/swagger-ui/**", "/api-docs/**").permitAll()
+                        // Publiczne: rejestracja gabinetu, Swagger, pobieranie plików
+                        .requestMatchers("/tenants/register", "/swagger-ui/**", "/api-docs/**", "/public/files/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

@@ -178,37 +178,39 @@ fun AccountDataScreen(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .clip(CircleShape)
-                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable { launchCropper() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (avatarUrl.isNotBlank()) {
-                        AsyncImage(
-                            model = avatarUrl,
-                            contentDescription = "Avatar",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Icon(
-                            Icons.Default.Person,
-                            contentDescription = null,
-                            modifier = Modifier.size(48.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                Box(contentAlignment = Alignment.BottomEnd) {
+                    Box(
+                        modifier = Modifier
+                            .size(100.dp)
+                            .clip(CircleShape)
+                            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clickable { launchCropper() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (avatarUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = avatarUrl,
+                                contentDescription = "Avatar",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                     // Overlay camera icon
                     Box(
                         modifier = Modifier
-                            .align(Alignment.BottomEnd)
                             .size(30.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary),
+                            .background(MaterialTheme.colorScheme.primary)
+                            .clickable { launchCropper() },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(

@@ -42,7 +42,8 @@ fun AccountScreen(
     onSettingsClick: () -> Unit,
     onLogoutClick: () -> Unit,
     onEditBusinessClick: () -> Unit,
-    onAccountDataClick: () -> Unit
+    onAccountDataClick: () -> Unit,
+    onCreateBusinessClick: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -90,23 +91,7 @@ fun AccountScreen(
         }
     }
 
-    // Clinic logo cropper (rectangle)
-    val logoCropLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
-        if (result.isSuccessful) {
-            val uri = result.uriContent ?: return@rememberLauncherForActivityResult
-            fileViewModel.uploadImage(
-                context = context, tenantId = tenantId, uri = uri,
-                onSuccess = { url ->
-                    logoUrl = url
-                    // TODO: Update clinic logo via TennantViewModel
-                    android.widget.Toast.makeText(context, "Logo zaktualizowane", android.widget.Toast.LENGTH_SHORT).show()
-                },
-                onError = { msg ->
-                    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
-                }
-            )
-        }
-    }
+
 
 
     Column(
@@ -214,61 +199,72 @@ fun AccountScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(60.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.surface)
-                                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
-                                .clickable {
-                                    logoCropLauncher.launch(
-                                        CropImageContractOptions(
-                                            uri = null,
-                                            cropImageOptions = CropImageOptions(
-                                                imageSourceIncludeGallery = true,
-                                                imageSourceIncludeCamera = false,
-                                                cropShape = CropImageView.CropShape.RECTANGLE,
-                                                outputCompressQuality = 85,
-                                                activityBackgroundColor = android.graphics.Color.parseColor("#1E1E1E")
-                                            )
-                                        )
-                                    )
-                                },
-                            contentAlignment = Alignment.Center
+                    if (tenantData == null || tenantData?.id == 0L) {
+                        // Creating new clinic
+                        Text(
+                            "Brak przypisanej kliniki",
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            "Utwórz profil firmy, aby rozpocząć konfigurację kalendarza i dodawanie personelu.",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
+                        )
+                        Button(
+                            onClick = onCreateBusinessClick,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
-                            if (logoUrl.isNotBlank()) {
-                                AsyncImage(
-                                    model = logoUrl,
-                                    contentDescription = null,
-                                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = MaterialTheme.colorScheme.outline)
+                            Icon(Icons.Default.AddBusiness, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("UTWÓRZ KLINIKĘ")
+                        }
+                    } else {
+                        // Managing existing clinic
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                modifier = Modifier
+                                    .size(60.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(MaterialTheme.colorScheme.surface)
+                                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (logoUrl.isNotBlank()) {
+                                    AsyncImage(
+                                        model = logoUrl,
+                                        contentDescription = null,
+                                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = MaterialTheme.colorScheme.outline)
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                val businessName = tenantData?.name ?: "Brak nazwy"
+                                val cityName = tenantData?.locations?.firstOrNull()?.addressCity ?: "Brak adresu"
+
+                                Text(businessName, fontWeight = FontWeight.Bold)
+                                Text(cityName, style = MaterialTheme.typography.bodySmall)
                             }
                         }
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column {
-                            val businessName = tenantData?.name ?: "Brak przypisanej kliniki"
-                            val cityName = tenantData?.locations?.firstOrNull()?.addressCity ?: "Skonfiguruj adres"
 
-                            Text(businessName, fontWeight = FontWeight.Bold)
-                            Text(cityName, style = MaterialTheme.typography.bodySmall)
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(
+                            onClick = onEditBusinessClick,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                        ) {
+                            Icon(Icons.Default.Business, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("ZARZĄDZAJ KLINIKĄ")
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Button(
-                        onClick = onEditBusinessClick,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                    ) {
-                        Icon(Icons.Default.Business, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(if (tenantData == null) "UTWÓRZ KLINIKĘ" else "ZARZĄDZAJ KLINIKĄ")
                     }
                 }
             }

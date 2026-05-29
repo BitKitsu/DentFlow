@@ -17,5 +17,6 @@ public record UpdateProfileRequest(
         @Size(max = 100) String addressStreet,
         @Size(max = 100) String addressCity,
         @Size(max = 20)  String addressZip,
-        @Size(max = 50)  String addressCountry
+        @Size(max = 50)  String addressCountry,
+        @Size(max = 1000) String avatarUrl
 ) {}

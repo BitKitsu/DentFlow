@@ -3,9 +3,8 @@ package com.example.dentflow_android.Screens
 import android.net.Uri
 import android.content.SharedPreferences
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -26,7 +25,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.rememberAsyncImagePainter
+import coil.compose.AsyncImage
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
+import com.canhub.cropper.CropImageView
+import com.example.dentflow_android.data.ViewModel.FileViewModel
 import com.example.dentflow_android.data.ViewModel.TenantViewModel
 import com.example.dentflow_android.data.remote.AuthViewModel
 
@@ -34,6 +38,7 @@ import com.example.dentflow_android.data.remote.AuthViewModel
 fun AccountScreen(
     tenantViewModel: TenantViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel(),
+    fileViewModel: FileViewModel = hiltViewModel(),
     onSettingsClick: () -> Unit,
     onLogoutClick: () -> Unit,
     onEditBusinessClick: () -> Unit,
@@ -48,24 +53,61 @@ fun AccountScreen(
     val userRole = remember { prefs.getString("user_role", "STAFF") ?: "STAFF" }
     val isOwner = userRole == "OWNER"
 
-    // --- WCZYTYWANIE DANYCH ---
+    // Read data
     LaunchedEffect(Unit) {
-        // Używamy nowej metody, która sama bierze ID z SharedPreferences
         tenantViewModel.loadAllTenantData()
     }
 
     val tenantData by tenantViewModel.tenantState
+    val isUploading by fileViewModel.isUploading.collectAsState()
+    val tenantId = remember { prefs.getLong("tenant_id", 0L) }
 
-    // --- LOGIKA WYBORU ZDJĘĆ ---
-    var profileImageUri by remember { mutableStateOf<Uri?>(null) }
-    var companyLogoUri by remember { mutableStateOf<Uri?>(null) }
+    // Avatar saved in SharedPrefs or updated after upload
+    var avatarUrl by remember { mutableStateOf(prefs.getString("user_avatar_url", "") ?: "") }
+    // Clonic logo downloaded from tenantState
+    var logoUrl by remember(tenantData) { mutableStateOf(tenantData?.logoUrl ?: "") }
 
-    val profilePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        profileImageUri = uri
+    // Avatar cropper (round 1:1)
+    val avatarCropLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
+        if (result.isSuccessful) {
+            val uri = result.uriContent ?: return@rememberLauncherForActivityResult
+            fileViewModel.uploadImage(
+                context = context, tenantId = tenantId, uri = uri,
+                onSuccess = { url ->
+                    avatarUrl = url
+                    authViewModel.updateProfile(
+                        firstName = null, lastName = null, phone = null,
+                        email = null, addressStreet = null, addressCity = null,
+                        addressZip = null, addressCountry = null, avatarUrl = url,
+                        onSuccess = { prefs.edit().putString("user_avatar_url", url).apply() },
+                        onError = {}
+                    )
+                },
+                onError = { msg ->
+                    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
+                }
+            )
+        }
     }
-    val logoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        companyLogoUri = uri
+
+    // Clinic logo cropper (rectangle)
+    val logoCropLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
+        if (result.isSuccessful) {
+            val uri = result.uriContent ?: return@rememberLauncherForActivityResult
+            fileViewModel.uploadImage(
+                context = context, tenantId = tenantId, uri = uri,
+                onSuccess = { url ->
+                    logoUrl = url
+                    // TODO: Update clinic logo via TennantViewModel
+                    android.widget.Toast.makeText(context, "Logo zaktualizowane", android.widget.Toast.LENGTH_SHORT).show()
+                },
+                onError = { msg ->
+                    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
+                }
+            )
+        }
     }
+
 
     Column(
         modifier = Modifier
@@ -84,16 +126,16 @@ fun AccountScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // --- SEKCJA ZDJĘCIA PROFILOWEGO ---
+        // Avatar
         Box(contentAlignment = Alignment.BottomEnd) {
             Surface(
                 modifier = Modifier.size(100.dp),
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
             ) {
-                if (profileImageUri != null) {
-                    Image(
-                        painter = rememberAsyncImagePainter(profileImageUri),
+                if (avatarUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = avatarUrl,
                         contentDescription = null,
                         modifier = Modifier.fillMaxSize().clip(CircleShape),
                         contentScale = ContentScale.Crop
@@ -112,7 +154,22 @@ fun AccountScreen(
                     .size(32.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary)
-                    .clickable { profilePicker.launch("image/*") },
+                    .clickable {
+                        avatarCropLauncher.launch(
+                            CropImageContractOptions(
+                                uri = null,
+                                cropImageOptions = CropImageOptions(
+                                    imageSourceIncludeGallery = true,
+                                    imageSourceIncludeCamera = true,
+                                    cropShape = CropImageView.CropShape.OVAL,
+                                    fixAspectRatio = true,
+                                    aspectRatioX = 1, aspectRatioY = 1,
+                                    outputCompressQuality = 85,
+                                    activityBackgroundColor = android.graphics.Color.parseColor("#1E1E1E")
+                                )
+                            )
+                        )
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -123,10 +180,13 @@ fun AccountScreen(
                 )
             }
         }
+        if (isUploading) {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // DANE UŻYTKOWNIKA (Dynamiczne)
+        // User data
         Text(
             text = userEmail,
             style = MaterialTheme.typography.titleLarge,
@@ -140,7 +200,7 @@ fun AccountScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // --- SEKCJA: TWOJA FIRMA (DYNAMICZNA) ---
+        // Clinic
         if (isOwner) {
             Text(
                 text = "Twoja Firma",
@@ -160,14 +220,28 @@ fun AccountScreen(
                                 .size(60.dp)
                                 .clip(RoundedCornerShape(8.dp))
                                 .background(MaterialTheme.colorScheme.surface)
-                                .clickable { logoPicker.launch("image/*") },
+                                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                                .clickable {
+                                    logoCropLauncher.launch(
+                                        CropImageContractOptions(
+                                            uri = null,
+                                            cropImageOptions = CropImageOptions(
+                                                imageSourceIncludeGallery = true,
+                                                imageSourceIncludeCamera = false,
+                                                cropShape = CropImageView.CropShape.RECTANGLE,
+                                                outputCompressQuality = 85,
+                                                activityBackgroundColor = android.graphics.Color.parseColor("#1E1E1E")
+                                            )
+                                        )
+                                    )
+                                },
                             contentAlignment = Alignment.Center
                         ) {
-                            if (companyLogoUri != null) {
-                                Image(
-                                    painter = rememberAsyncImagePainter(companyLogoUri),
+                            if (logoUrl.isNotBlank()) {
+                                AsyncImage(
+                                    model = logoUrl,
                                     contentDescription = null,
-                                    modifier = Modifier.fillMaxSize(),
+                                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
                                     contentScale = ContentScale.Crop
                                 )
                             } else {
@@ -201,7 +275,7 @@ fun AccountScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // --- SEKCJA: KONTO ---
+        // Account
         Text(
             text = "Konto i Bezpieczeństwo",
             modifier = Modifier.fillMaxWidth(),
@@ -262,7 +336,7 @@ fun AccountScreen(
 
         Spacer(modifier = Modifier.height(60.dp))
 
-        // --- PRZYCISK WYLOGUJ ---
+        // Logout
         Button(
             onClick = {
                 authViewModel.logout()

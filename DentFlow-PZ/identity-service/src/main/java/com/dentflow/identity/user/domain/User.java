@@ -46,6 +46,9 @@ public class User {
     @Column(name = "address_country", length = 50)
     private String addressCountry;
 
+    @Column(name = "avatar_url", length = 1000)
+    private String avatarUrl;
+
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 

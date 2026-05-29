@@ -4,6 +4,10 @@ server:
 spring:
   application:
     name: core-service
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -38,9 +42,13 @@ spring:
 jwt:
   secret: ${JWT_SECRET}
 
-supabase:
-  url: ${SUPABASE_URL}
-  service-key: ${SUPABASE_SERVICE_KEY}
+aws:
+  access-key-id: ${AWS_ACCESS_KEY_ID}
+  secret-access-key: ${AWS_SECRET_ACCESS_KEY}
+  endpoint-url: ${AWS_ENDPOINT_URL}
+  region: ${AWS_REGION:us-east-1}
+  bucket-name: ${S3_BUCKET_NAME}
+
 
 springdoc:
   api-docs:

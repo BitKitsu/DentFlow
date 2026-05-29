@@ -19,7 +19,7 @@ public class FileMetadata {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "tenant_id", nullable = false)
+    @Column(name = "tenant_id")
     private Long tenantId;
 
     @Column(name = "original_name", nullable = false, length = 255)
@@ -36,6 +36,9 @@ public class FileMetadata {
 
     @Column(name = "uploaded_by")
     private Long uploadedBy;
+
+    @Column(name = "public_url", length = 1000)
+    private String publicUrl;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false, columnDefinition = "TIMESTAMPTZ")

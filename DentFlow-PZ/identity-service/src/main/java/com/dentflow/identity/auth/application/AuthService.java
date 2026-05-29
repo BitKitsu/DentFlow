@@ -159,6 +159,7 @@ public class AuthService {
         if (request.addressCity()   != null) user.setAddressCity(request.addressCity());
         if (request.addressZip()    != null) user.setAddressZip(request.addressZip());
         if (request.addressCountry()!= null) user.setAddressCountry(request.addressCountry());
+        if (request.avatarUrl()     != null) user.setAvatarUrl(request.avatarUrl());
 
         if (request.email() != null && !request.email().equalsIgnoreCase(currentEmail)) {
             if (userRepository.existsByEmail(request.email())) {
@@ -204,6 +205,7 @@ public class AuthService {
                 user.getAddressStreet(),
                 user.getAddressCity(),
                 user.getAddressZip(),
-                user.getAddressCountry());
+                user.getAddressCountry(),
+                user.getAvatarUrl());
     }
 }

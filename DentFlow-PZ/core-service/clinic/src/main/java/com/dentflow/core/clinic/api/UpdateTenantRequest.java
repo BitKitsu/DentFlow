@@ -5,5 +5,7 @@ import jakarta.validation.constraints.Size;
 
 public record UpdateTenantRequest(
         @NotBlank @Size(max = 100)
-        String name
+        String name,
+        @Size(max = 1000)
+        String logoUrl
 ) {}

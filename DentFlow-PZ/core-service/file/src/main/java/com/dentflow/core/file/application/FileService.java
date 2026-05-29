@@ -4,133 +4,157 @@ import com.dentflow.core.file.api.FileUploadResponse;
 import com.dentflow.core.file.domain.FileMetadata;
 import com.dentflow.core.file.infrastructure.FileMetadataRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
 /**
- * Serwis obsługujący upload/download plików przez Supabase Storage REST API.
- * SCRUM-64
+ * Service that manages file upload/download via S3 bucker
  *
- * Supabase Storage API:
- *   Upload: POST /storage/v1/object/{bucket}/{path}
- *   Download: GET  /storage/v1/object/{bucket}/{path}
- *   Delete:  DELETE /storage/v1/object/{bucket} (body: {"prefixes": [path]})
+ * POST /tenants/{tenantId}/files – file upload (max 10MB)
+ * GET /tenants/{tenantId}/files - file list
+ * GET /tenants/{tenantId}/files/{fileId} - file metadata
+ * GET /tenants/{tenantId}/files/{fileId}/download – download file
+ * DELETE /tenants/{tenantId}/files/{fileId} - remove file
  */
 @Service
 public class FileService {
 
+    private static final long MAX_FILE_SIZE = 10L * 1024 * 1024; // 10 MB
+
     private final FileMetadataRepository fileMetadataRepository;
-    private final RestTemplate restTemplate;
+    private final S3Client s3Client;
 
-    @Value("${supabase.url}")
-    private String supabaseUrl;
-
-    @Value("${supabase.service-key}")
-    private String supabaseServiceKey;
-
-    @Value("${supabase.bucket:dentflow-files}")
+    @Value("${aws.bucket-name}")
     private String bucket;
 
-    public FileService(FileMetadataRepository fileMetadataRepository) {
+    @Value("${aws.endpoint-url}")
+    private String endpointUrl;
+
+    @Value("${RAILWAY_PUBLIC_DOMAIN:localhost:8080}")
+    private String appPublicDomain;
+
+    public FileService(FileMetadataRepository fileMetadataRepository, S3Client s3Client) {
         this.fileMetadataRepository = fileMetadataRepository;
-        this.restTemplate = new RestTemplate();
+        this.s3Client = s3Client;
     }
 
     /**
-     * Przesyła plik do Supabase Storage i zapisuje metadane w bazie.
+     * Uploads file to S3 and saves metadata to database
+     * Returns file public url
      */
     public FileUploadResponse uploadFile(Long tenantId, Long uploadedByUserId, MultipartFile file) {
         if (file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Plik jest pusty");
         }
-
-        String storagePath = tenantId + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
-        String uploadUrl = supabaseUrl + "/storage/v1/object/" + bucket + "/" + storagePath;
-
-        try {
-            HttpHeaders headers = buildAuthHeaders();
-            headers.setContentType(MediaType.parseMediaType(
-                    file.getContentType() != null ? file.getContentType() : MediaType.APPLICATION_OCTET_STREAM_VALUE));
-
-            HttpEntity<byte[]> entity = new HttpEntity<>(file.getBytes(), headers);
-            restTemplate.exchange(uploadUrl, HttpMethod.POST, entity, String.class);
-
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                    "Błąd przesyłania pliku do Supabase: " + e.getMessage());
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE,
+                    "Plik przekracza maksymalny rozmiar 10 MB");
         }
 
+        String extension = "";
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+        Long actualTenantId = (tenantId != null && tenantId > 0) ? tenantId : null;
+        String prefix = actualTenantId != null ? actualTenantId.toString() : "global";
+        String key = prefix + "/" + UUID.randomUUID() + extension;
+
+        try {
+            PutObjectRequest putRequest = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .contentType(file.getContentType() != null
+                            ? file.getContentType() : "application/octet-stream")
+                    .contentLength(file.getSize())
+                    .acl(ObjectCannedACL.PUBLIC_READ) // public access
+                    .build();
+
+            s3Client.putObject(putRequest, RequestBody.fromBytes(file.getBytes()));
+
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Nie można odczytać danych pliku: " + e.getMessage());
+        } catch (S3Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
+                    "Błąd przesyłania pliku do S3: " + e.getMessage());
+        }
+
+        // Public_url is set after save
         FileMetadata metadata = FileMetadata.builder()
-                .tenantId(tenantId)
-                .originalName(file.getOriginalFilename())
-                .storagePath(storagePath)
+                .tenantId(actualTenantId)
+                .originalName(originalFilename)
+                .storagePath(key)
                 .contentType(file.getContentType())
                 .sizeBytes(file.getSize())
                 .uploadedBy(uploadedByUserId)
                 .build();
 
         FileMetadata saved = fileMetadataRepository.save(metadata);
+        String protocol = appPublicDomain.contains("localhost") ? "http://" : "https://";
+        saved.setPublicUrl(protocol + appPublicDomain + "/public/files/" + saved.getId());
+        saved = fileMetadataRepository.save(saved);
+
         return toResponse(saved);
     }
 
     /**
-     * Pobiera plik z Supabase Storage jako bajty.
+     * Downloads file from S3 as bytes
      */
     public byte[] downloadFile(Long tenantId, Long fileId) {
         FileMetadata metadata = findOrThrow(tenantId, fileId);
+        return downloadFileBytes(metadata);
+    }
 
-        String downloadUrl = supabaseUrl + "/storage/v1/object/" + bucket + "/" + metadata.getStoragePath();
-
+    public byte[] downloadFileBytes(FileMetadata metadata) {
         try {
-            HttpEntity<Void> entity = new HttpEntity<>(buildAuthHeaders());
-            ResponseEntity<byte[]> response = restTemplate.exchange(
-                    downloadUrl, HttpMethod.GET, entity, byte[].class);
+            GetObjectRequest getRequest = GetObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(metadata.getStoragePath())
+                    .build();
 
-            if (response.getBody() == null) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Plik nie istnieje w storage");
-            }
-            return response.getBody();
-        } catch (ResponseStatusException e) {
-            throw e;
-        } catch (Exception e) {
+            return s3Client.getObjectAsBytes(getRequest).asByteArray();
+
+        } catch (NoSuchKeyException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Plik nie istnieje w storage");
+        } catch (S3Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                    "Błąd pobierania pliku z Supabase: " + e.getMessage());
+                    "Błąd pobierania pliku z S3: " + e.getMessage());
         }
     }
 
-    /**
-     * Zwraca listę metadanych plików dla danego tenanta.
-     */
     public List<FileUploadResponse> listFiles(Long tenantId) {
-        return fileMetadataRepository.findByTenantId(tenantId)
-                .stream()
+        Long actualTenantId = (tenantId != null && tenantId > 0) ? tenantId : null;
+        List<FileMetadata> files = actualTenantId == null
+                ? fileMetadataRepository.findByTenantIdIsNull()
+                : fileMetadataRepository.findByTenantId(actualTenantId);
+
+        return files.stream()
                 .map(this::toResponse)
                 .toList();
     }
 
-    /**
-     * Usuwa plik z Supabase Storage i jego metadane z bazy.
-     */
     public void deleteFile(Long tenantId, Long fileId) {
         FileMetadata metadata = findOrThrow(tenantId, fileId);
 
-        String deleteUrl = supabaseUrl + "/storage/v1/object/" + bucket;
-        String body = "{\"prefixes\":[\"" + metadata.getStoragePath() + "\"]}";
-
         try {
-            HttpHeaders headers = buildAuthHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<String> entity = new HttpEntity<>(body, headers);
-            restTemplate.exchange(deleteUrl, HttpMethod.DELETE, entity, String.class);
-        } catch (Exception e) {
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(metadata.getStoragePath())
+                    .build();
+            s3Client.deleteObject(deleteRequest);
+        } catch (S3Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                    "Błąd usuwania pliku z Supabase: " + e.getMessage());
+                    "Błąd usuwania pliku z S3: " + e.getMessage());
         }
 
         fileMetadataRepository.delete(metadata);
@@ -140,19 +164,22 @@ public class FileService {
         return toResponse(findOrThrow(tenantId, fileId));
     }
 
-    // ── helpers ──────────────────────────────────────────────────────────────
-
-    private FileMetadata findOrThrow(Long tenantId, Long fileId) {
-        return fileMetadataRepository.findByIdAndTenantId(fileId, tenantId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Plik nie istnieje"));
+    public FileMetadata getFileMetadataEntity(Long fileId) {
+        return fileMetadataRepository.findById(fileId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plik nie istnieje"));
     }
 
-    private HttpHeaders buildAuthHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + supabaseServiceKey);
-        headers.set("apikey", supabaseServiceKey);
-        return headers;
+    // helpers
+
+    private FileMetadata findOrThrow(Long tenantId, Long fileId) {
+        Long actualTenantId = (tenantId != null && tenantId > 0) ? tenantId : null;
+        if (actualTenantId == null) {
+            return fileMetadataRepository.findById(fileId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plik nie istnieje"));
+        }
+        return fileMetadataRepository.findByIdAndTenantId(fileId, actualTenantId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Plik nie istnieje"));
     }
 
     private FileUploadResponse toResponse(FileMetadata m) {
@@ -160,6 +187,7 @@ public class FileService {
                 m.getId(),
                 m.getOriginalName(),
                 m.getStoragePath(),
+                m.getPublicUrl(),
                 m.getContentType(),
                 m.getSizeBytes(),
                 m.getCreatedAt() != null ? m.getCreatedAt().toString() : null

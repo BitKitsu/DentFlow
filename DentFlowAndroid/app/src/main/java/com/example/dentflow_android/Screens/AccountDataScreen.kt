@@ -1,9 +1,13 @@
 package com.example.dentflow_android.Screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -14,6 +18,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -21,6 +27,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
+import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
+import com.canhub.cropper.CropImageView
+import com.example.dentflow_android.data.ViewModel.FileViewModel
 import com.example.dentflow_android.data.remote.AuthViewModel
 
 private val EMAIL_REGEX = Regex("^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$")
@@ -30,7 +42,8 @@ private val NAME_REGEX  = Regex("^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\\s
 @Composable
 fun AccountDataScreen(
     onBackClick: () -> Unit,
-    viewModel: AuthViewModel = hiltViewModel()
+    viewModel: AuthViewModel = hiltViewModel(),
+    fileViewModel: FileViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val prefs = remember {
@@ -48,6 +61,56 @@ fun AccountDataScreen(
     var addressCity    by remember { mutableStateOf(prefs.getString("user_addr_city",    "") ?: "") }
     var addressZip     by remember { mutableStateOf(prefs.getString("user_addr_zip",     "")?.replace("-", "") ?: "") }
     var addressCountry by remember { mutableStateOf(prefs.getString("user_addr_country", "") ?: "") }
+    var avatarUrl      by remember { mutableStateOf(prefs.getString("user_avatar_url", "") ?: "") }
+
+    val tenantId = remember { prefs.getLong("tenant_id", 0L) }
+    val isUploading by fileViewModel.isUploading.collectAsState()
+
+    val cropLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
+        if (result.isSuccessful) {
+            val uri = result.uriContent ?: return@rememberLauncherForActivityResult
+            fileViewModel.uploadImage(
+                context = context,
+                tenantId = tenantId,
+                uri = uri,
+                onSuccess = { url ->
+                    avatarUrl = url
+                    // Save avatar URL using profile update
+                    viewModel.updateProfile(
+                        firstName = null, lastName = null, phone = null,
+                        email = null, addressStreet = null, addressCity = null,
+                        addressZip = null, addressCountry = null,
+                        avatarUrl = url,
+                        onSuccess = {
+                            prefs.edit().putString("user_avatar_url", url).apply()
+                        },
+                        onError = {}
+                    )
+                },
+                onError = { msg ->
+                    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
+                }
+            )
+        }
+    }
+
+    fun launchCropper() {
+        cropLauncher.launch(
+            CropImageContractOptions(
+                uri = null,
+                cropImageOptions = CropImageOptions(
+                    imageSourceIncludeGallery = true,
+                    imageSourceIncludeCamera = true,
+                    cropShape = CropImageView.CropShape.OVAL,
+                    fixAspectRatio = true,
+                    aspectRatioX = 1,
+                    aspectRatioY = 1,
+                    outputCompressQuality = 85,
+                    activityBackgroundColor = android.graphics.Color.parseColor("#1E1E1E")
+                )
+            )
+        )
+    }
 
     // Password
     var currentPassword  by remember { mutableStateOf("") }
@@ -110,7 +173,58 @@ fun AccountDataScreen(
         ) {
             Spacer(modifier = Modifier.height(4.dp))
 
-            // ── Personal data ────────────────────────────────────────────────
+            // Avatar
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape)
+                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .clickable { launchCropper() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (avatarUrl.isNotBlank()) {
+                        AsyncImage(
+                            model = avatarUrl,
+                            contentDescription = "Avatar",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Icon(
+                            Icons.Default.Person,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    // Overlay camera icon
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(30.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.CameraAlt,
+                            contentDescription = "Zmień zdjęcie",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                }
+            }
+            if (isUploading) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+
+            // Personal data
             SectionHeader(icon = Icons.Default.Person, title = "Dane osobowe")
 
             Row(modifier = Modifier.fillMaxWidth()) {
@@ -174,7 +288,7 @@ fun AccountDataScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
 
-            // ── Address ──────────────────────────────────────────────────────
+            // Address
             SectionHeader(icon = Icons.Default.Home, title = "Adres zamieszkania")
 
             OutlinedTextField(
@@ -307,7 +421,7 @@ fun AccountDataScreen(
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
-            // ── Password change ──────────────────────────────────────────────
+            // Password change
             SectionHeader(icon = Icons.Default.Lock, title = "Zmiana hasła")
 
             OutlinedTextField(

@@ -28,6 +28,9 @@ public class Tenant {
     @Builder.Default
     private String status = "ACTIVE";
 
+    @Column(name = "logo_url", length = 1000)
+    private String logoUrl;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false,
             columnDefinition = "TIMESTAMPTZ")

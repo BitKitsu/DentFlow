@@ -62,6 +62,7 @@ public class TenantService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Gabinet nie istnieje"));
         tenant.setName(request.name());
+        if (request.logoUrl() != null) tenant.setLogoUrl(request.logoUrl());
         return TenantResponse.from(tenantRepository.save(tenant));
     }
 

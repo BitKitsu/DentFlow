@@ -11,5 +11,6 @@ public record AuthResponse(
         String addressStreet,
         String addressCity,
         String addressZip,
-        String addressCountry
+        String addressCountry,
+        String avatarUrl
 ) {}

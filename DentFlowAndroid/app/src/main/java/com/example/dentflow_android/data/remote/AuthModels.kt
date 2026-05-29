@@ -19,7 +19,8 @@ data class AuthResponse(
     val addressStreet: String? = null,
     val addressCity: String? = null,
     val addressZip: String? = null,
-    val addressCountry: String? = null
+    val addressCountry: String? = null,
+    val avatarUrl: String? = null
 )
 
 // Registration data
@@ -44,5 +45,6 @@ data class UpdateProfileRequest(
     val addressStreet: String? = null,
     val addressCity: String? = null,
     val addressZip: String? = null,
-    val addressCountry: String? = null
+    val addressCountry: String? = null,
+    val avatarUrl: String? = null
 )

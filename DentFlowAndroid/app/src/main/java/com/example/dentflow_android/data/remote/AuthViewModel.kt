@@ -152,6 +152,7 @@ class AuthViewModel @Inject constructor(
         addressCity: String?,
         addressZip: String?,
         addressCountry: String?,
+        avatarUrl: String? = null,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
@@ -167,7 +168,8 @@ class AuthViewModel @Inject constructor(
                         addressStreet  = addressStreet,
                         addressCity    = addressCity,
                         addressZip     = addressZip,
-                        addressCountry = addressCountry
+                        addressCountry = addressCountry,
+                        avatarUrl      = avatarUrl
                     )
                 )
                 if (response.isSuccessful && response.body() != null) {
@@ -208,6 +210,7 @@ class AuthViewModel @Inject constructor(
             putString("user_addr_city",   body.addressCity   ?: "")
             putString("user_addr_zip",    body.addressZip    ?: "")
             putString("user_addr_country",body.addressCountry?: "")
+            putString("user_avatar_url",  body.avatarUrl     ?: "")
             apply()
         }
     }

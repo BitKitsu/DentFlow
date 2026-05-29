@@ -25,9 +25,9 @@ public class TenantService {
     }
 
     /**
-     * Rejestracja gabinetu (tenant) wraz z pierwszą lokalizacją.
-     * Wywoływana synchronicznie po rejestracji użytkownika OWNER w identity-service.
-     * Zwraca TenantResponse - id gabinetu służy jako tenantId w JWT.
+     * Tenant registration with first location
+     * Ran synchronious after OWNER user registration in identity-service
+     * Returns TenantResponse
      */
     @Transactional
     public TenantResponse registerTenant(RegisterTenantRequest request) {
@@ -63,10 +63,33 @@ public class TenantService {
                         "Gabinet nie istnieje"));
         tenant.setName(request.name());
         if (request.logoUrl() != null) tenant.setLogoUrl(request.logoUrl());
+
+        // Update first location if provided
+        if (request.locationName() != null || request.addressStreet() != null) {
+            List<Location> locations = locationRepository.findByTenantId(tenantId);
+            if (!locations.isEmpty()) {
+                Location loc = locations.get(0);
+                if (request.locationName() != null) loc.setName(request.locationName());
+                if (request.addressStreet() != null) loc.setAddressStreet(request.addressStreet());
+                if (request.addressCity() != null) loc.setAddressCity(request.addressCity());
+                if (request.addressZip() != null) loc.setAddressZip(request.addressZip());
+                if (request.addressCountry() != null) loc.setAddressCountry(request.addressCountry());
+                locationRepository.save(loc);
+            }
+        }
+
         return TenantResponse.from(tenantRepository.save(tenant));
     }
 
-    // ----- Zarządzanie lokalizacjami (stub) -----
+    @Transactional
+    public void deleteTenant(Long tenantId) {
+        Tenant tenant = tenantRepository.findById(tenantId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Gabinet nie istnieje"));
+        tenantRepository.delete(tenant);
+    }
+
+    // Managing locations
 
     public List<LocationResponse> getLocations(Long tenantId) {
         requireTenantExists(tenantId);

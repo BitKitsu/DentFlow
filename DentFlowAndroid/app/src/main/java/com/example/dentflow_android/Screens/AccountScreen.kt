@@ -28,10 +28,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.dentflow_android.data.ViewModel.TenantViewModel
+import com.example.dentflow_android.data.remote.AuthViewModel
 
 @Composable
 fun AccountScreen(
     tenantViewModel: TenantViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel(),
     onSettingsClick: () -> Unit,
     onLogoutClick: () -> Unit,
     onEditBusinessClick: () -> Unit,
@@ -213,18 +215,59 @@ fun AccountScreen(
             onClick = onSettingsClick
         )
 
-        var showComingSoon by remember { mutableStateOf(false) }
+        var showDeleteDialog by remember { mutableStateOf(false) }
+
         AccountMenuItem(
             title = "Dane konta",
             icon = Icons.Default.ManageAccounts,
             onClick = onAccountDataClick
         )
+        
+        AccountMenuItem(
+            title = "Usuń konto",
+            icon = Icons.Default.DeleteForever,
+            onClick = { showDeleteDialog = true }
+        )
+
+        if (showDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteDialog = false },
+                title = { Text("Usuń konto") },
+                text = { Text("Czy na pewno chcesz bezpowrotnie usunąć swoje konto? Tej operacji nie można cofnąć.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDeleteDialog = false
+                            authViewModel.deleteAccount(
+                                onSuccess = {
+                                    authViewModel.logout()
+                                    onLogoutClick()
+                                },
+                                onError = { errorMsg ->
+                                    android.widget.Toast.makeText(context, errorMsg, android.widget.Toast.LENGTH_LONG).show()
+                                }
+                            )
+                        }
+                    ) {
+                        Text("Usuń", color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteDialog = false }) {
+                        Text("Anuluj")
+                    }
+                }
+            )
+        }
 
         Spacer(modifier = Modifier.height(60.dp))
 
         // --- PRZYCISK WYLOGUJ ---
         Button(
-            onClick = onLogoutClick,
+            onClick = {
+                authViewModel.logout()
+                onLogoutClick()
+            },
             modifier = Modifier.fillMaxWidth().height(56.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.error,

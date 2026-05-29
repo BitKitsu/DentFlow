@@ -66,7 +66,7 @@ class AuthServiceTest {
     @Test
     void shouldRegisterOwnerSuccessfully() {
         // given
-        RegisterRequest request = new RegisterRequest("new@example.com", "password123");
+        RegisterRequest request = new RegisterRequest("new@example.com", "password123", "Jan", "Kowalski", "123456789", null, null, null, null);
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
         when(passwordEncoder.encode("password123")).thenReturn("hashed_new_password");
         
@@ -93,7 +93,7 @@ class AuthServiceTest {
     @Test
     void shouldThrowConflictWhenEmailExistsDuringRegistration() {
         // given
-        RegisterRequest request = new RegisterRequest("test@example.com", "password123");
+        RegisterRequest request = new RegisterRequest("test@example.com", "password123", null, null, null, null, null, null, null);
         when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
 
         // when & then

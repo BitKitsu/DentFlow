@@ -1,17 +1,15 @@
 package com.dentflow.identity.auth.api;
 
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
- * Registration request for a new OWNER account.
- * Clinic data (name, location) are sent separately to core-service POST /tenants/register.
+ * Partial update of the logged-in user's profile.
+ * All fields are optional — only non-null values are applied.
  */
-public record RegisterRequest(
-        @Email @NotBlank String email,
-        @NotBlank @Size(min = 8) String password,
+public record UpdateProfileRequest(
+        @Email String email,
         @Size(min = 2, max = 100) String firstName,
         @Size(min = 2, max = 100) String lastName,
         @Pattern(regexp = "^\\+?[0-9][\\s\\-]?([0-9][\\s\\-]?){8,14}$",

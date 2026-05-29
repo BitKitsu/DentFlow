@@ -168,7 +168,7 @@ fun MainDashboard(
         if (isOwner) add(NavItem("Firma", Icons.Default.Business, 1))
         if (isOwner) add(NavItem("Admin", Icons.Default.AdminPanelSettings, 2))
         if (isOwner || isDoctor) add(NavItem("Wizyty", Icons.Default.CalendarMonth, 3))
-        add(NavItem("Alarmy", Icons.Default.Notifications, 4))
+        add(NavItem("Powiadomienia", Icons.Default.Notifications, 4))
         add(NavItem("Konto", Icons.Default.AccountCircle, 5))
     }
 
@@ -196,7 +196,7 @@ fun MainDashboard(
                                 Icon(navItem.icon, contentDescription = navItem.label)
                             }
                         },
-                        label = { Text(navItem.label, fontSize = 10.sp) },
+                        label = { Text(navItem.label, fontSize = 10.sp, maxLines = 1, softWrap = false) },
                         selected = selectedItem == navItem.tabIndex,
                         onClick = {
                             onTabChange(navItem.tabIndex)

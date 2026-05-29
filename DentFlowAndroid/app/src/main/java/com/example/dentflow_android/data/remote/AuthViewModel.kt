@@ -4,7 +4,6 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.dentflow_android.data.remote.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,73 +28,35 @@ class AuthViewModel @Inject constructor(
             _errorMessage.value = null
             try {
                 val response = authService.login(request)
-
                 if (response.isSuccessful && response.body() != null) {
                     val body = response.body()!!
                     val token = body.token
-
                     if (!token.isNullOrBlank()) {
                         val role = decodeRoleFromJwt(token)
-                        prefs.edit().apply {
-                            putString("jwt_token", token)
-                            putLong("tenant_id", body.tenantId)
-                            putLong("user_id", body.userId)
-                            putString("user_role", role)
-                            putString("user_email", body.email)
-                            apply()
-                        }
-                        Log.d("AUTH_DEBUG", "Zalogowano pomyślnie. TenantID: ${body.tenantId}, Rola: $role")
+                        saveSession(body, role)
+                        Log.d("AUTH_DEBUG", "Login successful. TenantID: ${body.tenantId}, Role: $role")
                         onSuccess(body.tenantId)
                     } else {
                         _errorMessage.value = "Błąd: Serwer nie przesłał tokenu."
                     }
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    Log.e("AUTH_DEBUG", "Błąd logowania. Kod: ${response.code()}, Body: $errorBody")
-
+                    Log.e("AUTH_DEBUG", "Login error. Code: ${response.code()}, Body: $errorBody")
                     _errorMessage.value = when (response.code()) {
                         401 -> "Błędny e-mail lub hasło."
                         403 -> "Dostęp zabroniony. Sprawdź konfigurację kliniki."
-                        500 -> "Błąd wewnętrzny serwera. Sprawdź logi bazy danych."
+                        500 -> "Błąd wewnętrzny serwera."
                         else -> "Błąd autoryzacji: ${response.code()}"
                     }
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Błąd połączenia. Upewnij się, że backend działa."
-                Log.e("AUTH_DEBUG", "Wyjątek podczas logowania: ${e.message}")
+                Log.e("AUTH_DEBUG", "Login exception: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
         }
     }
-
-    /**
-     * Dekoduje payload JWT (Base64) i wyciąga pierwszą rolę z pola "roles".
-     * Nie wymaga zewnętrznych bibliotek – JWT to po prostu Base64 JSON.
-     * Zwraca "UNKNOWN" jeśli parsowanie się nie powiedzie.
-     */
-    private fun decodeRoleFromJwt(token: String): String {
-        return try {
-            val parts = token.split(".")
-            if (parts.size < 2) return "UNKNOWN"
-            val payload = parts[1]
-            // Base64 URL decode (bez paddingu)
-            val decoded = android.util.Base64.decode(
-                payload.replace('-', '+').replace('_', '/'),
-                android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
-            )
-            val json = String(decoded, Charsets.UTF_8)
-            // JWT payload decoded (not logged for security)
-            // Prosta ekstrakcja pola "roles" z JSON-a
-            val rolesRegex = Regex("\"roles\":\\s*\\[\"([^\"]+)\"")
-            val match = rolesRegex.find(json)
-            match?.groupValues?.get(1) ?: "USER"
-        } catch (e: Exception) {
-            Log.e("AUTH_DEBUG", "Błąd dekodowania JWT: ${e.message}")
-            "UNKNOWN"
-        }
-    }
-
 
     fun register(request: RegisterRequest, onSuccess: () -> Unit) {
         viewModelScope.launch {
@@ -103,13 +64,15 @@ class AuthViewModel @Inject constructor(
             _errorMessage.value = null
             try {
                 val response = authService.register(request)
-                if (response.isSuccessful) {
-                    Log.d("AUTH_DEBUG", "Rejestracja zakończona sukcesem")
+                if (response.isSuccessful && response.body() != null) {
+                    val body = response.body()!!
+                    val role = decodeRoleFromJwt(body.token)
+                    saveSession(body, role)
+                    Log.d("AUTH_DEBUG", "Registration successful")
                     onSuccess()
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    Log.e("AUTH_DEBUG", "Błąd rejestracji. Kod: ${response.code()}, Body: $errorBody")
-
+                    Log.e("AUTH_DEBUG", "Registration error. Code: ${response.code()}, Body: $errorBody")
                     _errorMessage.value = when (response.code()) {
                         409 -> "Ten adres e-mail jest już zarejestrowany."
                         400 -> "Nieprawidłowe dane w formularzu."
@@ -118,7 +81,7 @@ class AuthViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Błąd sieci: Brak odpowiedzi od serwera."
-                Log.e("AUTH_DEBUG", "Wyjątek podczas rejestracji: ${e.message}")
+                Log.e("AUTH_DEBUG", "Registration exception: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
@@ -126,19 +89,13 @@ class AuthViewModel @Inject constructor(
     }
 
     fun logout() {
+        prefs.edit().clear().apply()
+        Log.d("AUTH_DEBUG", "Logged out, session data cleared locally.")
         viewModelScope.launch {
             try {
                 authService.logout()
             } catch (e: Exception) {
-                Log.e("AUTH_DEBUG", "Błąd przy wysyłaniu logout do API: ${e.message}")
-            } finally {
-                prefs.edit().apply {
-                    remove("jwt_token")
-                    remove("tenant_id")
-                    remove("user_id")
-                    apply()
-                }
-                Log.d("AUTH_DEBUG", "Wylogowano lokalnie i wyczyszczono dane sesji.")
+                Log.e("AUTH_DEBUG", "Logout API error: ${e.message}")
             }
         }
     }
@@ -165,6 +122,112 @@ class AuthViewModel @Inject constructor(
             } finally {
                 _isLoading.value = false
             }
+        }
+    }
+
+    fun deleteAccount(onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val response = authService.deleteAccount()
+                if (response.isSuccessful) {
+                    onSuccess()
+                } else {
+                    onError("Błąd usuwania konta (${response.code()})")
+                }
+            } catch (e: Exception) {
+                onError("Błąd połączenia z serwerem.")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun updateProfile(
+        firstName: String?,
+        lastName: String?,
+        phone: String?,
+        email: String?,
+        addressStreet: String?,
+        addressCity: String?,
+        addressZip: String?,
+        addressCountry: String?,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val response = authService.updateProfile(
+                    UpdateProfileRequest(
+                        email          = email?.takeIf { it.isNotBlank() },
+                        firstName      = firstName,
+                        lastName       = lastName,
+                        phone          = phone,
+                        addressStreet  = addressStreet,
+                        addressCity    = addressCity,
+                        addressZip     = addressZip,
+                        addressCountry = addressCountry
+                    )
+                )
+                if (response.isSuccessful && response.body() != null) {
+                    val body = response.body()!!
+                    val role = decodeRoleFromJwt(body.token)
+                    saveSession(body, role)
+                    Log.d("AUTH_DEBUG", "Profile updated successfully")
+                    onSuccess()
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    onError(when (response.code()) {
+                        409 -> "Podany adres e-mail jest już zajęty."
+                        400 -> "Nieprawidłowe dane. Sprawdź formularz."
+                        401 -> "Sesja wygasła. Zaloguj się ponownie."
+                        else -> "Błąd aktualizacji (${response.code()}): $errorBody"
+                    })
+                }
+            } catch (e: Exception) {
+                onError("Błąd połączenia z serwerem.")
+                Log.e("AUTH_DEBUG", "updateProfile exception: ${e.message}")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    private fun saveSession(body: AuthResponse, role: String) {
+        prefs.edit().apply {
+            putString("jwt_token",        body.token)
+            putLong("tenant_id",          body.tenantId)
+            putLong("user_id",            body.userId)
+            putString("user_role",        role)
+            putString("user_email",       body.email)
+            putString("user_first_name",  body.firstName     ?: "")
+            putString("user_last_name",   body.lastName      ?: "")
+            putString("user_phone",       body.phone         ?: "")
+            putString("user_addr_street", body.addressStreet ?: "")
+            putString("user_addr_city",   body.addressCity   ?: "")
+            putString("user_addr_zip",    body.addressZip    ?: "")
+            putString("user_addr_country",body.addressCountry?: "")
+            apply()
+        }
+    }
+
+    private fun decodeRoleFromJwt(token: String): String {
+        return try {
+            val parts = token.split(".")
+            if (parts.size < 2) return "UNKNOWN"
+            val payload = parts[1]
+            val decoded = android.util.Base64.decode(
+                payload.replace('-', '+').replace('_', '/'),
+                android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+            )
+            val json = String(decoded, Charsets.UTF_8)
+            val rolesRegex = Regex("\"roles\":\\s*\\[\"([^\"]+)\"")
+            val match = rolesRegex.find(json)
+            match?.groupValues?.get(1) ?: "USER"
+        } catch (e: Exception) {
+            Log.e("AUTH_DEBUG", "JWT decode error: ${e.message}")
+            "UNKNOWN"
         }
     }
 }

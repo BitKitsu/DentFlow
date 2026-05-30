@@ -45,8 +45,10 @@ class StaffMemberServiceTest {
                 .id(10L)
                 .tenant(tenant)
                 .userId(100L)
-                .displayName("Dr. Smith")
+                .firstName("Dr.")
+                .lastName("Smith")
                 .profession("Dentist")
+                .bio("I am a dentist")
                 .build();
     }
 
@@ -58,36 +60,38 @@ class StaffMemberServiceTest {
         List<StaffMemberResponse> responses = staffMemberService.getStaffMembers(1L);
 
         assertThat(responses).hasSize(1);
-        assertThat(responses.get(0).displayName()).isEqualTo("Dr. Smith");
+        assertThat(responses.get(0).firstName()).isEqualTo("Dr.");
+        assertThat(responses.get(0).lastName()).isEqualTo("Smith");
         assertThat(responses.get(0).profession()).isEqualTo("Dentist");
     }
 
     @Test
     void shouldAddStaffMember() {
-        CreateStaffMemberRequest req = new CreateStaffMemberRequest(200L, "Dr. Jones", "Assistant");
+        CreateStaffMemberRequest req = new CreateStaffMemberRequest(200L, "Dr.", "Jones", "Assistant", "I am an assistant");
         when(tenantRepository.findById(1L)).thenReturn(Optional.of(tenant));
         
         StaffMember newStaff = StaffMember.builder()
             .id(11L).tenant(tenant).userId(req.userId())
-            .displayName(req.displayName()).profession(req.profession()).build();
+            .firstName(req.firstName()).lastName(req.lastName()).profession(req.profession()).bio(req.bio()).build();
 
         when(staffMemberRepository.save(any(StaffMember.class))).thenReturn(newStaff);
 
         StaffMemberResponse response = staffMemberService.addStaffMember(1L, req);
 
-        assertThat(response.displayName()).isEqualTo("Dr. Jones");
+        assertThat(response.firstName()).isEqualTo("Dr.");
+        assertThat(response.lastName()).isEqualTo("Jones");
         verify(staffMemberRepository).save(any(StaffMember.class));
     }
 
     @Test
     void shouldUpdateStaffMember() {
-        UpdateStaffMemberRequest req = new UpdateStaffMemberRequest(100L, "Dr. Smith Updated", "Lead Dentist");
+        UpdateStaffMemberRequest req = new UpdateStaffMemberRequest(100L, "Dr.", "Smith Updated", "Lead Dentist", "Updated bio");
         when(staffMemberRepository.findByIdAndTenantId(10L, 1L)).thenReturn(Optional.of(staffMember));
         when(staffMemberRepository.save(any(StaffMember.class))).thenReturn(staffMember);
 
         StaffMemberResponse response = staffMemberService.updateStaffMember(1L, 10L, req);
 
-        assertThat(response.displayName()).isEqualTo("Dr. Smith Updated");
+        assertThat(response.lastName()).isEqualTo("Smith Updated");
         assertThat(response.profession()).isEqualTo("Lead Dentist");
         verify(staffMemberRepository).save(staffMember);
     }

@@ -167,7 +167,7 @@ public class AppointmentService {
 
             String patientName = patient != null
                     ? patient.getFirstName() + " " + patient.getLastName() : "Pacjent";
-            String dentistName = dentist != null ? dentist.getDisplayName() : "Lekarz";
+            String dentistName = dentist != null ? dentist.getFirstName() + " " + dentist.getLastName() : "Lekarz";
 
             // Email do pacjenta
             if (patient != null && patient.getEmail() != null && !patient.getEmail().isBlank()) {

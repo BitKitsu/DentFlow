@@ -62,7 +62,7 @@ interface ApiService {
     suspend fun updatePatient(
         @Path("tenantId") tenantId: Long,
         @Path("patientId") patientId: Long,
-        @Body request: CreatePatientRequest
+        @Body request: UpdatePatientRequest
     ): Response<PatientResponse>
 
     @DELETE("tenants/{tenantId}/patients/{patientId}")

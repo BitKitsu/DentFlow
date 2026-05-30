@@ -172,7 +172,7 @@ fun CreateAppointmentScreen(
             expanded = doctorExpanded,
             onExpandedChange = { doctorExpanded = it }
         ) {
-            val doctorName = staff.find { it.id == selectedDoctorId }?.displayName ?: "Wybierz lekarza"
+            val doctorName = staff.find { it.id == selectedDoctorId }?.let { "${it.firstName} ${it.lastName}" } ?: "Wybierz lekarza"
             OutlinedTextField(
                 value = doctorName,
                 onValueChange = {},
@@ -188,7 +188,7 @@ fun CreateAppointmentScreen(
             ) {
                 staff.forEach { member ->
                     DropdownMenuItem(
-                        text = { Text("${member.displayName} (${member.profession})") },
+                        text = { Text("${member.firstName} ${member.lastName} (${member.profession})") },
                         onClick = {
                             selectedDoctorId = member.id
                             doctorExpanded = false

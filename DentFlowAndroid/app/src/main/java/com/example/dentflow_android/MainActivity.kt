@@ -48,7 +48,11 @@ class MainActivity : ComponentActivity() {
                 val savedToken = startPrefs.getString("jwt_token", null)
                 val startDestination = if (!savedToken.isNullOrBlank()) "main_dashboard" else "login"
 
-                NavHost(navController = navController, startDestination = startDestination) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    NavHost(navController = navController, startDestination = startDestination) {
                     composable("login") {
                         LoginScreen(
                             onLoginSuccess = {
@@ -98,6 +102,13 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    composable("appointment_setup") {
+                        CreateAppointmentScreen(
+                            initialDoctorId = "",
+                            onSuccess = { navController.popBackStack() }
+                        )
+                    }
+
                     composable("appointment_setup/{staffId}") { backStackEntry ->
                         val staffId = backStackEntry.arguments?.getString("staffId") ?: ""
                         CreateAppointmentScreen(
@@ -127,6 +138,7 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         )
+                    }
                     }
                 }
             }
@@ -221,7 +233,10 @@ fun MainDashboard(
                 1 -> BusinessScreen(
                     onNavigateToSettings = { isShowingSettings = true }
                 )
-                2 -> VisitsScreen(viewModel = visitViewModel)
+                2 -> VisitsScreen(
+                    viewModel = visitViewModel,
+                    onCreateClick = { navController.navigate("appointment_setup") }
+                )
                 3 -> NotificationsScreen(viewModel = notificationViewModel)
                 4 -> {
                     if (!isShowingSettings) {

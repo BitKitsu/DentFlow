@@ -46,8 +46,10 @@ public class StaffMemberService {
         StaffMember staff = StaffMember.builder()
                 .tenant(tenant)
                 .userId(request.userId())
-                .displayName(request.displayName())
+                .firstName(request.firstName())
+                .lastName(request.lastName())
                 .profession(request.profession())
+                .bio(request.bio())
                 .build();
 
         return StaffMemberResponse.from(staffMemberRepository.save(staff));
@@ -58,8 +60,10 @@ public class StaffMemberService {
         StaffMember staff = staffMemberRepository.findByIdAndTenantId(staffId, tenantId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pracownik nie istnieje w tym gabinecie"));
 
-        staff.setDisplayName(request.displayName());
+        staff.setFirstName(request.firstName());
+        staff.setLastName(request.lastName());
         staff.setProfession(request.profession());
+        staff.setBio(request.bio());
         if (request.userId() != null) {
             staff.setUserId(request.userId());
         }

@@ -79,7 +79,14 @@ data class PatientResponse(
     val lastName: String,
     val email: String? = null,
     val phone: String,
-    val notes: String? = null
+    val notes: String? = null,
+    val dateOfBirth: String? = null,
+    val pesel: String? = null,
+    val gender: String? = null,
+    val addressStreet: String? = null,
+    val addressCity: String? = null,
+    val addressZip: String? = null,
+    val addressCountry: String? = null
 )
 
 data class CreatePatientRequest(
@@ -88,7 +95,14 @@ data class CreatePatientRequest(
     val lastName: String,
     val email: String,
     val phone: String,
-    val notes: String = ""
+    val notes: String = "",
+    val dateOfBirth: String? = null,
+    val pesel: String? = null,
+    val gender: String? = null,
+    val addressStreet: String? = null,
+    val addressCity: String? = null,
+    val addressZip: String? = null,
+    val addressCountry: String? = null
 )
 
 data class UpdatePatientRequest(
@@ -97,7 +111,14 @@ data class UpdatePatientRequest(
     val lastName: String,
     val email: String,
     val phone: String,
-    val notes: String = ""
+    val notes: String = "",
+    val dateOfBirth: String? = null,
+    val pesel: String? = null,
+    val gender: String? = null,
+    val addressStreet: String? = null,
+    val addressCity: String? = null,
+    val addressZip: String? = null,
+    val addressCountry: String? = null
 )
 
 // --- STAFF ---
@@ -106,20 +127,26 @@ data class StaffMemberResponse(
     val id: Long,
     val tenantId: Long,
     val userId: Long,
-    val displayName: String,
-    val profession: String
+    val firstName: String,
+    val lastName: String,
+    val profession: String,
+    val bio: String? = null
 )
 
 data class CreateStaffMemberRequest(
     val userId: Long,
-    val displayName: String,
-    val profession: String
+    val firstName: String,
+    val lastName: String,
+    val profession: String,
+    val bio: String? = null
 )
 
 data class UpdateStaffMemberRequest(
     val userId: Long,
-    val displayName: String,
-    val profession: String
+    val firstName: String,
+    val lastName: String,
+    val profession: String,
+    val bio: String? = null
 )
 
 // --- APPOINTMENTS (Wizyty) ---

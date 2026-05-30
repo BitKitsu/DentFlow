@@ -7,8 +7,13 @@ public record UpdateStaffMemberRequest(
         Long userId,
 
         @NotBlank @Size(max = 100)
-        String displayName,
+        String firstName,
+
+        @NotBlank @Size(max = 100)
+        String lastName,
 
         @NotBlank @Size(max = 20)
-        String profession
+        String profession,
+
+        String bio
 ) {}

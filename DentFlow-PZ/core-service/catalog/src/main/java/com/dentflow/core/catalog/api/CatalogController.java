@@ -9,12 +9,28 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+
+/**
+ * Kontroler REST zarządzający cennikiem usług dla danego tenanta.
+ *
+ * <p>Wszystkie endpointy są dostępne pod ścieżką
+ * {@code /tenants/{tenantId}/catalog}.</p>
+ *
+ * <p>Operacje zapisu (POST, PUT, DELETE) wymagają roli
+ * {@code ADMIN}, {@code OWNER} lub {@code DOCTOR}.</p>
+ */
+
 @RestController
 @RequestMapping("/tenants/{tenantId}/catalog")
 public class CatalogController {
 
     private final CatalogService catalogService;
 
+    /**
+     * Tworzy instancję kontrolera z wstrzykniętym serwisem katalogu.
+     *
+     * @param catalogService serwis obsługujący logikę biznesową cennika
+     */
     public CatalogController(CatalogService catalogService) {
         this.catalogService = catalogService;
     }

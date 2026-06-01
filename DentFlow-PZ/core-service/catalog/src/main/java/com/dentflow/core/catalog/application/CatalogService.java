@@ -12,15 +12,38 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+/**
+ * Serwis aplikacyjny obsługujący logikę biznesową cennika usług.
+ *
+ * <p>Wszystkie operacje są ograniczone do kontekstu konkretnego tenanta —
+ * żadna metoda nie może odczytać ani zmodyfikować danych należących
+ * do innego gabinetu.</p>
+ *
+ * <p>Gdy żądana usługa nie istnieje w kontekście tenanta, metody rzucają
+ * {@link ResponseStatusException} z kodem {@code 404 Not Found}.</p>
+ */
 @Service
 public class CatalogService {
 
     private final ServiceCatalogItemRepository repository;
 
+
+    /**
+     * Tworzy instancję serwisu z wstrzykniętym repozytorium.
+     *
+     * @param repository repozytorium pozycji cennika
+     */
     public CatalogService(ServiceCatalogItemRepository repository) {
         this.repository = repository;
     }
 
+    /**
+     * Zwraca wszystkie usługi tenanta — zarówno aktywne, jak i nieaktywne.
+     *
+     * @param tenantId identyfikator tenanta
+     * @return lista wszystkich {@link ServiceCatalogItemDTO} dla danego tenanta;
+     *         pusta lista jeśli brak pozycji
+     */
     @Transactional(readOnly = true)
     public List<ServiceCatalogItemDTO> getAllServices(Long tenantId) {
         return repository.findByTenantId(tenantId)
@@ -29,6 +52,13 @@ public class CatalogService {
                 .toList();
     }
 
+    /**
+     * Zwraca wyłącznie aktywne usługi tenanta.
+     *
+     * @param tenantId identyfikator tenanta
+     * @return lista aktywnych {@link ServiceCatalogItemDTO};
+     *         pusta lista jeśli brak aktywnych pozycji
+     */
     @Transactional(readOnly = true)
     public List<ServiceCatalogItemDTO> getActiveServices(Long tenantId) {
         return repository.findByTenantIdAndActiveTrue(tenantId)
@@ -37,6 +67,16 @@ public class CatalogService {
                 .toList();
     }
 
+    /**
+     * Zwraca pojedynczą usługę tenanta po jej identyfikatorze.
+     *
+     * @param tenantId identyfikator tenanta
+     * @param id       identyfikator usługi
+     * @return {@link ServiceCatalogItemDTO} dla znalezionej usługi
+     * @throws ResponseStatusException {@code 404 Not Found} gdy usługa
+     *         o podanym {@code id} nie istnieje w kontekście tenanta
+     */
+
     @Transactional(readOnly = true)
     public ServiceCatalogItemDTO getService(Long tenantId, Long id) {
         return repository.findByIdAndTenantId(id, tenantId)
@@ -44,6 +84,17 @@ public class CatalogService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Usługa o id=" + id + " nie istnieje w tym gabinecie"));
     }
+
+    /**
+     * Tworzy nową pozycję w cenniku tenanta.
+     *
+     * <p>Jeśli pole {@code active} w żądaniu ma wartość {@code null},
+     * usługa jest domyślnie tworzona jako aktywna.</p>
+     *
+     * @param tenantId identyfikator tenanta
+     * @param request  dane nowej usługi
+     * @return {@link ServiceCatalogItemDTO} reprezentujący zapisaną usługę
+     */
 
     @Transactional
     public ServiceCatalogItemDTO createService(Long tenantId, CreateServiceCatalogItemRequest request) {
@@ -56,7 +107,19 @@ public class CatalogService {
                 .build();
         return toDTO(repository.save(item));
     }
-
+    /**
+     * Aktualizuje wszystkie pola istniejącej usługi tenanta.
+     *
+     * <p>Metoda nadpisuje wszystkie edytowalne pola wartościami z {@code request} —
+     * każde pole musi być podane nawet jeśli się nie zmienia.</p>
+     *
+     * @param tenantId identyfikator tenanta
+     * @param id       identyfikator usługi do zaktualizowania
+     * @param request  nowe dane usługi
+     * @return {@link ServiceCatalogItemDTO} z zaktualizowanymi danymi
+     * @throws ResponseStatusException {@code 404 Not Found} gdy usługa
+     *         o podanym {@code id} nie istnieje w kontekście tenanta
+     */
     @Transactional
     public ServiceCatalogItemDTO updateService(Long tenantId, Long id, UpdateServiceCatalogItemRequest request) {
         ServiceCatalogItem item = repository.findByIdAndTenantId(id, tenantId)
@@ -71,6 +134,14 @@ public class CatalogService {
         return toDTO(repository.save(item));
     }
 
+    /**
+     * Usuwa pozycję z cennika tenanta.
+     *
+     * @param tenantId identyfikator tenanta
+     * @param id       identyfikator usługi do usunięcia
+     * @throws ResponseStatusException {@code 404 Not Found} gdy usługa
+     *         o podanym {@code id} nie istnieje w kontekście tenanta
+     */
     @Transactional
     public void deleteService(Long tenantId, Long id) {
         ServiceCatalogItem item = repository.findByIdAndTenantId(id, tenantId)
@@ -79,6 +150,12 @@ public class CatalogService {
         repository.delete(item);
     }
 
+    /**
+     * Mapuje encję {@link ServiceCatalogItem} na obiekt transferu danych.
+     *
+     * @param item encja do zmapowania
+     * @return odpowiadający {@link ServiceCatalogItemDTO}
+     */
     private ServiceCatalogItemDTO toDTO(ServiceCatalogItem item) {
         return new ServiceCatalogItemDTO(
                 item.getId(),

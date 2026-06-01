@@ -7,5 +7,10 @@ public record UpdateTenantRequest(
         @NotBlank @Size(max = 100)
         String name,
         @Size(max = 1000)
-        String logoUrl
+        String logoUrl,
+        String locationName,
+        String addressStreet,
+        String addressCity,
+        String addressZip,
+        String addressCountry
 ) {}

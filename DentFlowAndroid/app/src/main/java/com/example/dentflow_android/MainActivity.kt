@@ -25,6 +25,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.dentflow_android.Screens.*
 import com.example.dentflow_android.data.ViewModel.*
+import com.example.dentflow_android.data.remote.AuthViewModel
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -47,7 +48,11 @@ class MainActivity : ComponentActivity() {
                 val savedToken = startPrefs.getString("jwt_token", null)
                 val startDestination = if (!savedToken.isNullOrBlank()) "main_dashboard" else "login"
 
-                NavHost(navController = navController, startDestination = startDestination) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    NavHost(navController = navController, startDestination = startDestination) {
                     composable("login") {
                         LoginScreen(
                             onLoginSuccess = {
@@ -68,16 +73,13 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("main_dashboard") {
-                        val ctx = androidx.compose.ui.platform.LocalContext.current
-                        val prefs = ctx.getSharedPreferences("dentflow_prefs", android.content.Context.MODE_PRIVATE)
                         MainDashboard(
                             isDarkTheme = isDarkTheme,
                             onThemeChange = { isDarkTheme = it },
                             navController = navController,
                             tenantViewModel = tenantViewModel,
                             selectedItem = currentDashboardTab,
-                            onTabChange = { currentDashboardTab = it },
-                            prefs = prefs
+                            onTabChange = { currentDashboardTab = it }
                         )
                     }
 
@@ -97,6 +99,13 @@ class MainActivity : ComponentActivity() {
                         CreateTenantScreen(
                             onBack = { navController.popBackStack() },
                             tenantViewModel = tenantViewModel
+                        )
+                    }
+
+                    composable("appointment_setup") {
+                        CreateAppointmentScreen(
+                            initialDoctorId = "",
+                            onSuccess = { navController.popBackStack() }
                         )
                     }
 
@@ -130,6 +139,7 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     }
+                    }
                 }
             }
         }
@@ -143,33 +153,34 @@ fun MainDashboard(
     navController: NavHostController,
     selectedItem: Int,
     onTabChange: (Int) -> Unit,
-    prefs: SharedPreferences,
     staffViewModel: StaffViewModel = hiltViewModel(),
     tenantViewModel: TenantViewModel = hiltViewModel(),
     notificationViewModel: NotificationViewModel = hiltViewModel(),
     visitViewModel: VisitViewModel = hiltViewModel(),
-    catalogViewModel: CatalogViewModel = hiltViewModel()
+    catalogViewModel: CatalogViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     var isShowingSettings by remember { mutableStateOf(false) }
 
     val staffList by staffViewModel.staffMembers.collectAsState()
     val tenantData by tenantViewModel.tenantState
     val serviceList by catalogViewModel.servicesState
+    val sessionState by authViewModel.sessionState.collectAsState()
 
     val currentTenant = tenantData
-    val userRole = prefs.getString("user_role", "USER") ?: "USER"
+    val userRole = sessionState.role
     val isOwner  = userRole == "OWNER"
     val isDoctor = userRole == "DOCTOR"
 
-    // Budujemy listę kart nawigacyjnych na podstawie roli
+    val hasClinic = currentTenant != null && currentTenant.id != 0L
+
     data class NavItem(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector, val tabIndex: Int)
     val navItems = buildList {
         add(NavItem("Home", Icons.Default.Home, 0))
-        if (isOwner) add(NavItem("Firma", Icons.Default.Business, 1))
-        if (isOwner) add(NavItem("Admin", Icons.Default.AdminPanelSettings, 2))
-        if (isOwner || isDoctor) add(NavItem("Wizyty", Icons.Default.CalendarMonth, 3))
-        add(NavItem("Powiadomienia", Icons.Default.Notifications, 4))
-        add(NavItem("Konto", Icons.Default.AccountCircle, 5))
+        if (isOwner && hasClinic) add(NavItem("Klinika", Icons.Default.Business, 1))
+        if (isOwner || isDoctor) add(NavItem("Wizyty", Icons.Default.CalendarMonth, 2))
+        add(NavItem("Powiadomienia", Icons.Default.Notifications, 3))
+        add(NavItem("Konto", Icons.Default.AccountCircle, 4))
     }
 
     LaunchedEffect(Unit) {
@@ -188,7 +199,7 @@ fun MainDashboard(
                     NavigationBarItem(
                         icon = {
                             BadgedBox(badge = {
-                                if (navItem.tabIndex == 4) {
+                                if (navItem.tabIndex == 3) {
                                     val unreadCount by notificationViewModel.unreadCount.collectAsState()
                                     if (unreadCount > 0) Badge { Text(unreadCount.toString()) }
                                 }
@@ -200,7 +211,7 @@ fun MainDashboard(
                         selected = selectedItem == navItem.tabIndex,
                         onClick = {
                             onTabChange(navItem.tabIndex)
-                            if (navItem.tabIndex != 5) isShowingSettings = false
+                            if (navItem.tabIndex != 4) isShowingSettings = false
                         }
                     )
                 }
@@ -219,25 +230,15 @@ fun MainDashboard(
                         navController.navigate("appointment_setup/${staff.id}")
                     }
                 )
-                1 -> {
-                    if (currentTenant == null || currentTenant.id == 0L) {
-                        EmptyTenantView(
-                            onCreateClick = { navController.navigate("create_tenant_form") }
-                        )
-                    } else {
-                        BusinessScreen()
-                    }
-                }
-                2 -> AdminPanelScreen(
-                    onNavigateToStaff    = { navController.navigate("staff_management") },
-                    onNavigateToPatients = { navController.navigate("patient_list") },
-                    onNavigateToCatalog  = { navController.navigate("catalog_management") },
-                    onNavigateToSchedule = { navController.navigate("schedule") },
-                    onNavigateToSettings = { navController.navigate("settings") }
+                1 -> BusinessScreen(
+                    onNavigateToSettings = { isShowingSettings = true }
                 )
-                3 -> VisitsScreen(viewModel = visitViewModel)
-                4 -> NotificationsScreen(viewModel = notificationViewModel)
-                5 -> {
+                2 -> VisitsScreen(
+                    viewModel = visitViewModel,
+                    onCreateClick = { navController.navigate("appointment_setup") }
+                )
+                3 -> NotificationsScreen(viewModel = notificationViewModel)
+                4 -> {
                     if (!isShowingSettings) {
                         AccountScreen(
                             onSettingsClick = { isShowingSettings = true },
@@ -247,7 +248,8 @@ fun MainDashboard(
                                 }
                             },
                             onEditBusinessClick = { onTabChange(1) },
-                            onAccountDataClick = { navController.navigate("account_data") }
+                            onAccountDataClick = { navController.navigate("account_data") },
+                            onCreateBusinessClick = { navController.navigate("create_tenant_form") }
                         )
                     } else {
                         SettingsScreen(
@@ -258,39 +260,6 @@ fun MainDashboard(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun EmptyTenantView(onCreateClick: () -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.AddBusiness,
-            contentDescription = null,
-            modifier = Modifier.size(100.dp),
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = "Brak aktywnej kliniki",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(modifier = Modifier.height(32.dp))
-        Button(
-            onClick = onCreateClick,
-            modifier = Modifier.fillMaxWidth(0.8f)
-        ) {
-            Icon(Icons.Default.Add, contentDescription = null)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("Utwórz nową klinikę")
         }
     }
 }

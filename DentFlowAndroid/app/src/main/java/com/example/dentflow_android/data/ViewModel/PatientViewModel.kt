@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.dentflow_android.data.remote.ApiService
 import com.example.dentflow_android.data.remote.CreatePatientRequest
+import com.example.dentflow_android.data.remote.UpdatePatientRequest
 import com.example.dentflow_android.data.remote.PatientResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,8 +72,11 @@ class PatientViewModel @Inject constructor(
     // Alias dla kompatybilności
     fun loadPatients() = fetchPatients()
 
-    // 2. DODAWANIE PACJENTA
-    fun addPatient(firstName: String, lastName: String, email: String, phone: String) {
+    fun addPatient(
+        firstName: String, lastName: String, email: String, phone: String, 
+        dateOfBirth: String? = null, pesel: String? = null, gender: String? = null,
+        addressStreet: String? = null, addressCity: String? = null, addressZip: String? = null, addressCountry: String? = null
+    ) {
         if (!checkTenantId()) return
 
         viewModelScope.launch {
@@ -83,7 +87,14 @@ class PatientViewModel @Inject constructor(
                     lastName = lastName,
                     phone = phone,
                     email = email,
-                    notes = ""
+                    notes = "",
+                    dateOfBirth = dateOfBirth,
+                    pesel = pesel,
+                    gender = gender,
+                    addressStreet = addressStreet,
+                    addressCity = addressCity,
+                    addressZip = addressZip,
+                    addressCountry = addressCountry
                 )
 
                 val response = apiService.createPatient(currentTenantId, request)
@@ -99,19 +110,29 @@ class PatientViewModel @Inject constructor(
         }
     }
 
-    // 3. EDYCJA PACJENTA
-    fun updatePatient(id: Long, firstName: String, lastName: String, email: String, phone: String) {
+    fun updatePatient(
+        id: Long, firstName: String, lastName: String, email: String, phone: String, 
+        dateOfBirth: String? = null, pesel: String? = null, gender: String? = null,
+        addressStreet: String? = null, addressCity: String? = null, addressZip: String? = null, addressCountry: String? = null
+    ) {
         if (!checkTenantId()) return
 
         viewModelScope.launch {
             Log.d(TAG, "Edycja pacjenta ID: $id -> Nowe dane: $lastName, $phone")
             try {
-                val request = CreatePatientRequest(
+                val request = UpdatePatientRequest(
                     firstName = firstName,
                     lastName = lastName,
                     phone = phone,
                     email = email,
-                    notes = ""
+                    notes = "",
+                    dateOfBirth = dateOfBirth,
+                    pesel = pesel,
+                    gender = gender,
+                    addressStreet = addressStreet,
+                    addressCity = addressCity,
+                    addressZip = addressZip,
+                    addressCountry = addressCountry
                 )
 
                 val response = apiService.updatePatient(currentTenantId, id, request)

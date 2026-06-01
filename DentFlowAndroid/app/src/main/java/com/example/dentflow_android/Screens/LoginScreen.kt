@@ -35,20 +35,6 @@ fun LoginScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
 
-    val textFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = Color.Black,
-        unfocusedTextColor = Color.Black,
-        focusedBorderColor = MaterialTheme.colorScheme.primary,
-        unfocusedBorderColor = Color.Gray,
-        focusedLabelColor = MaterialTheme.colorScheme.primary,
-        unfocusedLabelColor = Color.DarkGray,
-        focusedLeadingIconColor = MaterialTheme.colorScheme.primary,
-        unfocusedLeadingIconColor = Color.DarkGray,
-        focusedTrailingIconColor = MaterialTheme.colorScheme.primary,
-        unfocusedTrailingIconColor = Color.DarkGray,
-        cursorColor = MaterialTheme.colorScheme.primary
-    )
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -85,7 +71,6 @@ fun LoginScreen(
                 leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isLoading,
-                colors = textFieldColors,
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
@@ -109,7 +94,6 @@ fun LoginScreen(
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !isLoading,
-                colors = textFieldColors,
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )

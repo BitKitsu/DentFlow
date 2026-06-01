@@ -10,11 +10,47 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+data class SessionState(
+    val email: String = "",
+    val role: String = "STAFF",
+    val firstName: String = "",
+    val lastName: String = "",
+    val phone: String = "",
+    val addressStreet: String = "",
+    val addressCity: String = "",
+    val addressZip: String = "",
+    val addressCountry: String = "",
+    val avatarUrl: String = "",
+    val tenantId: Long = 0L,
+    val userId: Long = 0L
+)
+
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val authService: AuthService,
     private val prefs: SharedPreferences
 ) : ViewModel() {
+
+    private fun loadSessionState(): SessionState {
+        return SessionState(
+            email = prefs.getString("user_email", "") ?: "",
+            role = prefs.getString("user_role", "STAFF") ?: "STAFF",
+            firstName = prefs.getString("user_first_name", "") ?: "",
+            lastName = prefs.getString("user_last_name", "") ?: "",
+            phone = prefs.getString("user_phone", "") ?: "",
+            addressStreet = prefs.getString("user_addr_street", "") ?: "",
+            addressCity = prefs.getString("user_addr_city", "") ?: "",
+            addressZip = prefs.getString("user_addr_zip", "") ?: "",
+            addressCountry = prefs.getString("user_addr_country", "") ?: "",
+            avatarUrl = prefs.getString("user_avatar_url", "") ?: "",
+            tenantId = prefs.getLong("tenant_id", 0L),
+            userId = prefs.getLong("user_id", 0L)
+        )
+    }
+
+    private val _sessionState = MutableStateFlow(loadSessionState())
+    val sessionState: StateFlow<SessionState> = _sessionState
+
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -90,6 +126,7 @@ class AuthViewModel @Inject constructor(
 
     fun logout() {
         prefs.edit().clear().apply()
+        _sessionState.value = SessionState()
         Log.d("AUTH_DEBUG", "Logged out, session data cleared locally.")
         viewModelScope.launch {
             try {
@@ -213,6 +250,7 @@ class AuthViewModel @Inject constructor(
             putString("user_avatar_url",  body.avatarUrl     ?: "")
             apply()
         }
+        _sessionState.value = loadSessionState()
     }
 
     private fun decodeRoleFromJwt(token: String): String {

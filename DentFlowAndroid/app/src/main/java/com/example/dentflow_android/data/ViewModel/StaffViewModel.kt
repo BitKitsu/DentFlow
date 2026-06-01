@@ -114,7 +114,7 @@ class StaffViewModel @Inject constructor(
 
     // --- ZARZĄDZANIE PERSONELEM ---
 
-    fun addStaff(fName: String, lName: String, profession: String, email: String, password: String, phone: String) {
+    fun addStaff(fName: String, lName: String, profession: String, email: String, password: String, phone: String, bio: String) {
         if (!hasValidSession()) return
 
         viewModelScope.launch {
@@ -139,8 +139,10 @@ class StaffViewModel @Inject constructor(
                     if (createdUserId != 0L) {
                         val staffRequest = CreateStaffMemberRequest(
                             userId = createdUserId,
-                            displayName = "$fName $lName",
-                            profession = profession
+                            firstName = fName,
+                            lastName = lName,
+                            profession = profession,
+                            bio = bio
                         )
 
                         // 2. Potem tworzymy rekord pracownika w konkretnej klinice (tenantId)
@@ -163,7 +165,7 @@ class StaffViewModel @Inject constructor(
         }
     }
 
-    fun updateStaff(staffId: Long, fName: String, lName: String, profession: String, userId: Long) {
+    fun updateStaff(staffId: Long, fName: String, lName: String, profession: String, userId: Long, bio: String) {
         if (!hasValidSession()) return
 
         viewModelScope.launch {
@@ -171,8 +173,10 @@ class StaffViewModel @Inject constructor(
             try {
                 val updateRequest = UpdateStaffMemberRequest(
                     userId = userId,
-                    displayName = "$fName $lName",
-                    profession = profession
+                    firstName = fName,
+                    lastName = lName,
+                    profession = profession,
+                    bio = bio
                 )
                 val response = apiService.updateStaffMember(currentTenantId, staffId, updateRequest)
                 if (response.isSuccessful) {

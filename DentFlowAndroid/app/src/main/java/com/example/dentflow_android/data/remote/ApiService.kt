@@ -28,6 +28,11 @@ interface ApiService {
         @Body request: TenantRequest
     ): Response<TenantResponse>
 
+    @DELETE("tenants/{tenantId}")
+    suspend fun deleteTenant(
+        @Path("tenantId") tenantId: Long
+    ): Response<Unit>
+
     // --- ROOMS (GABINETY) ---
     @GET("tenants/{tenantId}/rooms")
     suspend fun getRooms(
@@ -57,7 +62,7 @@ interface ApiService {
     suspend fun updatePatient(
         @Path("tenantId") tenantId: Long,
         @Path("patientId") patientId: Long,
-        @Body request: CreatePatientRequest
+        @Body request: UpdatePatientRequest
     ): Response<PatientResponse>
 
     @DELETE("tenants/{tenantId}/patients/{patientId}")

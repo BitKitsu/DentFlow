@@ -6,16 +6,20 @@ public record StaffMemberResponse(
         Long id,
         Long tenantId,
         Long userId,
-        String displayName,
-        String profession
+        String firstName,
+        String lastName,
+        String profession,
+        String bio
 ) {
     public static StaffMemberResponse from(StaffMember staffMember) {
         return new StaffMemberResponse(
                 staffMember.getId(),
                 staffMember.getTenant().getId(),
                 staffMember.getUserId(),
-                staffMember.getDisplayName(),
-                staffMember.getProfession()
+                staffMember.getFirstName(),
+                staffMember.getLastName(),
+                staffMember.getProfession(),
+                staffMember.getBio()
         );
     }
 }

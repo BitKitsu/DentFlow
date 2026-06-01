@@ -24,18 +24,19 @@ import com.example.dentflow_android.data.remote.StaffMemberResponse
 @Composable
 fun AddStaffDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, String, String, String, String, String) -> Unit
+    onConfirm: (String, String, String, String, String, String, String) -> Unit
 ) {
     var fName by remember { mutableStateOf("") }
     var lName by remember { mutableStateOf("") }
     var prof by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
+    var bio by remember { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
     var showError by remember { mutableStateOf(false) }
 
     val isEmailValid = email.contains("@") && email.contains(".")
-    val isPassValid = pass.length >= 6
+    val isPassValid = pass.length >= 8
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -75,6 +76,15 @@ fun AddStaffDialog(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 )
+                OutlinedTextField(
+                    value = bio,
+                    onValueChange = { bio = it },
+                    label = { Text("Krótkie Bio / O mnie") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2,
+                    maxLines = 4,
+                    shape = RoundedCornerShape(12.dp)
+                )
                 HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                 OutlinedTextField(
                     value = email,
@@ -91,7 +101,12 @@ fun AddStaffDialog(
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
                     isError = showError && !isPassValid,
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    supportingText = {
+                        if (showError && !isPassValid) {
+                            Text("Hasło musi mieć co najmniej 8 znaków", color = MaterialTheme.colorScheme.error)
+                        }
+                    }
                 )
             }
         },
@@ -99,7 +114,7 @@ fun AddStaffDialog(
             Button(
                 onClick = {
                     if (fName.isNotBlank() && lName.isNotBlank() && prof.isNotBlank() && isEmailValid && isPassValid) {
-                        onConfirm(fName, lName, prof, email, pass, phone)
+                        onConfirm(fName, lName, prof, email, pass, phone, bio)
                     } else { showError = true }
                 },
                 shape = RoundedCornerShape(12.dp)
@@ -115,12 +130,12 @@ fun AddStaffDialog(
 fun EditStaffDialog(
     member: StaffMemberResponse,
     onDismiss: () -> Unit,
-    onConfirm: (String, String, String) -> Unit
+    onConfirm: (String, String, String, String) -> Unit
 ) {
-    val names = member.displayName.split(" ")
-    var fName by remember { mutableStateOf(names.firstOrNull() ?: "") }
-    var lName by remember { mutableStateOf(if (names.size > 1) names.subList(1, names.size).joinToString(" ") else "") }
+    var fName by remember { mutableStateOf(member.firstName) }
+    var lName by remember { mutableStateOf(member.lastName) }
     var prof by remember { mutableStateOf(member.profession) }
+    var bio by remember { mutableStateOf(member.bio ?: "") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -130,10 +145,11 @@ fun EditStaffDialog(
                 OutlinedTextField(value = fName, onValueChange = { fName = it }, label = { Text("Imię") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp))
                 OutlinedTextField(value = lName, onValueChange = { lName = it }, label = { Text("Nazwisko") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp))
                 OutlinedTextField(value = prof, onValueChange = { prof = it }, label = { Text("Profesja") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp))
+                OutlinedTextField(value = bio, onValueChange = { bio = it }, label = { Text("Krótkie Bio / O mnie") }, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 4, shape = RoundedCornerShape(12.dp))
             }
         },
         confirmButton = {
-            Button(onClick = { onConfirm(fName, lName, prof) }, shape = RoundedCornerShape(12.dp)) { Text("ZAPISZ") }
+            Button(onClick = { onConfirm(fName, lName, prof, bio) }, shape = RoundedCornerShape(12.dp)) { Text("ZAPISZ") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("ANULUJ") } }
     )
@@ -200,8 +216,8 @@ fun StaffManagementScreen(
             if (showAddDialog) {
                 AddStaffDialog(
                     onDismiss = { showAddDialog = false },
-                    onConfirm = { fn, ln, pr, em, ps, ph ->
-                        viewModel.addStaff(fn, ln, pr, em, ps, ph)
+                    onConfirm = { fn, ln, pr, em, ps, ph, bo ->
+                        viewModel.addStaff(fn, ln, pr, em, ps, ph, bo)
                         showAddDialog = false
                     }
                 )
@@ -211,9 +227,9 @@ fun StaffManagementScreen(
                 EditStaffDialog(
                     member = member,
                     onDismiss = { editingMember = null },
-                    onConfirm = { fn, ln, pr ->
+                    onConfirm = { fn, ln, pr, bo ->
                         // --- POPRAWKA: Bez tenantId ---
-                        viewModel.updateStaff(member.id, fn, ln, pr, member.userId)
+                        viewModel.updateStaff(member.id, fn, ln, pr, member.userId, bo)
                         editingMember = null
                     }
                 )
@@ -248,7 +264,7 @@ fun StaffItem(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = member.displayName.take(1).uppercase(),
+                    text = member.firstName.take(1).uppercase(),
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onTertiaryContainer
                 )
@@ -256,7 +272,7 @@ fun StaffItem(
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = member.displayName,
+                    text = "${member.firstName} ${member.lastName}",
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )

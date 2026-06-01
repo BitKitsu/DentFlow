@@ -40,6 +40,15 @@ public class SchedulingController {
                 .body(schedulingService.addSlot(tenantId, request));
     }
 
+    @PutMapping("/slots/{slotId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
+    public ResponseEntity<WorkScheduleSlotResponse> updateSlot(
+            @PathVariable Long tenantId,
+            @PathVariable Long slotId,
+            @Valid @RequestBody UpdateWorkScheduleSlotRequest request) {
+        return ResponseEntity.ok(schedulingService.updateSlot(tenantId, slotId, request));
+    }
+
     @DeleteMapping("/slots/{slotId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
     public ResponseEntity<Void> deleteSlot(

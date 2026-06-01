@@ -51,4 +51,12 @@ public class TenantController {
             @Valid @RequestBody UpdateTenantRequest request) {
         return ResponseEntity.ok(tenantService.updateTenant(tenantId, request));
     }
+
+    @DeleteMapping("/{tenantId}")
+    @Operation(summary = "Usunięcie gabinetu")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<Void> deleteTenant(@PathVariable Long tenantId) {
+        tenantService.deleteTenant(tenantId);
+        return ResponseEntity.noContent().build();
+    }
 }

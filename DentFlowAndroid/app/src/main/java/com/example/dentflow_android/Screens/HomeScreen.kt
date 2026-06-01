@@ -54,7 +54,7 @@ fun HomeScreen(
                 q.isEmpty() ||
                         item.service.name.lowercase().contains(q) ||
                         item.location?.addressCity?.lowercase()?.contains(q) == true ||
-                        item.specialists.any { staff -> staff.displayName.lowercase().contains(q) }
+                        item.specialists.any { staff -> "${staff.firstName} ${staff.lastName}".lowercase().contains(q) }
             }
     }
 
@@ -73,7 +73,7 @@ fun HomeScreen(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = { Text("Zabieg, miasto lub nazwisko...") },
+            placeholder = { Text("Szukaj usług lub specjalisty...", maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
             leadingIcon = { Icon(Icons.Default.Search, null, tint = MaterialTheme.colorScheme.primary) },
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
@@ -196,7 +196,7 @@ fun ServiceTile(item: ServiceDisplayModel, onStaffClick: (StaffMemberResponse) -
                     item.specialists.forEach { staff ->
                         AssistChip(
                             onClick = { onStaffClick(staff) },
-                            label = { Text(staff.displayName, fontSize = 11.sp) },
+                            label = { Text("${staff.firstName} ${staff.lastName}", fontSize = 11.sp) },
                             leadingIcon = {
                                 Icon(Icons.Default.AccountCircle, null, modifier = Modifier.size(18.dp))
                             },

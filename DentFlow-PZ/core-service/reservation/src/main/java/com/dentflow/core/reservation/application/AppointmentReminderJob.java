@@ -69,7 +69,7 @@ public class AppointmentReminderJob {
                 }
 
                 String patientName = patient.getFirstName() + " " + patient.getLastName();
-                String dentistName = dentist != null ? dentist.getDisplayName() : "Lekarz";
+                String dentistName = dentist != null ? dentist.getFirstName() + " " + dentist.getLastName() : "Lekarz";
 
                 emailService.sendAppointmentReminder(
                         patient.getEmail(),

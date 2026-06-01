@@ -47,6 +47,13 @@ public class PatientService {
                 .phone(request.phone())
                 .email(request.email())
                 .notes(request.notes())
+                .dateOfBirth(request.dateOfBirth())
+                .pesel(request.pesel())
+                .gender(request.gender())
+                .addressStreet(request.addressStreet())
+                .addressCity(request.addressCity())
+                .addressZip(request.addressZip())
+                .addressCountry(request.addressCountry())
                 .build();
 
         return PatientResponse.from(patientRepository.save(patient));
@@ -62,6 +69,13 @@ public class PatientService {
         patient.setPhone(request.phone());
         patient.setEmail(request.email());
         patient.setNotes(request.notes());
+        patient.setDateOfBirth(request.dateOfBirth());
+        patient.setPesel(request.pesel());
+        patient.setGender(request.gender());
+        patient.setAddressStreet(request.addressStreet());
+        patient.setAddressCity(request.addressCity());
+        patient.setAddressZip(request.addressZip());
+        patient.setAddressCountry(request.addressCountry());
         if (request.userId() != null) {
             patient.setUserId(request.userId());
         }

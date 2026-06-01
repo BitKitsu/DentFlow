@@ -165,20 +165,19 @@ class TenantViewModel @Inject constructor(
         }
     }
 
-    fun saveBusinessData(name: String, locName: String, street: String, city: String, zip: String) {
+    fun saveBusinessData(name: String, locName: String, street: String, city: String, zip: String, logoUrl: String? = null) {
         val id = prefs.getLong("tenant_id", 0L)
-        Log.d(TAG, "Aktualizacja danych biznesowych klini ID: $id")
+        Log.d(TAG, "Aktualizacja danych biznesowych kliniki ID: $id")
         viewModelScope.launch {
             _isLoading.value = true
             val request = TenantRequest(
                 name = name,
-                location = LocationRequest(
-                    name = locName,
-                    addressStreet = street,
-                    addressCity = city,
-                    addressZip = zip,
-                    addressCountry = "Polska"
-                )
+                logoUrl = logoUrl,
+                locationName = locName,
+                addressStreet = street,
+                addressCity = city,
+                addressZip = zip,
+                addressCountry = "Polska"
             )
             try {
                 val response = apiService.updateTenant(id, request)
@@ -193,7 +192,33 @@ class TenantViewModel @Inject constructor(
                     Log.e(TAG, "API BŁĄD -> updateTenant: Kod=${response.code()}, Body=$errorMsg")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "WYJĄTEK przy aktualizacji danych biznesowych: ${e.message}", e)
+                Log.e(TAG, "WYJATEK przy aktualizacji danych biznesowych: ${e.message}", e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun deleteClinic(onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val id = prefs.getLong("tenant_id", 0L)
+        Log.d(TAG, "Usuwanie kliniki ID: $id")
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val response = apiService.deleteTenant(id)
+                if (response.isSuccessful) {
+                    Log.d(TAG, "API -> Usunięto klinikę pomyślnie.")
+                    prefs.edit().remove("tenant_id").apply()
+                    _tenantState.value = null
+                    onSuccess()
+                } else {
+                    val msg = response.errorBody()?.string() ?: "Nieznany błąd"
+                    Log.e(TAG, "API BŁĄD -> deleteTenant: ${response.code()} $msg")
+                    onError(msg)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "WYJATEK przy usuwaniu kliniki: ${e.message}", e)
+                onError(e.message ?: "Błąd połączenia")
             } finally {
                 _isLoading.value = false
             }

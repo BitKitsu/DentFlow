@@ -56,6 +56,21 @@ public class SchedulingService {
     }
 
     @Transactional
+    public WorkScheduleSlotResponse updateSlot(Long tenantId, Long slotId, UpdateWorkScheduleSlotRequest request) {
+        if (!request.endAt().isAfter(request.startAt())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endAt musi być po startAt");
+        }
+        WorkScheduleSlot slot = slotRepository.findById(slotId)
+                .filter(s -> s.getTenantId().equals(tenantId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Slot nie istnieje"));
+        slot.setLocationId(request.locationId());
+        slot.setRoomId(request.roomId());
+        slot.setStartAt(request.startAt());
+        slot.setEndAt(request.endAt());
+        return WorkScheduleSlotResponse.from(slotRepository.save(slot));
+    }
+
+    @Transactional
     public void deleteSlot(Long tenantId, Long slotId) {
         WorkScheduleSlot slot = slotRepository.findById(slotId)
                 .filter(s -> s.getTenantId().equals(tenantId))

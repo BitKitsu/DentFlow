@@ -1,6 +1,7 @@
 package com.dentflow.core.patient.domain;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import lombok.*;
 
 @Entity
@@ -36,4 +37,25 @@ public class Patient {
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
+
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
+
+    @Column(name = "pesel", length = 11)
+    private String pesel;
+
+    @Column(name = "gender", length = 10)
+    private String gender;
+
+    @Column(name = "address_street", length = 100)
+    private String addressStreet;
+
+    @Column(name = "address_city", length = 100)
+    private String addressCity;
+
+    @Column(name = "address_zip", length = 20)
+    private String addressZip;
+
+    @Column(name = "address_country", length = 100)
+    private String addressCountry;
 }

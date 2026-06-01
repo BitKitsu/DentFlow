@@ -1,6 +1,7 @@
 package com.dentflow.core.patient.api;
 
 import com.dentflow.core.patient.domain.Patient;
+import java.time.LocalDate;
 
 public record PatientResponse(
         Long id,
@@ -10,7 +11,14 @@ public record PatientResponse(
         String lastName,
         String phone,
         String email,
-        String notes
+        String notes,
+        LocalDate dateOfBirth,
+        String pesel,
+        String gender,
+        String addressStreet,
+        String addressCity,
+        String addressZip,
+        String addressCountry
 ) {
     public static PatientResponse from(Patient patient) {
         return new PatientResponse(
@@ -21,7 +29,14 @@ public record PatientResponse(
                 patient.getLastName(),
                 patient.getPhone(),
                 patient.getEmail(),
-                patient.getNotes()
+                patient.getNotes(),
+                patient.getDateOfBirth(),
+                patient.getPesel(),
+                patient.getGender(),
+                patient.getAddressStreet(),
+                patient.getAddressCity(),
+                patient.getAddressZip(),
+                patient.getAddressCountry()
         );
     }
 }

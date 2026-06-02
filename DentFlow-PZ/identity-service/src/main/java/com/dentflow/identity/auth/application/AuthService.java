@@ -63,14 +63,14 @@ public class AuthService {
                 .status("ACTIVE")
                 .build();
 
-        UserRole ownerRole = UserRole.builder()
+        UserRole patientRole = UserRole.builder()
                 .user(user)
-                .role(Role.OWNER)
+                .role(Role.PATIENT)
                 .build();
-        user.getRoles().add(ownerRole);
+        user.getRoles().add(patientRole);
 
         User saved = userRepository.save(user);
-        log.info("User registered successfully - id: {}, email: {}, role: OWNER",
+        log.info("User registered successfully - id: {}, email: {}, role: PATIENT",
                 saved.getId(), saved.getEmail());
 
         String token = jwtService.generateToken(saved);
@@ -187,6 +187,52 @@ public class AuthService {
                         "Użytkownik nie istnieje"));
         userRepository.delete(user);
         log.info("Account deleted for userId: {}", user.getId());
+    }
+
+    // -------------------------------------------------------------------------
+    // User lookup by email
+    // -------------------------------------------------------------------------
+
+    public Long getUserIdByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Użytkownik nie istnieje"));
+        return user.getId();
+    }
+
+    public AuthResponse getUserByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Użytkownik nie istnieje"));
+        String token = jwtService.generateToken(user);
+        return toAuthResponse(token, user);
+    }
+
+    // -------------------------------------------------------------------------
+    // Role assignment
+    // -------------------------------------------------------------------------
+
+    @Transactional
+    public void assignRoleToUser(Long userId, Role role) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Użytkownik nie istnieje"));
+        
+        // Check if user already has this role
+        boolean hasRole = user.getRoles().stream()
+                .anyMatch(ur -> ur.getRole() == role);
+        
+        if (!hasRole) {
+            UserRole userRole = UserRole.builder()
+                    .user(user)
+                    .role(role)
+                    .build();
+            user.getRoles().add(userRole);
+            userRepository.save(user);
+            log.info("Assigned role {} to userId: {}", role, userId);
+        } else {
+            log.info("User {} already has role {}", userId, role);
+        }
     }
 
     // -------------------------------------------------------------------------

@@ -52,12 +52,13 @@ fun CatalogListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Cennik Usług") },
+                title = { Text("Cennik Usług", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Powrót")
                     }
                 },
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 actions = {
                     IconButton(onClick = {
                         Log.d(UI_TAG, "Kliknięto przycisk DODAJ nową usługę.")

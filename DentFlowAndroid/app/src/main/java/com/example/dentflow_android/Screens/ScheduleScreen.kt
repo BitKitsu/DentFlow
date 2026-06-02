@@ -38,6 +38,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleScreen(
+    onBackClick: () -> Unit = {},
     viewModel: ScheduleViewModel = hiltViewModel(),
     tenantViewModel: TenantViewModel = hiltViewModel(),
     staffViewModel: StaffViewModel = hiltViewModel()
@@ -77,6 +78,13 @@ fun ScheduleScreen(
     }
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Grafik Pracy", fontWeight = FontWeight.Bold) },
+                navigationIcon = { IconButton(onClick = onBackClick) { Icon(Icons.Default.ArrowBack, null) } },
+                windowInsets = WindowInsets(0, 0, 0, 0)
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
@@ -93,21 +101,20 @@ fun ScheduleScreen(
             Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 4.dp) {
                 Column(modifier = Modifier.padding(bottom = 8.dp)) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("GRAFIK PRACY", fontWeight = FontWeight.Black, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             IconButton(onClick = { currentMonth = currentMonth.minusMonths(1) }) {
-                                Icon(Icons.Default.ArrowBack, null, tint = MaterialTheme.colorScheme.primary)
+                                Icon(Icons.Default.KeyboardArrowLeft, null, tint = MaterialTheme.colorScheme.primary)
                             }
                             Text(
                                 "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale("pl")).uppercase()} ${currentMonth.year}",
                                 fontWeight = FontWeight.Bold, fontSize = 15.sp
                             )
                             IconButton(onClick = { currentMonth = currentMonth.plusMonths(1) }) {
-                                Icon(Icons.Default.ArrowForward, null, tint = MaterialTheme.colorScheme.primary)
+                                Icon(Icons.Default.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.primary)
                             }
                         }
                     }

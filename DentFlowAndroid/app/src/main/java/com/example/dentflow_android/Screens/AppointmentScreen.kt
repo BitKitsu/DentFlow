@@ -86,20 +86,25 @@ fun CreateAppointmentScreen(
         true
     )
 
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text("Nowa Rezerwacja", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = { onSuccess() }) {
+                        Icon(Icons.Default.ArrowBack, null)
+                    }
+                }
+            )
+        }
+    ) { padding ->
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(padding)
+            .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        Text(
-            text = "Nowa Rezerwacja",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
 
         // Patient Dropdown
         ExposedDropdownMenuBox(
@@ -324,5 +329,6 @@ fun CreateAppointmentScreen(
             if (isLoading) CircularProgressIndicator(color = androidx.compose.ui.graphics.Color.White)
             else Text("ZAREZERWUJ WIZYTĘ")
         }
+    }
     }
 }

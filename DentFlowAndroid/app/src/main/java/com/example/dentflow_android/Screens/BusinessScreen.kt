@@ -140,16 +140,10 @@ fun BusinessScreen(
         }
         showScheduleScreen -> {
             BackHandler { showScheduleScreen = false }
-            Box(modifier = Modifier.fillMaxSize()) {
-                ScheduleScreen(viewModel = scheduleViewModel)
-                IconButton(
-                    onClick = { showScheduleScreen = false },
-                    modifier = Modifier.padding(16.dp).align(Alignment.TopStart)
-                        .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.7f), RoundedCornerShape(50))
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                }
-            }
+            ScheduleScreen(
+                onBackClick = { showScheduleScreen = false },
+                viewModel = scheduleViewModel
+            )
         }
         showEditScreen -> {
             BackHandler { showEditScreen = false }

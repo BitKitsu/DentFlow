@@ -39,5 +39,7 @@ public record UpdatePatientRequest(
         String addressZip,
 
         @Size(max = 100)
-        String addressCountry
+        String addressCountry,
+
+        String avatarUrl
 ) {}

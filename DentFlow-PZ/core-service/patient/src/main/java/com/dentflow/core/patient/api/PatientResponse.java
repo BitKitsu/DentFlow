@@ -18,7 +18,8 @@ public record PatientResponse(
         String addressStreet,
         String addressCity,
         String addressZip,
-        String addressCountry
+        String addressCountry,
+        String avatarUrl
 ) {
     public static PatientResponse from(Patient patient) {
         return new PatientResponse(
@@ -36,7 +37,8 @@ public record PatientResponse(
                 patient.getAddressStreet(),
                 patient.getAddressCity(),
                 patient.getAddressZip(),
-                patient.getAddressCountry()
+                patient.getAddressCountry(),
+                patient.getAvatarUrl()
         );
     }
 }

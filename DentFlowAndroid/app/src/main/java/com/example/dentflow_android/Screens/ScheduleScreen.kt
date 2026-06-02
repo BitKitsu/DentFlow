@@ -167,7 +167,7 @@ fun ScheduleScreen(
 
                     // Tabs
                     TabRow(selectedTabIndex = selectedTab, modifier = Modifier.fillMaxWidth()) {
-                        Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text("Sloty (${filteredSlots.size})") })
+                        Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text("Dostępność (${filteredSlots.size})") })
                         Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }, text = { Text("Przerwy (${filteredBlockers.size})") })
                     }
                 }
@@ -203,6 +203,7 @@ fun ScheduleScreen(
             roomMap = roomMap,
             staffList = staff,
             currentTenantId = tenantData?.id ?: -1L,
+            selectedDate = selectedDate,
             onDismiss = { showSlotDialog = false; editingSlot = null },
             onConfirm = { slotData ->
                 if (editingSlot != null) viewModel.updateSlot(editingSlot!!.id, slotData)
@@ -276,7 +277,7 @@ private fun SlotsList(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(Icons.Default.EventBusy, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.outline)
                 Spacer(Modifier.height(8.dp))
-                Text("Brak slotów na ten dzień", color = Color.Gray)
+                Text("Brak slotów dostępności na ten dzień", color = Color.Gray)
             }
         }
     } else {
@@ -369,11 +370,12 @@ fun SlotEditDialog(
     roomMap: Map<Long, String>,
     staffList: List<StaffMemberResponse>,
     currentTenantId: Long,
+    selectedDate: LocalDate,
     onDismiss: () -> Unit,
     onConfirm: (ScheduleSlotDTO) -> Unit
 ) {
     val context = LocalContext.current
-    var date by remember { mutableStateOf(initialSlot?.startAt?.take(10) ?: LocalDate.now().toString()) }
+    var date by remember { mutableStateOf(initialSlot?.startAt?.take(10) ?: selectedDate.toString()) }
     var startT by remember { mutableStateOf(initialSlot?.startAt?.substringAfter("T")?.take(5) ?: "09:00") }
     var endT by remember { mutableStateOf(initialSlot?.endAt?.substringAfter("T")?.take(5) ?: "17:00") }
 
@@ -397,7 +399,15 @@ fun SlotEditDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (initialSlot != null) "Edytuj Slot" else "Nowy Slot", fontWeight = FontWeight.Bold) },
+        title = { 
+            Column {
+                Text(if (initialSlot != null) "Edytuj slot dostępności" else "Dodaj slot dostępności", fontWeight = FontWeight.Bold)
+                if (initialSlot == null) {
+                    Spacer(Modifier.height(4.dp))
+                    Text("Określ czas, kiedy lekarz jest dostępny do wizyt", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 // Date

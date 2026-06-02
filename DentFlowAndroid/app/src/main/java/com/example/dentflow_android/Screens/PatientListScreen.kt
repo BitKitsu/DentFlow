@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -215,7 +217,7 @@ fun PatientDialog(
     val isEmailValid = email.isEmpty() || (email.contains("@") && email.contains("."))
     val isPhoneValid = phone.length >= 9
     val isPeselValid = pesel.isEmpty() || pesel.length == 11
-    val areFieldsValid = firstName.isNotBlank() && lastName.isNotBlank() && isPhoneValid && isPeselValid && addressCity.isNotBlank() && addressStreet.isNotBlank()
+    val areFieldsValid = firstName.isNotBlank() && lastName.isNotBlank() && isPhoneValid && isPeselValid
 
     val calendar = Calendar.getInstance()
     val datePickerDialog = DatePickerDialog(
@@ -234,7 +236,10 @@ fun PatientDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (patient == null) "Dodaj pacjenta" else "Edytuj pacjenta") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.verticalScroll(rememberScrollState())
+            ) {
                 OutlinedTextField(
                     value = firstName,
                     onValueChange = { firstName = it },
@@ -347,6 +352,35 @@ fun PatientDialog(
                         Spacer(Modifier.width(8.dp))
                         Text("Wybierz datę urodzenia")
                     }
+                }
+                
+                // --- SEKCJA ADRESOWA ---
+                Divider(modifier = Modifier.padding(vertical = 4.dp))
+                Text("Adres (opcjonalny)", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                
+                OutlinedTextField(
+                    value = addressStreet,
+                    onValueChange = { addressStreet = it },
+                    label = { Text("Ulica i numer") },
+                    leadingIcon = { Icon(Icons.Default.Home, null) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = addressZip,
+                        onValueChange = { addressZip = it },
+                        label = { Text("Kod pocztowy") },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    OutlinedTextField(
+                        value = addressCity,
+                        onValueChange = { addressCity = it },
+                        label = { Text("Miasto") },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
                 }
             }
         },

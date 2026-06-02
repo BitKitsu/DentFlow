@@ -122,7 +122,7 @@ fun CatalogListScreen(
                 onConfirm = { name, priceCents, duration, isActive ->
                     if (selectedService == null) {
                         Log.d(UI_TAG, "Zatwierdzono formularz: Wywołuję addService.")
-                        catalogViewModel.addService(name, priceCents, duration) // Nowy ViewModel
+                        catalogViewModel.addService(name, priceCents, duration, isActive)
                     } else {
                         Log.d(UI_TAG, "Zatwierdzono formularz: Wywołuję updateService dla ID: ${selectedService!!.id}")
                         catalogViewModel.updateService( // Nowy ViewModel

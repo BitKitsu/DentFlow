@@ -50,6 +50,9 @@ public class StaffMemberService {
                 .lastName(request.lastName())
                 .profession(request.profession())
                 .bio(request.bio())
+                .avatarUrl(request.avatarUrl())
+                .phone(request.phone())
+                .email(request.email())
                 .build();
 
         return StaffMemberResponse.from(staffMemberRepository.save(staff));
@@ -76,6 +79,19 @@ public class StaffMemberService {
         StaffMember staff = staffMemberRepository.findByIdAndTenantId(staffId, tenantId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pracownik nie istnieje w tym gabinecie"));
         staffMemberRepository.delete(staff);
+    }
+
+    @Transactional
+    public void syncFromUser(Long userId, String firstName, String lastName, String avatarUrl, String phone, String email) {
+        List<StaffMember> members = staffMemberRepository.findByUserId(userId);
+        for (StaffMember member : members) {
+            if (firstName != null) member.setFirstName(firstName);
+            if (lastName != null) member.setLastName(lastName);
+            if (avatarUrl != null) member.setAvatarUrl(avatarUrl);
+            if (phone != null) member.setPhone(phone);
+            if (email != null) member.setEmail(email);
+        }
+        staffMemberRepository.saveAll(members);
     }
 
     private void requireTenantExists(Long tenantId) {

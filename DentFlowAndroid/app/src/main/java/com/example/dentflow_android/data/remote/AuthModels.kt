@@ -48,3 +48,9 @@ data class UpdateProfileRequest(
     val addressCountry: String? = null,
     val avatarUrl: String? = null
 )
+
+// Assign role to user
+data class AssignRoleRequest(
+    val userId: Long,
+    val role: String
+)

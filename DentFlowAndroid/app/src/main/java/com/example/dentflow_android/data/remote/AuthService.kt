@@ -5,6 +5,8 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.DELETE
+import retrofit2.http.GET
+import retrofit2.http.Query
 
 interface AuthService {
 
@@ -28,6 +30,15 @@ interface AuthService {
 
     @DELETE("auth/account")
     suspend fun deleteAccount(): Response<Unit>
+
+    @GET("auth/check-email")
+    suspend fun checkEmailExists(@Query("email") email: String): Response<Long>
+
+    @GET("auth/user-by-email")
+    suspend fun getUserByEmail(@Query("email") email: String): Response<AuthResponse>
+
+    @POST("auth/assign-role")
+    suspend fun assignRole(@Body request: AssignRoleRequest): Response<Unit>
 }
 
 data class ChangePasswordRequest(

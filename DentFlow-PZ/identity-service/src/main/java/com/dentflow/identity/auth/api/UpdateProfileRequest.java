@@ -5,8 +5,14 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
- * Partial update of the logged-in user's profile.
- * All fields are optional — only non-null values are applied.
+ * Żądanie częściowej aktualizacji profilu zalogowanego użytkownika.
+ *
+ * <p>Wszystkie pola są opcjonalne — wartość {@code null} oznacza
+ * brak zmiany danego pola. Tylko pola z wartością inną niż {@code null}
+ * są zapisywane przez {@link com.dentflow.identity.auth.application.AuthService#updateProfile}.</p>
+ *
+ * <p>Zmiana adresu e-mail wymaga unikalności w systemie — jeśli podany
+ * e-mail jest już zajęty, serwis zwróci {@code 409 Conflict}.</p>
  */
 public record UpdateProfileRequest(
         @Email String email,

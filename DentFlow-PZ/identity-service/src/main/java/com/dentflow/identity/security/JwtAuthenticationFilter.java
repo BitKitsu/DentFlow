@@ -18,6 +18,32 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
+
+/**
+ * Filtr uwierzytelniania JWT wykonywany raz na żądanie HTTP.
+ *
+ * <p>Dla każdego żądania zawierającego nagłówek
+ * {@code Authorization: Bearer <token>} filtr:</p>
+ * <ol>
+ *   <li>Wyciąga token z nagłówka.</li>
+ *   <li>Odczytuje e-mail użytkownika z claima {@code sub}.</li>
+ *   <li>Weryfikuje token przez {@link JwtService#isTokenValid}.</li>
+ *   <li>Ładuje użytkownika z {@link UserRepository} i mapuje jego role
+ *       na {@link SimpleGrantedAuthority} w formacie {@code ROLE_<NAZWA>}.</li>
+ *   <li>Ustawia {@link UsernamePasswordAuthenticationToken} w
+ *       {@link SecurityContextHolder}, co Spring Security traktuje
+ *       jako pomyślne uwierzytelnienie.</li>
+ * </ol>
+ *
+ * <p>Żądania bez nagłówka {@code Authorization} lub z innym schematem
+ * niż {@code Bearer} są przepuszczane dalej bez uwierzytelniania —
+ * Spring Security zadecyduje czy endpoint wymaga autoryzacji.</p>
+ *
+ * <p>Wszelkie wyjątki podczas przetwarzania tokenu są przechwytywane
+ * i logowane — żądanie jest wtedy przekazywane dalej bez ustawionego
+ * kontekstu, co skutkuje odpowiedzią {@code 401 Unauthorized}
+ * dla chronionych endpointów.</p>
+ */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -26,11 +52,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserRepository userRepository;
 
+
+    /**
+     * Tworzy filtr z wstrzykniętymi zależnościami.
+     *
+     * @param jwtService     serwis do parsowania i walidacji tokenów JWT
+     * @param userRepository repozytorium użytkowników do weryfikacji istnienia konta
+     */
     public JwtAuthenticationFilter(JwtService jwtService, UserRepository userRepository) {
         this.jwtService = jwtService;
         this.userRepository = userRepository;
     }
 
+    /**
+     * Przetwarza nagłówek {@code Authorization} i ustawia kontekst bezpieczeństwa.
+     *
+     * <p>Uwierzytelnienie jest ustawiane tylko gdy spełnione są wszystkie warunki:</p>
+     * <ul>
+     *   <li>nagłówek {@code Authorization} zaczyna się od {@code "Bearer "}</li>
+     *   <li>token zawiera prawidłowy claim {@code sub} z adresem e-mail</li>
+     *   <li>kontekst bezpieczeństwa nie ma jeszcze ustawionego uwierzytelnienia</li>
+     *   <li>użytkownik o danym e-mailu istnieje w bazie danych</li>
+     *   <li>token przechodzi walidację w {@link JwtService#isTokenValid}</li>
+     * </ul>
+     *
+     * @param request     przychodzące żądanie HTTP
+     * @param response    odpowiedź HTTP
+     * @param filterChain łańcuch filtrów Spring Security
+     * @throws ServletException gdy wystąpi błąd filtra
+     * @throws IOException      gdy wystąpi błąd wejścia/wyjścia
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,

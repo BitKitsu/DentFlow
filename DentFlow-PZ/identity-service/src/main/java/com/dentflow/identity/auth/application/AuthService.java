@@ -18,6 +18,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * Serwis aplikacyjny obsługujący uwierzytelnianie i zarządzanie kontem użytkownika.
+ *
+ * <p>Odpowiada za pełny cykl życia konta: rejestrację, logowanie,
+ * zmianę hasła, aktualizację profilu oraz usunięcie konta.
+ * Po każdej operacji modyfikującej dane użytkownika zwracany jest
+ * świeży token JWT odzwierciedlający aktualny stan konta.</p>
+ *
+ * <p>Każda metoda wyszukuje użytkownika wyłącznie po adresie e-mail
+ * pochodzącym z zweryfikowanego tokenu JWT — co gwarantuje że
+ * użytkownik może modyfikować tylko własne konto.</p>
+ */
 @Service
 public class AuthService {
 
@@ -27,6 +39,13 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
+    /**
+     * Tworzy serwis z wstrzykniętymi zależnościami.
+     *
+     * @param userRepository  repozytorium użytkowników
+     * @param passwordEncoder enkoder haseł (BCrypt)
+     * @param jwtService      serwis generowania tokenów JWT
+     */
     public AuthService(UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService) {
@@ -38,7 +57,17 @@ public class AuthService {
     // -------------------------------------------------------------------------
     // Registration
     // -------------------------------------------------------------------------
-
+    /**
+     * Rejestruje nowego użytkownika i zwraca token JWT.
+     *
+     * <p>Nowo utworzone konto otrzymuje domyślnie rolę {@link Role#OWNER}
+     * oraz {@code tenantId = 0} — tenant jest przypisywany osobno
+     * przez {@link #assignTenantToCurrentUser}.</p>
+     *
+     * @param request dane rejestracyjne nowego użytkownika
+     * @return {@link AuthResponse} z tokenem JWT i danymi konta
+     * @throws ResponseStatusException {@code 409 Conflict} gdy e-mail jest już zajęty
+     */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         log.info("Starting registration for email: {}", request.email());
@@ -81,6 +110,18 @@ public class AuthService {
     // Login
     // -------------------------------------------------------------------------
 
+    /**
+     * Uwierzytelnia użytkownika na podstawie e-maila i hasła.
+     *
+     * <p>Celowo zwraca ten sam komunikat błędu ({@code "Nieprawidłowy email lub hasło"})
+     * zarówno gdy użytkownik nie istnieje, jak i gdy hasło jest błędne —
+     * zapobiega to enumeracji kont przez atakującego.</p>
+     *
+     * @param request dane logowania (e-mail i hasło)
+     * @return {@link AuthResponse} z tokenem JWT i danymi konta
+     * @throws ResponseStatusException {@code 401 Unauthorized} gdy dane są nieprawidłowe
+     * @throws ResponseStatusException {@code 403 Forbidden} gdy konto jest nieaktywne
+     */
     public AuthResponse login(LoginRequest request) {
         log.info("Login attempt for email: {}", request.email());
 
@@ -111,7 +152,18 @@ public class AuthService {
     // -------------------------------------------------------------------------
     // Tenant assignment
     // -------------------------------------------------------------------------
-
+    /**
+     * Przypisuje tenanta do konta użytkownika i zwraca odświeżony token JWT.
+     *
+     * <p>Wywoływana po pomyślnym utworzeniu lub dołączeniu do gabinetu —
+     * nowy token zawiera zaktualizowany {@code tenantId}, dzięki czemu
+     * kolejne żądania mają od razu właściwy kontekst gabinetu.</p>
+     *
+     * @param email    adres e-mail użytkownika z kontekstu bezpieczeństwa
+     * @param tenantId identyfikator gabinetu do przypisania
+     * @return {@link AuthResponse} z nowym tokenem JWT zawierającym {@code tenantId}
+     * @throws ResponseStatusException {@code 404 Not Found} gdy użytkownik nie istnieje
+     */
     @Transactional
     public AuthResponse assignTenantToCurrentUser(String email, Long tenantId) {
         User user = userRepository.findByEmail(email)
@@ -126,7 +178,17 @@ public class AuthService {
     // -------------------------------------------------------------------------
     // Password change
     // -------------------------------------------------------------------------
-
+    /**
+     * Zmienia hasło zalogowanego użytkownika.
+     *
+     * <p>Wymaga podania aktualnego hasła w celu weryfikacji tożsamości —
+     * zapobiega zmianie hasła przez osobę która przejęła aktywną sesję.</p>
+     *
+     * @param email   adres e-mail użytkownika z kontekstu bezpieczeństwa
+     * @param request obiekt zawierający aktualne i nowe hasło
+     * @throws ResponseStatusException {@code 404 Not Found} gdy użytkownik nie istnieje
+     * @throws ResponseStatusException {@code 401 Unauthorized} gdy aktualne hasło jest błędne
+     */
     @Transactional
     public void changePassword(String email, ChangePasswordRequest request) {
         User user = userRepository.findByEmail(email)
@@ -145,7 +207,23 @@ public class AuthService {
     // -------------------------------------------------------------------------
     // Profile update
     // -------------------------------------------------------------------------
-
+    /**
+     * Aktualizuje dane profilowe zalogowanego użytkownika.
+     *
+     * <p>Wszystkie pola żądania są opcjonalne — wartość {@code null}
+     * oznacza brak zmiany danego pola (partial update).</p>
+     *
+     * <p>Zmiana adresu e-mail jest dozwolona pod warunkiem że nowy
+     * e-mail nie jest już zajęty przez inne konto. Po zmianie e-maila
+     * zwrócony token zawiera nowy adres jako claim {@code sub} —
+     * klient powinien zastąpić nim dotychczasowy token.</p>
+     *
+     * @param currentEmail aktualny adres e-mail użytkownika z kontekstu bezpieczeństwa
+     * @param request      nowe dane profilowe (wszystkie pola opcjonalne)
+     * @return {@link AuthResponse} z odświeżonym tokenem JWT i zaktualizowanymi danymi
+     * @throws ResponseStatusException {@code 404 Not Found} gdy użytkownik nie istnieje
+     * @throws ResponseStatusException {@code 409 Conflict} gdy nowy e-mail jest już zajęty
+     */
     @Transactional
     public AuthResponse updateProfile(String currentEmail, UpdateProfileRequest request) {
         User user = userRepository.findByEmail(currentEmail)
@@ -179,7 +257,16 @@ public class AuthService {
     // -------------------------------------------------------------------------
     // Account deletion
     // -------------------------------------------------------------------------
-
+    /**
+     * Trwale usuwa konto zalogowanego użytkownika.
+     *
+     * <p>Operacja jest nieodwracalna. Usunięcie kaskadowo usuwa również
+     * wszystkie powiązane role ({@link UserRole}) dzięki konfiguracji
+     * {@code CascadeType.ALL} + {@code orphanRemoval} na encji {@link User}.</p>
+     *
+     * @param currentEmail adres e-mail użytkownika z kontekstu bezpieczeństwa
+     * @throws ResponseStatusException {@code 404 Not Found} gdy użytkownik nie istnieje
+     */
     @Transactional
     public void deleteAccount(String currentEmail) {
         User user = userRepository.findByEmail(currentEmail)
@@ -192,7 +279,13 @@ public class AuthService {
     // -------------------------------------------------------------------------
     // Helper
     // -------------------------------------------------------------------------
-
+    /**
+     * Mapuje użytkownika i token JWT na obiekt odpowiedzi API.
+     *
+     * @param token wygenerowany token JWT
+     * @param user  encja użytkownika
+     * @return {@link AuthResponse} gotowy do zwrócenia przez kontroler
+     */
     private AuthResponse toAuthResponse(String token, User user) {
         return new AuthResponse(
                 token,

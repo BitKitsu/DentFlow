@@ -67,7 +67,7 @@ class StaffMemberServiceTest {
 
     @Test
     void shouldAddStaffMember() {
-        CreateStaffMemberRequest req = new CreateStaffMemberRequest(200L, "Dr.", "Jones", "Assistant", "I am an assistant");
+        CreateStaffMemberRequest req = new CreateStaffMemberRequest(200L, "Dr.", "Jones", "Assistant", "I am an assistant", null, null, null);
         when(tenantRepository.findById(1L)).thenReturn(Optional.of(tenant));
         
         StaffMember newStaff = StaffMember.builder()

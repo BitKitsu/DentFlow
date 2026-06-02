@@ -58,4 +58,7 @@ public class Patient {
 
     @Column(name = "address_country", length = 100)
     private String addressCountry;
+
+    @Column(name = "avatar_url", length = 1000)
+    private String avatarUrl;
 }

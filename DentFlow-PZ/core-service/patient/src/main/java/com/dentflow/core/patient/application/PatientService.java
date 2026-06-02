@@ -54,6 +54,7 @@ public class PatientService {
                 .addressCity(request.addressCity())
                 .addressZip(request.addressZip())
                 .addressCountry(request.addressCountry())
+                .avatarUrl(request.avatarUrl())
                 .build();
 
         return PatientResponse.from(patientRepository.save(patient));
@@ -78,6 +79,9 @@ public class PatientService {
         patient.setAddressCountry(request.addressCountry());
         if (request.userId() != null) {
             patient.setUserId(request.userId());
+        }
+        if (request.avatarUrl() != null) {
+            patient.setAvatarUrl(request.avatarUrl());
         }
 
         return PatientResponse.from(patientRepository.save(patient));

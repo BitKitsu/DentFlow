@@ -66,7 +66,7 @@ class PatientServiceTest {
     @Test
     void shouldAddPatient() {
         // 13 args: userId, firstName, lastName, phone, email, notes, dateOfBirth, pesel, gender, street, city, zip, country
-        CreatePatientRequest request = new CreatePatientRequest(null, "Jane", "Doe", null, null, null, null, null, null, null, null, null, null);
+        CreatePatientRequest request = new CreatePatientRequest(null, "Jane", "Doe", null, null, null, null, null, null, null, null, null, null, null);
         when(patientRepository.save(any(Patient.class))).thenAnswer(invocation -> {
             Patient p = invocation.getArgument(0);
             p.setId(2L);
@@ -83,7 +83,7 @@ class PatientServiceTest {
     @Test
     void shouldAddPatientWithDateOfBirth() {
         LocalDate dob = LocalDate.of(1990, 5, 15);
-        CreatePatientRequest request = new CreatePatientRequest(null, "Anna", "Kowalska", "500000000", "anna@test.pl", "", dob, "12345678901", "Kobieta", "Kwiatowa 1", "Warszawa", "00-001", "Polska");
+        CreatePatientRequest request = new CreatePatientRequest(null, "Anna", "Kowalska", "500000000", "anna@test.pl", "", dob, "12345678901", "Kobieta", "Kwiatowa 1", "Warszawa", "00-001", "Polska", null);
         when(patientRepository.save(any(Patient.class))).thenAnswer(invocation -> {
             Patient p = invocation.getArgument(0);
             p.setId(3L);
@@ -101,7 +101,7 @@ class PatientServiceTest {
     @Test
     void shouldUpdatePatientDateOfBirth() {
         LocalDate newDob = LocalDate.of(1985, 3, 20);
-        UpdatePatientRequest request = new UpdatePatientRequest(null, "John", "Doe", "123456789", "j@d.com", "", newDob, null, null, null, null, null, null);
+        UpdatePatientRequest request = new UpdatePatientRequest(null, "John", "Doe", "123456789", "j@d.com", "", newDob, null, null, null, null, null, null, null);
         when(patientRepository.findByIdAndTenantId(1L, 100L)).thenReturn(Optional.of(patient));
         when(patientRepository.save(any(Patient.class))).thenAnswer(i -> i.getArgument(0));
 

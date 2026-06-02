@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.dentflow.identity.auth.api.AssignTenantRequest;
+import com.dentflow.identity.auth.api.AssignRoleRequest;
 import com.dentflow.identity.auth.api.ChangePasswordRequest;
 import com.dentflow.identity.auth.api.UpdateProfileRequest;
 import org.springframework.security.core.Authentication;
@@ -96,6 +97,33 @@ public class AuthController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> deleteAccount(Authentication authentication) {
         authService.deleteAccount(authentication.getName());
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/check-email")
+    @Operation(summary = "Sprawdź czy użytkownik z danym emailem istnieje i zwróć jego userId")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<Long> checkEmailExists(@RequestParam String email) {
+        log.info("Sprawdzanie istnienia użytkownika: {}", email);
+        Long userId = authService.getUserIdByEmail(email);
+        return ResponseEntity.ok(userId);
+    }
+
+    @GetMapping("/user-by-email")
+    @Operation(summary = "Pobierz dane użytkownika na podstawie emaila")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<AuthResponse> getUserByEmail(@RequestParam String email) {
+        log.info("Pobieranie danych użytkownika: {}", email);
+        AuthResponse response = authService.getUserByEmail(email);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/assign-role")
+    @Operation(summary = "Przypisz rolę użytkownikowi")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<Void> assignRole(@RequestBody AssignRoleRequest request) {
+        log.info("Przypisywanie roli {} użytkownikowi {}", request.role(), request.userId());
+        authService.assignRoleToUser(request.userId(), request.role());
         return ResponseEntity.noContent().build();
     }
 

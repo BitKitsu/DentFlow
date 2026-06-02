@@ -28,6 +28,7 @@ data class SessionState(
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val authService: AuthService,
+    private val apiService: ApiService,
     private val prefs: SharedPreferences
 ) : ViewModel() {
 
@@ -214,6 +215,27 @@ class AuthViewModel @Inject constructor(
                     val role = decodeRoleFromJwt(body.token)
                     saveSession(body, role)
                     Log.d("AUTH_DEBUG", "Profile updated successfully")
+                    
+                    // Sync staff member data
+                    val tenantId = body.tenantId
+                    if (tenantId > 0) {
+                        try {
+                            apiService.syncStaffFromUser(
+                                tenantId,
+                                SyncFromUserRequest(
+                                    userId = body.userId,
+                                    firstName = firstName,
+                                    lastName = lastName,
+                                    avatarUrl = avatarUrl,
+                                    phone = phone,
+                                    email = email
+                                )
+                            )
+                        } catch (e: Exception) {
+                            Log.w("AUTH_DEBUG", "Staff sync failed: ${e.message}")
+                        }
+                    }
+                    
                     onSuccess()
                 } else {
                     val errorBody = response.errorBody()?.string()

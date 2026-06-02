@@ -86,7 +86,8 @@ data class PatientResponse(
     val addressStreet: String? = null,
     val addressCity: String? = null,
     val addressZip: String? = null,
-    val addressCountry: String? = null
+    val addressCountry: String? = null,
+    val avatarUrl: String? = null
 )
 
 data class CreatePatientRequest(
@@ -102,7 +103,8 @@ data class CreatePatientRequest(
     val addressStreet: String? = null,
     val addressCity: String? = null,
     val addressZip: String? = null,
-    val addressCountry: String? = null
+    val addressCountry: String? = null,
+    val avatarUrl: String? = null
 )
 
 data class UpdatePatientRequest(
@@ -118,7 +120,8 @@ data class UpdatePatientRequest(
     val addressStreet: String? = null,
     val addressCity: String? = null,
     val addressZip: String? = null,
-    val addressCountry: String? = null
+    val addressCountry: String? = null,
+    val avatarUrl: String? = null
 )
 
 // --- STAFF ---
@@ -130,7 +133,10 @@ data class StaffMemberResponse(
     val firstName: String,
     val lastName: String,
     val profession: String,
-    val bio: String? = null
+    val bio: String? = null,
+    val avatarUrl: String? = null,
+    val phone: String? = null,
+    val email: String? = null
 )
 
 data class CreateStaffMemberRequest(
@@ -138,7 +144,19 @@ data class CreateStaffMemberRequest(
     val firstName: String,
     val lastName: String,
     val profession: String,
-    val bio: String? = null
+    val bio: String? = null,
+    val avatarUrl: String? = null,
+    val phone: String? = null,
+    val email: String? = null
+)
+
+data class SyncFromUserRequest(
+    val userId: Long,
+    val firstName: String?,
+    val lastName: String?,
+    val avatarUrl: String?,
+    val phone: String?,
+    val email: String?
 )
 
 data class UpdateStaffMemberRequest(

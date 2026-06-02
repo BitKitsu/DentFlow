@@ -96,6 +96,12 @@ interface ApiService {
         @Path("staffId") staffId: Long
     ): Response<Unit>
 
+    @POST("tenants/{tenantId}/staff/sync-from-user")
+    suspend fun syncStaffFromUser(
+        @Path("tenantId") tenantId: Long,
+        @Body request: SyncFromUserRequest
+    ): Response<Unit>
+
     // --- APPOINTMENTS (WIZYTY) ---
     @GET("tenants/{tenantId}/appointments")
     suspend fun getAppointments(

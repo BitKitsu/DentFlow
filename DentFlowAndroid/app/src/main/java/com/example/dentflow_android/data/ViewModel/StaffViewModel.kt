@@ -114,48 +114,83 @@ class StaffViewModel @Inject constructor(
 
     // --- ZARZĄDZANIE PERSONELEM ---
 
-    fun addStaff(fName: String, lName: String, profession: String, email: String, password: String, phone: String, bio: String) {
+    suspend fun checkUserByEmail(email: String): AuthResponse? {
+        return try {
+            val response = authService.getUserByEmail(email)
+            if (response.isSuccessful && response.body() != null) {
+                Log.d(TAG, "Użytkownik znaleziony: ${response.body()?.email}")
+                response.body()
+            } else {
+                Log.d(TAG, "Użytkownik nie istnieje: $email")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Błąd sprawdzania emaila: ${e.message}")
+            null
+        }
+    }
+
+    fun addStaff(fName: String, lName: String, profession: String, email: String, password: String, phone: String, bio: String, userExists: Boolean, existingUserId: Long?) {
         if (!hasValidSession()) return
 
         viewModelScope.launch {
             _isLoading.value = true
-            Log.d(TAG, "ETAP 1: Rejestracja konta użytkownika dla: $email")
+            Log.d(TAG, "Dodawanie pracownika: $email, userExists=$userExists")
             try {
-                val registerRequest = RegisterRequest(
-                    email = email,
-                    password = password,
-                    firstName = fName,
-                    lastName = lName,
-                    phone = phone
-                )
+                var userId: Long? = existingUserId
 
-                // 1. Najpierw tworzymy konto w systemie Auth
-                val authResponse = authService.register(registerRequest)
+                // 1. Jeśli użytkownik nie istnieje - utwórz nowe konto
+                if (!userExists) {
+                    Log.d(TAG, "Tworzenie nowego konta dla: $email")
+                    val registerRequest = RegisterRequest(
+                        email = email,
+                        password = password,
+                        firstName = fName,
+                        lastName = lName,
+                        phone = phone
+                    )
 
-                if (authResponse.isSuccessful && authResponse.body() != null) {
-                    val createdUserId = authResponse.body()!!.userId
-                    Log.d(TAG, "Konto utworzone pomyślnie. UserId: $createdUserId. ETAP 2: Przypisanie do kliniki")
-
-                    if (createdUserId != 0L) {
-                        val staffRequest = CreateStaffMemberRequest(
-                            userId = createdUserId,
-                            firstName = fName,
-                            lastName = lName,
-                            profession = profession,
-                            bio = bio
-                        )
-
-                        // 2. Potem tworzymy rekord pracownika w konkretnej klinice (tenantId)
-                        val coreResponse = apiService.createStaffMember(currentTenantId, staffRequest)
-                        if (coreResponse.isSuccessful) {
-                            Log.d(TAG, "Pracownik pomyślnie przypisany do kliniki $currentTenantId")
-                            loadStaff()
-                        } else {
-                            Log.e(TAG, "Błąd ETAPU 2 (przypisanie): ${coreResponse.code()}")
-                        }
+                    val authResponse = authService.register(registerRequest)
+                    if (authResponse.isSuccessful && authResponse.body() != null) {
+                        userId = authResponse.body()!!.userId
+                        Log.d(TAG, "Konto utworzone pomyślnie. UserId: $userId")
+                    } else {
+                        Log.e(TAG, "Błąd tworzenia konta: ${authResponse.code()}")
+                        _isLoading.value = false
+                        return@launch
                     }
                 } else {
-                    Log.e(TAG, "Błąd ETAPU 1 (rejestracja): ${authResponse.code()}")
+                    Log.d(TAG, "Używam istniejącego użytkownika. UserId: $userId")
+                }
+
+                // 2. Przypisz rolę DOCTOR użytkownikowi
+                if (userId != null && userId != 0L) {
+                    val roleRequest = AssignRoleRequest(userId = userId, role = "DENTIST")
+                    val roleResponse = authService.assignRole(roleRequest)
+                    if (roleResponse.isSuccessful) {
+                        Log.d(TAG, "Rola DOCTOR przypisana użytkownikowi $userId")
+                    } else {
+                        Log.w(TAG, "Nie udało się przypisać roli DOCTOR: ${roleResponse.code()}")
+                    }
+
+                    // 3. Przypisz użytkownika do kliniki jako pracownika
+                    val staffRequest = CreateStaffMemberRequest(
+                        userId = userId,
+                        firstName = fName,
+                        lastName = lName,
+                        profession = profession,
+                        bio = bio
+                    )
+
+                    val coreResponse = apiService.createStaffMember(currentTenantId, staffRequest)
+                    if (coreResponse.isSuccessful) {
+                        Log.d(TAG, "Pracownik pomyślnie przypisany do kliniki $currentTenantId")
+                        loadStaff()
+                    } else {
+                        Log.e(TAG, "Błąd przypisania do kliniki: ${coreResponse.code()}")
+                    }
+                } else {
+                    Log.e(TAG, "Nie udało się uzyskać userId")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Wyjątek addStaff: ${e.message}")

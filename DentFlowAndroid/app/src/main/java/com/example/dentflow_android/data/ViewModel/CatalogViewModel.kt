@@ -60,14 +60,14 @@ class CatalogViewModel @Inject constructor(
         }
     }
 
-    fun addService(name: String, priceCents: Int, duration: Int) {
+    fun addService(name: String, priceCents: Int, duration: Int, active: Boolean = true) {
         val tId = currentTenantId
         if (tId == -1L) return
 
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val request = ServiceCatalogRequest(name, duration, priceCents, true)
+                val request = ServiceCatalogRequest(name, duration, priceCents, active)
                 val response = apiService.createService(tId, request)
                 if (response.isSuccessful) {
                     loadServices(tId) // Odśwież listę po sukcesie

@@ -67,4 +67,11 @@ public class StaffMemberController {
         staffMemberService.deleteStaffMember(tenantId, staffId);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/sync-from-user")
+    @Operation(summary = "Synchronizacja danych pracownika z profilem użytkownika")
+    public ResponseEntity<Void> syncFromUser(@RequestBody SyncFromUserRequest request) {
+        staffMemberService.syncFromUser(request.userId(), request.firstName(), request.lastName(), request.avatarUrl(), request.phone(), request.email());
+        return ResponseEntity.ok().build();
+    }
 }

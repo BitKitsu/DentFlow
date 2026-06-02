@@ -9,7 +9,10 @@ public record StaffMemberResponse(
         String firstName,
         String lastName,
         String profession,
-        String bio
+        String bio,
+        String avatarUrl,
+        String phone,
+        String email
 ) {
     public static StaffMemberResponse from(StaffMember staffMember) {
         return new StaffMemberResponse(
@@ -19,7 +22,10 @@ public record StaffMemberResponse(
                 staffMember.getFirstName(),
                 staffMember.getLastName(),
                 staffMember.getProfession(),
-                staffMember.getBio()
+                staffMember.getBio(),
+                staffMember.getAvatarUrl(),
+                staffMember.getPhone(),
+                staffMember.getEmail()
         );
     }
 }

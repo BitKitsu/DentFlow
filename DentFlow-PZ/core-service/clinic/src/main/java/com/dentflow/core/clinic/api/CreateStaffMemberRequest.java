@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record CreateStaffMemberRequest(
-        Long userId, // Opcjonalne przypisanie do konta użytkownika
+        Long userId,
 
         @NotBlank @Size(max = 100)
         String firstName,
@@ -15,5 +15,11 @@ public record CreateStaffMemberRequest(
         @NotBlank @Size(max = 20)
         String profession,
 
-        String bio
+        String bio,
+
+        String avatarUrl,
+
+        String phone,
+
+        String email
 ) {}

@@ -17,4 +17,6 @@ public interface StaffMemberRepository extends JpaRepository<StaffMember, Long> 
 
     @Query("SELECT s FROM StaffMember s WHERE s.id = :id AND s.tenant.id = :tenantId")
     Optional<StaffMember> findByIdAndTenantId(@Param("id") Long id, @Param("tenantId") Long tenantId);
+
+    List<StaffMember> findByUserId(Long userId);
 }

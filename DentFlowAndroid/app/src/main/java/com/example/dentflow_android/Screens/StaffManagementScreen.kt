@@ -16,10 +16,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.example.dentflow_android.data.ViewModel.StaffViewModel
 import com.example.dentflow_android.data.remote.AuthResponse
 import com.example.dentflow_android.data.remote.StaffMemberResponse
@@ -29,13 +31,14 @@ import kotlinx.coroutines.launch
 @Composable
 fun AddStaffDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, String, String, String, String, String, String, Boolean, Long?) -> Unit,
+    onConfirm: (String, String, String, String, String, String, String, Boolean, Long?, String?) -> Unit,
     onCheckEmail: suspend (String) -> AuthResponse?
 ) {
     var email by remember { mutableStateOf("") }
     var emailChecked by remember { mutableStateOf(false) }
     var userExists by remember { mutableStateOf(false) }
     var existingUserId by remember { mutableStateOf<Long?>(null) }
+    var userAvatarUrl by remember { mutableStateOf<String?>(null) }
     var isCheckingEmail by remember { mutableStateOf(false) }
     
     var fName by remember { mutableStateOf("") }
@@ -82,12 +85,14 @@ fun AddStaffDialog(
                                     if (userData != null) {
                                         userExists = true
                                         existingUserId = userData.userId
+                                        userAvatarUrl = userData.avatarUrl
                                         fName = userData.firstName ?: ""
                                         lName = userData.lastName ?: ""
                                         phone = userData.phone ?: ""
                                     } else {
                                         userExists = false
                                         existingUserId = null
+                                        userAvatarUrl = null
                                         fName = ""
                                         lName = ""
                                         phone = ""
@@ -199,7 +204,7 @@ fun AddStaffDialog(
             Button(
                 onClick = {
                     if (emailChecked && fName.isNotBlank() && lName.isNotBlank() && prof.isNotBlank() && isPassValid) {
-                        onConfirm(fName, lName, prof, email, pass, phone, bio, userExists, existingUserId)
+                        onConfirm(fName, lName, prof, email, pass, phone, bio, userExists, existingUserId, userAvatarUrl)
                     } else { showError = true }
                 },
                 shape = RoundedCornerShape(12.dp),
@@ -249,6 +254,7 @@ fun StaffManagementScreen(
 ) {
     var showAddDialog by remember { mutableStateOf(false) }
     var editingMember by remember { mutableStateOf<StaffMemberResponse?>(null) }
+    var selectedMember by remember { mutableStateOf<StaffMemberResponse?>(null) }
 
     val staffList by viewModel.staffMembers.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -265,9 +271,10 @@ fun StaffManagementScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
+            TopAppBar(
                 title = { Text("Zarządzanie Personelem", fontWeight = FontWeight.Bold) },
-                navigationIcon = { IconButton(onClick = onBackClick) { Icon(Icons.Default.ArrowBack, null) } }
+                navigationIcon = { IconButton(onClick = onBackClick) { Icon(Icons.Default.ArrowBack, null) } },
+                windowInsets = WindowInsets(0, 0, 0, 0)
             )
         },
         floatingActionButton = {
@@ -293,7 +300,8 @@ fun StaffManagementScreen(
                         StaffItem(
                             member = member,
                             onEdit = { editingMember = member },
-                            onDelete = { viewModel.deleteStaff(member.id) } // --- POPRAWKA ---
+                            onDelete = { viewModel.deleteStaff(member.id) },
+                            onClick = { selectedMember = member }
                         )
                     }
                 }
@@ -302,8 +310,8 @@ fun StaffManagementScreen(
             if (showAddDialog) {
                 AddStaffDialog(
                     onDismiss = { showAddDialog = false },
-                    onConfirm = { fn, ln, pr, em, ps, ph, bo, exists, userId ->
-                        viewModel.addStaff(fn, ln, pr, em, ps, ph, bo, exists, userId)
+                    onConfirm = { fn, ln, pr, em, ps, ph, bo, exists, userId, avatarUrl ->
+                        viewModel.addStaff(fn, ln, pr, em, ps, ph, bo, exists, userId, avatarUrl)
                         showAddDialog = false
                     },
                     onCheckEmail = { email ->
@@ -317,10 +325,16 @@ fun StaffManagementScreen(
                     member = member,
                     onDismiss = { editingMember = null },
                     onConfirm = { fn, ln, pr, bo ->
-                        // --- POPRAWKA: Bez tenantId ---
                         viewModel.updateStaff(member.id, fn, ln, pr, member.userId, bo)
                         editingMember = null
                     }
+                )
+            }
+
+            selectedMember?.let { member ->
+                StaffDetailDialog(
+                    member = member,
+                    onDismiss = { selectedMember = null }
                 )
             }
         }
@@ -331,7 +345,8 @@ fun StaffManagementScreen(
 fun StaffItem(
     member: StaffMemberResponse,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onClick: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
@@ -339,26 +354,36 @@ fun StaffItem(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        onClick = onClick
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(44.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.tertiaryContainer),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = member.firstName.take(1).uppercase(),
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer
-                )
+                if (!member.avatarUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = member.avatarUrl,
+                        contentDescription = "${member.firstName} avatar",
+                        modifier = Modifier.fillMaxSize().clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Text(
+                        text = member.firstName.take(1).uppercase(),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                    )
+                }
             }
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "${member.firstName} ${member.lastName}",
@@ -394,4 +419,103 @@ fun StaffItem(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StaffDetailDialog(
+    member: StaffMemberResponse,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Profil pracownika", fontWeight = FontWeight.Bold)
+            }
+        },
+        text = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                // Avatar
+                Box(
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (!member.avatarUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = member.avatarUrl,
+                            contentDescription = "${member.firstName} avatar",
+                            modifier = Modifier.fillMaxSize().clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text(
+                            text = member.firstName.take(1).uppercase(),
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "${member.firstName} ${member.lastName}",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = member.profession,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(12.dp))
+                // Info rows
+                if (!member.phone.isNullOrBlank()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Phone, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(member.phone, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                if (!member.email.isNullOrBlank()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Email, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(member.email, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                if (!member.bio.isNullOrBlank()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(member.bio, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Zamknij") }
+        }
+    )
 }

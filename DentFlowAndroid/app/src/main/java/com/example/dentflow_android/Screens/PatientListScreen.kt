@@ -14,17 +14,22 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.example.dentflow_android.data.ViewModel.PatientViewModel
 import com.example.dentflow_android.data.ViewModel.VisitViewModel
+import com.example.dentflow_android.data.remote.AuthResponse
 import com.example.dentflow_android.data.remote.PatientResponse
 import com.example.dentflow_android.data.remote.AppointmentResponse
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
@@ -43,6 +48,7 @@ fun PatientListScreen(
     var showDialog by remember { mutableStateOf(false) }
     var selectedPatient by remember { mutableStateOf<PatientResponse?>(null) }
     var showHistoryFor by remember { mutableStateOf<PatientResponse?>(null) }
+    var showDetailFor by remember { mutableStateOf<PatientResponse?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.fetchPatients()
@@ -50,16 +56,14 @@ fun PatientListScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
+            TopAppBar(
                 title = { Text("Baza Pacjentów", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Powrót")
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                windowInsets = WindowInsets(0, 0, 0, 0)
             )
         },
         floatingActionButton = {
@@ -89,6 +93,7 @@ fun PatientListScreen(
                     items(patients, key = { it.id }) { patient ->
                         PatientItem(
                             patient = patient,
+                            onClick = { showDetailFor = patient },
                             onEdit = {
                                 selectedPatient = patient
                                 showDialog = true
@@ -108,14 +113,15 @@ fun PatientListScreen(
             PatientDialog(
                 patient = selectedPatient,
                 onDismiss = { showDialog = false },
-                onConfirm = { fName, lName, mail, phone, dob, pesel, gender, street, city, zip ->
+                onConfirm = { fName, lName, mail, phone, dob, pesel, gender, street, city, zip, exists, userId, avatarUrl ->
                     if (selectedPatient == null) {
-                        viewModel.addPatient(fName, lName, mail, phone, dob, pesel, gender, street, city, zip, "Polska")
+                        viewModel.addPatient(fName, lName, mail, phone, dob, pesel, gender, street, city, zip, "Polska", userId, avatarUrl)
                     } else {
                         viewModel.updatePatient(selectedPatient!!.id, fName, lName, mail, phone, dob, pesel, gender, street, city, zip, "Polska")
                     }
                     showDialog = false
-                }
+                },
+                onCheckEmail = { email -> viewModel.checkUserByEmail(email) }
             )
         }
 
@@ -126,32 +132,52 @@ fun PatientListScreen(
                 onDismiss = { showHistoryFor = null }
             )
         }
+
+        showDetailFor?.let { patient ->
+            PatientDetailDialog(
+                patient = patient,
+                onDismiss = { showDetailFor = null }
+            )
+        }
     }
 }
 
 @Composable
 fun PatientItem(
     patient: PatientResponse,
+    onClick: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onShowHistory: () -> Unit
 ) {
+    var showMenu by remember { mutableStateOf(false) }
+
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { onEdit() },
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        onClick = onClick
     ) {
         Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                modifier = Modifier.size(48.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
             ) {
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                if (!patient.avatarUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = patient.avatarUrl,
+                        contentDescription = "${patient.firstName} avatar",
+                        modifier = Modifier.fillMaxSize().clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
                     Text(
                         text = patient.firstName.take(1).uppercase(),
                         style = MaterialTheme.typography.titleMedium,
@@ -160,7 +186,7 @@ fun PatientItem(
                     )
                 }
             }
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "${patient.firstName} ${patient.lastName}",
@@ -172,22 +198,32 @@ fun PatientItem(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                patient.dateOfBirth?.let {
-                    Text(
-                        text = "Ur.: $it",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline
+            }
+            Box {
+                IconButton(onClick = { showMenu = true }) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-            }
-            IconButton(onClick = onShowHistory) {
-                Icon(Icons.Default.History, contentDescription = "Historia wizyt", tint = MaterialTheme.colorScheme.primary)
-            }
-            IconButton(onClick = onEdit) {
-                Icon(Icons.Default.Edit, contentDescription = "Edytuj", tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Usuń", tint = MaterialTheme.colorScheme.error)
+                DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                    DropdownMenuItem(
+                        text = { Text("Edytuj") },
+                        onClick = { showMenu = false; onEdit() },
+                        leadingIcon = { Icon(Icons.Default.Edit, null) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Historia wizyt") },
+                        onClick = { showMenu = false; onShowHistory() },
+                        leadingIcon = { Icon(Icons.Default.History, null) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Usuń", color = Color.Red) },
+                        onClick = { showMenu = false; onDelete() },
+                        leadingIcon = { Icon(Icons.Default.Delete, null, tint = Color.Red) }
+                    )
+                }
             }
         }
     }
@@ -198,16 +234,24 @@ fun PatientItem(
 fun PatientDialog(
     patient: PatientResponse?,
     onDismiss: () -> Unit,
-    onConfirm: (String, String, String, String, String?, String?, String?, String?, String?, String?) -> Unit
+    onConfirm: (String, String, String, String, String?, String?, String?, String?, String?, String?, Boolean, Long?, String?) -> Unit,
+    onCheckEmail: suspend (String) -> AuthResponse?
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val isEditing = patient != null
+
+    var email by remember { mutableStateOf(patient?.email ?: "") }
+    var emailChecked by remember { mutableStateOf(isEditing) }
+    var userExists by remember { mutableStateOf(false) }
+    var existingUserId by remember { mutableStateOf<Long?>(null) }
+    var userAvatarUrl by remember { mutableStateOf<String?>(null) }
+    var isCheckingEmail by remember { mutableStateOf(false) }
+
     var firstName by remember { mutableStateOf(patient?.firstName ?: "") }
     var lastName by remember { mutableStateOf(patient?.lastName ?: "") }
-    var email by remember { mutableStateOf(patient?.email ?: "") }
     var phone by remember { mutableStateOf(patient?.phone ?: "") }
     var dateOfBirth by remember { mutableStateOf(patient?.dateOfBirth ?: "") }
-    
-    // Nowe pola
     var pesel by remember { mutableStateOf(patient?.pesel ?: "") }
     var gender by remember { mutableStateOf(patient?.gender ?: "Nie podano") }
     var addressStreet by remember { mutableStateOf(patient?.addressStreet ?: "") }
@@ -240,13 +284,70 @@ fun PatientDialog(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.verticalScroll(rememberScrollState())
             ) {
+                if (!isEditing) {
+                    // Email check section (only for new patients)
+                    Text("1. Sprawdź email pacjenta", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = email,
+                            onValueChange = { email = it; emailChecked = false },
+                            label = { Text("Email") },
+                            modifier = Modifier.weight(1f),
+                            isError = !isEmailValid && email.isNotEmpty(),
+                            shape = RoundedCornerShape(12.dp),
+                            enabled = !emailChecked
+                        )
+                        Button(
+                            onClick = {
+                                if (isEmailValid) {
+                                    isCheckingEmail = true
+                                    scope.launch {
+                                        val userData = onCheckEmail(email)
+                                        if (userData != null) {
+                                            userExists = true
+                                            existingUserId = userData.userId
+                                            userAvatarUrl = userData.avatarUrl
+                                            firstName = userData.firstName ?: ""
+                                            lastName = userData.lastName ?: ""
+                                            phone = userData.phone ?: ""
+                                        } else {
+                                            userExists = false
+                                            existingUserId = null
+                                            userAvatarUrl = null
+                                        }
+                                        emailChecked = true
+                                        isCheckingEmail = false
+                                    }
+                                }
+                            },
+                            enabled = isEmailValid && !emailChecked && !isCheckingEmail,
+                            modifier = Modifier.align(Alignment.CenterVertically)
+                        ) {
+                            if (isCheckingEmail) CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                            else Text("Sprawdź")
+                        }
+                    }
+                    if (emailChecked) {
+                        if (userExists) {
+                            Text("✓ Użytkownik istnieje - dane zostaną automatycznie uzupełnione", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+                        } else {
+                            Text("⚠ Nowy pacjent", color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+
+                if (emailChecked || isEditing) {
+                // Personal data section
+                Text(if (isEditing) "Dane osobowe" else "2. Dane osobowe", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                 OutlinedTextField(
                     value = firstName,
                     onValueChange = { firstName = it },
                     label = { Text("Imię") },
                     leadingIcon = { Icon(Icons.Default.Person, null) },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = !userExists || isEditing
                 )
                 OutlinedTextField(
                     value = lastName,
@@ -254,7 +355,8 @@ fun PatientDialog(
                     label = { Text("Nazwisko") },
                     leadingIcon = { Icon(Icons.Default.Person, null) },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = !userExists || isEditing
                 )
                 OutlinedTextField(
                     value = phone,
@@ -262,7 +364,8 @@ fun PatientDialog(
                     label = { Text("Telefon") },
                     leadingIcon = { Icon(Icons.Default.Phone, null) },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = !userExists || isEditing
                 )
                 OutlinedTextField(
                     value = email,
@@ -271,12 +374,13 @@ fun PatientDialog(
                     leadingIcon = { Icon(Icons.Default.Email, null) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    isError = !isEmailValid && email.isNotEmpty()
+                    isError = !isEmailValid && email.isNotEmpty(),
+                    enabled = !userExists || isEditing
                 )
                 
-                // --- SEKCJA MEDYCZNA ---
+                // Medical section
                 Divider(modifier = Modifier.padding(vertical = 4.dp))
-                Text("Dane medyczne", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                Text("3. Dane medyczne", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                 
                 OutlinedTextField(
                     value = pesel,
@@ -312,15 +416,11 @@ fun PatientDialog(
                         listOf("Kobieta", "Mężczyzna", "Inna", "Nie podano").forEach { selectionOption ->
                             DropdownMenuItem(
                                 text = { Text(selectionOption) },
-                                onClick = {
-                                    gender = selectionOption
-                                    expandedGender = false
-                                }
+                                onClick = { gender = selectionOption; expandedGender = false }
                             )
                         }
                     }
                 }
-                // Data urodzenia — kliknięcie otwiera DatePickerDialog
                 OutlinedTextField(
                     value = if (dateOfBirth.isNotBlank()) dateOfBirth else "",
                     onValueChange = {},
@@ -329,14 +429,10 @@ fun PatientDialog(
                     leadingIcon = { Icon(Icons.Default.Cake, null) },
                     trailingIcon = {
                         if (dateOfBirth.isNotBlank()) {
-                            IconButton(onClick = { dateOfBirth = "" }) {
-                                Icon(Icons.Default.Clear, null)
-                            }
+                            IconButton(onClick = { dateOfBirth = "" }) { Icon(Icons.Default.Clear, null) }
                         }
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { datePickerDialog.show() },
+                    modifier = Modifier.fillMaxWidth().clickable { datePickerDialog.show() },
                     shape = RoundedCornerShape(12.dp),
                     enabled = false,
                     colors = OutlinedTextFieldDefaults.colors(
@@ -354,9 +450,9 @@ fun PatientDialog(
                     }
                 }
                 
-                // --- SEKCJA ADRESOWA ---
+                // Address section
                 Divider(modifier = Modifier.padding(vertical = 4.dp))
-                Text("Adres (opcjonalny)", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                Text("4. Adres (opcjonalny)", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                 
                 OutlinedTextField(
                     value = addressStreet,
@@ -382,6 +478,7 @@ fun PatientDialog(
                         shape = RoundedCornerShape(12.dp)
                     )
                 }
+                } // end if (emailChecked || isEditing)
             }
         },
         confirmButton = {
@@ -390,14 +487,13 @@ fun PatientDialog(
                     onConfirm(
                         firstName, lastName, email, phone, dateOfBirth.ifBlank { null },
                         pesel.ifBlank { null }, if (gender == "Nie podano") null else gender,
-                        addressStreet.ifBlank { null }, addressCity.ifBlank { null }, addressZip.ifBlank { null }
+                        addressStreet.ifBlank { null }, addressCity.ifBlank { null }, addressZip.ifBlank { null },
+                        userExists, existingUserId, userAvatarUrl
                     ) 
                 },
-                enabled = areFieldsValid,
+                enabled = areFieldsValid && (emailChecked || isEditing),
                 shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Zapisz")
-            }
+            ) { Text("Zapisz") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Anuluj") }
@@ -517,4 +613,85 @@ fun EmptyPatientsState(modifier: Modifier) {
         Spacer(modifier = Modifier.height(16.dp))
         Text("Baza pacjentów jest pusta", color = MaterialTheme.colorScheme.outline)
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PatientDetailDialog(
+    patient: PatientResponse,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Profil pacjenta", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
+            ) {
+                // Avatar
+                Box(
+                    modifier = Modifier.size(80.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (!patient.avatarUrl.isNullOrBlank()) {
+                        AsyncImage(model = patient.avatarUrl, contentDescription = "${patient.firstName} avatar", modifier = Modifier.fillMaxSize().clip(CircleShape), contentScale = ContentScale.Crop)
+                    } else {
+                        Text(text = patient.firstName.take(1).uppercase(), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(text = "${patient.firstName} ${patient.lastName}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // Info rows
+                if (!patient.phone.isNullOrBlank()) {
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Phone, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(patient.phone, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                if (!patient.email.isNullOrBlank()) {
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Email, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(patient.email, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                patient.dateOfBirth?.let {
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Cake, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(it, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                if (!patient.pesel.isNullOrBlank()) {
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Badge, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("PESEL: ${patient.pesel}", style = MaterialTheme.typography.bodyMedium)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                val fullAddress = listOfNotNull(patient.addressStreet, patient.addressZip, patient.addressCity).joinToString(", ")
+                if (fullAddress.isNotBlank()) {
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Home, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(fullAddress, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Zamknij") }
+        }
+    )
 }

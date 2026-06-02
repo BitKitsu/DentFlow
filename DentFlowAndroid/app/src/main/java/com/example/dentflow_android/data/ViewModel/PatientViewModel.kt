@@ -5,6 +5,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.dentflow_android.data.remote.ApiService
+import com.example.dentflow_android.data.remote.AuthResponse
+import com.example.dentflow_android.data.remote.AuthService
 import com.example.dentflow_android.data.remote.CreatePatientRequest
 import com.example.dentflow_android.data.remote.UpdatePatientRequest
 import com.example.dentflow_android.data.remote.PatientResponse
@@ -17,7 +19,8 @@ import javax.inject.Inject
 @HiltViewModel
 class PatientViewModel @Inject constructor(
     private val apiService: ApiService,
-    private val prefs: SharedPreferences // Wstrzykujemy prefs, aby brać dynamiczne tenantId
+    private val authService: AuthService,
+    private val prefs: SharedPreferences
 ) : ViewModel() {
 
     private val _patients = MutableStateFlow<List<PatientResponse>>(emptyList())
@@ -72,10 +75,27 @@ class PatientViewModel @Inject constructor(
     // Alias dla kompatybilności
     fun loadPatients() = fetchPatients()
 
+    suspend fun checkUserByEmail(email: String): AuthResponse? {
+        return try {
+            val response = authService.getUserByEmail(email)
+            if (response.isSuccessful && response.body() != null) {
+                Log.d(TAG, "Użytkownik znaleziony: ${response.body()?.email}")
+                response.body()
+            } else {
+                Log.d(TAG, "Użytkownik nie istnieje: $email")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Błąd sprawdzania emaila: ${e.message}")
+            null
+        }
+    }
+
     fun addPatient(
         firstName: String, lastName: String, email: String, phone: String, 
         dateOfBirth: String? = null, pesel: String? = null, gender: String? = null,
-        addressStreet: String? = null, addressCity: String? = null, addressZip: String? = null, addressCountry: String? = null
+        addressStreet: String? = null, addressCity: String? = null, addressZip: String? = null, addressCountry: String? = null,
+        userId: Long? = null, avatarUrl: String? = null
     ) {
         if (!checkTenantId()) return
 
@@ -83,6 +103,7 @@ class PatientViewModel @Inject constructor(
             Log.d(TAG, "Próba dodania pacjenta: $firstName $lastName, tel: $phone")
             try {
                 val request = CreatePatientRequest(
+                    userId = userId,
                     firstName = firstName,
                     lastName = lastName,
                     phone = phone,
@@ -94,7 +115,8 @@ class PatientViewModel @Inject constructor(
                     addressStreet = addressStreet,
                     addressCity = addressCity,
                     addressZip = addressZip,
-                    addressCountry = addressCountry
+                    addressCountry = addressCountry,
+                    avatarUrl = avatarUrl
                 )
 
                 val response = apiService.createPatient(currentTenantId, request)

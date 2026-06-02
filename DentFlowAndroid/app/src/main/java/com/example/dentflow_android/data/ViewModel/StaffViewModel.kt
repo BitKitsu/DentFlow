@@ -130,7 +130,7 @@ class StaffViewModel @Inject constructor(
         }
     }
 
-    fun addStaff(fName: String, lName: String, profession: String, email: String, password: String, phone: String, bio: String, userExists: Boolean, existingUserId: Long?) {
+    fun addStaff(fName: String, lName: String, profession: String, email: String, password: String, phone: String, bio: String, userExists: Boolean, existingUserId: Long?, avatarUrl: String? = null) {
         if (!hasValidSession()) return
 
         viewModelScope.launch {
@@ -138,6 +138,7 @@ class StaffViewModel @Inject constructor(
             Log.d(TAG, "Dodawanie pracownika: $email, userExists=$userExists")
             try {
                 var userId: Long? = existingUserId
+                var userAvatarUrl: String? = avatarUrl
 
                 // 1. Jeśli użytkownik nie istnieje - utwórz nowe konto
                 if (!userExists) {
@@ -153,6 +154,7 @@ class StaffViewModel @Inject constructor(
                     val authResponse = authService.register(registerRequest)
                     if (authResponse.isSuccessful && authResponse.body() != null) {
                         userId = authResponse.body()!!.userId
+                        userAvatarUrl = authResponse.body()!!.avatarUrl
                         Log.d(TAG, "Konto utworzone pomyślnie. UserId: $userId")
                     } else {
                         Log.e(TAG, "Błąd tworzenia konta: ${authResponse.code()}")
@@ -163,14 +165,14 @@ class StaffViewModel @Inject constructor(
                     Log.d(TAG, "Używam istniejącego użytkownika. UserId: $userId")
                 }
 
-                // 2. Przypisz rolę DOCTOR użytkownikowi
+                // 2. Przypisz rolę DENTIST użytkownikowi
                 if (userId != null && userId != 0L) {
                     val roleRequest = AssignRoleRequest(userId = userId, role = "DENTIST")
                     val roleResponse = authService.assignRole(roleRequest)
                     if (roleResponse.isSuccessful) {
-                        Log.d(TAG, "Rola DOCTOR przypisana użytkownikowi $userId")
+                        Log.d(TAG, "Rola DENTIST przypisana użytkownikowi $userId")
                     } else {
-                        Log.w(TAG, "Nie udało się przypisać roli DOCTOR: ${roleResponse.code()}")
+                        Log.w(TAG, "Nie udało się przypisać roli DENTIST: ${roleResponse.code()}")
                     }
 
                     // 3. Przypisz użytkownika do kliniki jako pracownika
@@ -179,7 +181,10 @@ class StaffViewModel @Inject constructor(
                         firstName = fName,
                         lastName = lName,
                         profession = profession,
-                        bio = bio
+                        bio = bio,
+                        avatarUrl = userAvatarUrl,
+                        phone = phone,
+                        email = email
                     )
 
                     val coreResponse = apiService.createStaffMember(currentTenantId, staffRequest)

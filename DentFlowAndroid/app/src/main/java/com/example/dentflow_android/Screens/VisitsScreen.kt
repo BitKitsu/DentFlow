@@ -65,6 +65,10 @@ fun VisitsScreen(
     var showCancelConfirm by remember { mutableStateOf(false) }
     var showCompleteConfirm by remember { mutableStateOf(false) }
 
+    var showPdfDialog by remember { mutableStateOf(false) }
+    var pdfFromDate by remember { mutableStateOf(LocalDate.now().minusMonths(1)) }
+    var pdfToDate by remember { mutableStateOf(LocalDate.now()) }
+
     LaunchedEffect(selectedDate, isHistoryMode) {
         viewModel.refreshVisits()
     }
@@ -99,12 +103,24 @@ fun VisitsScreen(
                         )
                     }
                 }
-                IconButton(onClick = { isHistoryMode = !isHistoryMode }) {
-                    Icon(
-                        imageVector = if (isHistoryMode) Icons.Default.CalendarMonth else Icons.Default.History,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                Row {
+                    if (isHistoryMode) {
+                        val ctx = LocalContext.current
+                        IconButton(onClick = { showPdfDialog = true }) {
+                            Icon(
+                                imageVector = Icons.Default.PictureAsPdf,
+                                contentDescription = "Pobierz PDF",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                    IconButton(onClick = { isHistoryMode = !isHistoryMode }) {
+                        Icon(
+                            imageVector = if (isHistoryMode) Icons.Default.CalendarMonth else Icons.Default.History,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
 
@@ -379,6 +395,57 @@ fun VisitsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showCompleteConfirm = false }) { Text("Anuluj") }
+            }
+        )
+    }
+
+    if (showPdfDialog) {
+        val ctx = LocalContext.current
+        val fromDatePicker = DatePickerDialog(
+            ctx,
+            { _, year, month, dayOfMonth ->
+                pdfFromDate = LocalDate.of(year, month + 1, dayOfMonth)
+            },
+            pdfFromDate.year,
+            pdfFromDate.monthValue - 1,
+            pdfFromDate.dayOfMonth
+        )
+        val toDatePicker = DatePickerDialog(
+            ctx,
+            { _, year, month, dayOfMonth ->
+                pdfToDate = LocalDate.of(year, month + 1, dayOfMonth)
+            },
+            pdfToDate.year,
+            pdfToDate.monthValue - 1,
+            pdfToDate.dayOfMonth
+        )
+
+        AlertDialog(
+            onDismissRequest = { showPdfDialog = false },
+            title = { Text("Zakres raportu PDF") },
+            text = {
+                Column {
+                    OutlinedButton(onClick = { fromDatePicker.show() }, modifier = Modifier.fillMaxWidth()) {
+                        Text("Od: ${pdfFromDate.format(DateTimeFormatter.ISO_LOCAL_DATE)}")
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(onClick = { toDatePicker.show() }, modifier = Modifier.fillMaxWidth()) {
+                        Text("Do: ${pdfToDate.format(DateTimeFormatter.ISO_LOCAL_DATE)}")
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showPdfDialog = false
+                    viewModel.downloadReport(
+                        pdfFromDate.format(DateTimeFormatter.ISO_LOCAL_DATE),
+                        pdfToDate.format(DateTimeFormatter.ISO_LOCAL_DATE),
+                        ctx
+                    )
+                }) { Text("Pobierz") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPdfDialog = false }) { Text("Anuluj") }
             }
         )
     }

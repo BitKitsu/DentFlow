@@ -155,4 +155,107 @@ class VisitViewModel @Inject constructor(
             }
         }
     }
+
+    fun downloadReport(from: String, to: String, context: android.content.Context) {
+        val tenantId = currentTenantId
+        if (tenantId == -1L) return
+
+        viewModelScope.launch {
+            try {
+                val response = apiService.getAppointmentReportPdf(tenantId, from, to)
+                if (response.isSuccessful) {
+                    val bytes = response.body()?.bytes()
+                    if (bytes != null && bytes.size > 100) {
+                        savePdfToDisk(bytes, context, "Raport_Wizyt_${from}_$to.pdf")
+                    } else {
+                        android.widget.Toast.makeText(context, "Brak danych do wygenerowania raportu", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Log.e(TAG, "Błąd pobierania PDF: ${response.code()}")
+                    android.widget.Toast.makeText(context, "Błąd serwera: ${response.code()}", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Błąd sieci: ${e.message}")
+                android.widget.Toast.makeText(context, "Brak połączenia z serwerem", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    fun downloadRoomOccupancyReport(from: String, to: String, roomId: Long?, context: android.content.Context) {
+        val tenantId = currentTenantId
+        if (tenantId == -1L) return
+
+        viewModelScope.launch {
+            try {
+                val response = if (roomId != null && roomId > 0) {
+                    apiService.getSingleRoomOccupancyReport(tenantId, roomId, from, to)
+                } else {
+                    apiService.getRoomOccupancyReport(tenantId, from, to)
+                }
+                if (response.isSuccessful) {
+                    val bytes = response.body()?.bytes()
+                    if (bytes != null && bytes.size > 100) {
+                        val suffix = if (roomId != null && roomId > 0) "_gabinet_$roomId" else ""
+                        savePdfToDisk(bytes, context, "Raport_Oblzenia${suffix}_${from}_$to.pdf")
+                    } else {
+                        android.widget.Toast.makeText(context, "Brak danych do wygenerowania raportu", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Log.e(TAG, "Błąd pobierania PDF obłożenia: ${response.code()}")
+                    android.widget.Toast.makeText(context, "Błąd serwera: ${response.code()}", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Błąd sieci obłożenie: ${e.message}")
+                android.widget.Toast.makeText(context, "Brak połączenia z serwerem", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    fun downloadPatientHistoryReport(patientId: Long, context: android.content.Context) {
+        val tenantId = currentTenantId
+        if (tenantId == -1L) return
+
+        viewModelScope.launch {
+            try {
+                val response = apiService.getPatientHistoryReportPdf(tenantId, patientId)
+                if (response.isSuccessful) {
+                    val bytes = response.body()?.bytes()
+                    if (bytes != null && bytes.size > 100) {
+                        savePdfToDisk(bytes, context, "Historia_Pacjenta_$patientId.pdf")
+                    } else {
+                        android.widget.Toast.makeText(context, "Brak danych do wygenerowania raportu", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    Log.e(TAG, "Błąd pobierania PDF historii: ${response.code()}")
+                    android.widget.Toast.makeText(context, "Błąd serwera: ${response.code()}", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Błąd sieci historia: ${e.message}")
+                android.widget.Toast.makeText(context, "Brak połączenia z serwerem", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun savePdfToDisk(bytes: ByteArray, context: android.content.Context, filename: String) {
+        try {
+            val contentValues = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, filename)
+                put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+                put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
+            }
+            val resolver = context.contentResolver
+            val uri = resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+            if (uri != null) {
+                resolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(bytes)
+                }
+                android.widget.Toast.makeText(context, "Zapisano PDF w Pobranych", android.widget.Toast.LENGTH_SHORT).show()
+            } else {
+                android.widget.Toast.makeText(context, "Nie udało się zapisać pliku", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Błąd zapisu pliku: ${e.message}")
+            android.widget.Toast.makeText(context, "Błąd zapisu: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
 }

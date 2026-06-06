@@ -139,6 +139,14 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     }
+
+                    composable("reports") {
+                        val visitVm: VisitViewModel = hiltViewModel()
+                        ReportsScreen(
+                            onBackClick = { navController.popBackStack() },
+                            visitViewModel = visitVm
+                        )
+                    }
                     }
                 }
             }
@@ -163,9 +171,16 @@ fun MainDashboard(
     var isShowingSettings by remember { mutableStateOf(false) }
 
     val staffList by staffViewModel.staffMembers.collectAsState()
+    val allStaff by staffViewModel.allStaff.collectAsState()
     val tenantData by tenantViewModel.tenantState
+    val allTenants by tenantViewModel.allTenants
     val serviceList by catalogViewModel.servicesState
+    val allCatalog by catalogViewModel.allCatalog
     val sessionState by authViewModel.sessionState.collectAsState()
+
+    LaunchedEffect(tenantData) {
+        authViewModel.refreshSession()
+    }
 
     val currentTenant = tenantData
     val userRole = sessionState.role
@@ -176,7 +191,7 @@ fun MainDashboard(
 
     data class NavItem(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector, val tabIndex: Int)
     val navItems = buildList {
-        add(NavItem("Home", Icons.Default.Home, 0))
+        add(NavItem("Oferty", Icons.Default.LocalOffer, 0))
         if (isOwner && hasClinic) add(NavItem("Klinika", Icons.Default.Business, 1))
         if (isOwner || isDoctor) add(NavItem("Wizyty", Icons.Default.CalendarMonth, 2))
         add(NavItem("Powiadomienia", Icons.Default.Notifications, 3))
@@ -185,7 +200,10 @@ fun MainDashboard(
 
     LaunchedEffect(Unit) {
         staffViewModel.loadStaff()
+        staffViewModel.loadAllStaff()
         tenantViewModel.loadAllTenantData()
+        tenantViewModel.loadAllTenants()
+        catalogViewModel.loadAllCatalog()
         notificationViewModel.fetchNotifications()
         visitViewModel.refreshVisits()
         catalogViewModel.loadServices()
@@ -226,12 +244,19 @@ fun MainDashboard(
                     staffList = staffList,
                     serviceList = serviceList,
                     tenantData = tenantData,
+                    allTenants = allTenants,
+                    allCatalog = allCatalog,
+                    allStaff = allStaff,
                     onStaffClick = { staff ->
                         navController.navigate("appointment_setup/${staff.id}")
                     }
                 )
                 1 -> BusinessScreen(
-                    onNavigateToSettings = { isShowingSettings = true }
+                    onNavigateToSettings = { isShowingSettings = true },
+                    onClinicDeleted = {
+                        onTabChange(0)
+                        tenantViewModel.loadAllTenantData()
+                    }
                 )
                 2 -> VisitsScreen(
                     viewModel = visitViewModel,
@@ -249,7 +274,8 @@ fun MainDashboard(
                             },
                             onEditBusinessClick = { onTabChange(1) },
                             onAccountDataClick = { navController.navigate("account_data") },
-                            onCreateBusinessClick = { navController.navigate("create_tenant_form") }
+                            onCreateBusinessClick = { navController.navigate("create_tenant_form") },
+                            onReportsClick = { navController.navigate("reports") }
                         )
                     } else {
                         SettingsScreen(

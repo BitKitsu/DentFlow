@@ -28,7 +28,7 @@ class AppointmentRepositoryTest {
         // given
         // Wstawiamy mockowe dane do tabel z innych modułów za pomocą jdbcTemplate
         jdbcTemplate.execute("INSERT INTO patient (id, first_name, last_name) VALUES (1, 'Jan', 'Kowalski')");
-        jdbcTemplate.execute("INSERT INTO staff_member (id, display_name) VALUES (2, 'Dr. Ząb')");
+        jdbcTemplate.execute("INSERT INTO staff_member (id, first_name, last_name) VALUES (2, 'Dr.', 'Ząb')");
         jdbcTemplate.execute("INSERT INTO location (id, name) VALUES (3, 'Klinika Główna')");
         jdbcTemplate.execute("INSERT INTO room (id, name) VALUES (4, 'Gabinet 1')");
 

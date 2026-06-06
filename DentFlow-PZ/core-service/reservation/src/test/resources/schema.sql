@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS patient (
 
 CREATE TABLE IF NOT EXISTS staff_member (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    display_name VARCHAR(100)
+    first_name VARCHAR(100),
+    last_name VARCHAR(100)
 );
 
 CREATE TABLE IF NOT EXISTS location (

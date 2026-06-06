@@ -23,7 +23,8 @@ import com.example.dentflow_android.data.remote.*
 data class ServiceDisplayModel(
     val service: ServiceCatalogItemDTO,
     val location: LocationResponse?,
-    val specialists: List<StaffMemberResponse>
+    val specialists: List<StaffMemberResponse>,
+    val clinicName: String = ""
 )
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -35,24 +36,30 @@ fun HomeScreen(
     staffList: List<StaffMemberResponse>,
     serviceList: List<ServiceCatalogItemDTO>,
     tenantData: TenantResponse?,
+    allTenants: List<TenantResponse> = emptyList(),
+    allCatalog: List<ServiceCatalogItemDTO> = emptyList(),
+    allStaff: List<StaffMemberResponse> = emptyList(),
     isLoading: Boolean = false
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
-    // Mapowanie danych: Zabieg -> Lokalizacja -> Specjaliści
-    val displayItems = remember(searchQuery, staffList, serviceList, tenantData) {
+    val displayItems = remember(searchQuery, allCatalog, allStaff, allTenants) {
         val q = searchQuery.lowercase().trim()
 
-        serviceList
+        val tenantsById = allTenants.associateBy { it.id }
+
+        allCatalog
             .filter { it.active }
             .map { service ->
-                val location = tenantData?.locations?.find { it.tenantId == service.tenantId }
-                val specialists = staffList.filter { it.tenantId == service.tenantId }
-                ServiceDisplayModel(service, location, specialists)
+                val clinic = tenantsById[service.tenantId]
+                val location = clinic?.locations?.firstOrNull()
+                val specialists = allStaff.filter { it.tenantId == service.tenantId }
+                ServiceDisplayModel(service, location, specialists, clinic?.name ?: "")
             }
             .filter { item ->
                 q.isEmpty() ||
                         item.service.name.lowercase().contains(q) ||
+                        item.clinicName.lowercase().contains(q) ||
                         item.location?.addressCity?.lowercase()?.contains(q) == true ||
                         item.specialists.any { staff -> "${staff.firstName} ${staff.lastName}".lowercase().contains(q) }
             }
@@ -121,13 +128,27 @@ fun HomeScreen(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ServiceTile(item: ServiceDisplayModel, onStaffClick: (StaffMemberResponse) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (expanded) 8.dp else 2.dp),
+        onClick = { expanded = !expanded }
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
+            // 0. Nazwa kliniki (jeśli więcej niż jedna)
+            if (item.clinicName.isNotEmpty()) {
+                Text(
+                    text = item.clinicName,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+
             // 1. Nazwa zabiegu i Cena
             Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.Top) {
                 Text(
@@ -202,6 +223,26 @@ fun ServiceTile(item: ServiceDisplayModel, onStaffClick: (StaffMemberResponse) -
                             },
                             shape = RoundedCornerShape(12.dp)
                         )
+                    }
+                }
+            }
+            if (expanded) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(12.dp)).padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text("Czas trwania", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Text("${item.service.durationMinutes} min", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                    }
+                    Button(
+                        onClick = { if (item.specialists.isNotEmpty()) onStaffClick(item.specialists.first()) },
+                        enabled = item.specialists.isNotEmpty(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text("ZAREZERWUJ")
                     }
                 }
             }

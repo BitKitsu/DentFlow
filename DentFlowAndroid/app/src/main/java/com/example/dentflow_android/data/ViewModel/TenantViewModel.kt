@@ -26,6 +26,9 @@ class TenantViewModel @Inject constructor(
     private val _rooms = MutableStateFlow<List<RoomResponse>>(emptyList())
     val rooms = _rooms.asStateFlow()
 
+    private val _allTenants = mutableStateOf<List<TenantResponse>>(emptyList())
+    val allTenants: State<List<TenantResponse>> = _allTenants
+
     private val _isLoading = mutableStateOf(false)
     val isLoading: State<Boolean> = _isLoading
 
@@ -37,6 +40,9 @@ class TenantViewModel @Inject constructor(
             Log.d(TAG, "Odczytano tenant_id z SharedPreferences: $id")
             return if (id <= 0L) -1L else id
         }
+
+    private val currentUserId: Long
+        get() = prefs.getLong("user_id", 0L)
 
     fun loadAllTenantData() {
         val id = currentTenantId
@@ -54,6 +60,19 @@ class TenantViewModel @Inject constructor(
                 fetchRooms(id)
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+
+    fun loadAllTenants() {
+        viewModelScope.launch {
+            try {
+                val response = apiService.getAllTenants()
+                if (response.isSuccessful) {
+                    _allTenants.value = response.body() ?: emptyList()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Błąd pobierania wszystkich klinik: ${e.message}")
             }
         }
     }
@@ -105,6 +124,7 @@ class TenantViewModel @Inject constructor(
                     prefs.edit().putLong("tenant_id", newTenant.id).apply()
 
                     assignTenantOnIdentityService(newTenant.id)
+                    assignOwnerRole()
                     _tenantState.value = newTenant
                     loadAllTenantData()
                 } else {
@@ -140,6 +160,32 @@ class TenantViewModel @Inject constructor(
             }
         } catch (e: Exception) {
             Log.e(TAG, "WYJĄTEK przy assignTenant: ${e.message}", e)
+        }
+    }
+
+    private suspend fun assignOwnerRole() {
+        val userId = currentUserId
+        if (userId <= 0L) {
+            Log.w(TAG, "assignOwnerRole: Brak userId, pomijam")
+            return
+        }
+        try {
+            Log.d(TAG, "API -> Przypisywanie roli OWNER dla userId: $userId")
+            val response = authService.assignRole(AssignRoleRequest(userId = userId, role = "OWNER"))
+            if (response.isSuccessful && response.body() != null) {
+                val authResponse = response.body()!!
+                // Save new JWT with updated roles
+                prefs.edit()
+                    .putString("jwt_token", authResponse.token)
+                    .putLong("tenant_id", authResponse.tenantId)
+                    .apply()
+                Log.d(TAG, "API -> Przypisano rolę OWNER pomyślnie, nowy JWT zapisany")
+            } else {
+                val errorMsg = response.errorBody()?.string()
+                Log.e(TAG, "API BŁĄD -> assignRole: Kod=${response.code()}, Body=$errorMsg")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "WYJĄTEK przy assignRole: ${e.message}")
         }
     }
 
@@ -217,7 +263,7 @@ class TenantViewModel @Inject constructor(
                     onError(msg)
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "WYJATEK przy usuwaniu kliniki: ${e.message}", e)
+                Log.e(TAG, "WYJĄTEK przy usuwaniu kliniki: ${e.message}", e)
                 onError(e.message ?: "Błąd połączenia")
             } finally {
                 _isLoading.value = false

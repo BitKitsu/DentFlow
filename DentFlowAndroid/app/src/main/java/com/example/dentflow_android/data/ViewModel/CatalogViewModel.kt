@@ -30,6 +30,9 @@ class CatalogViewModel @Inject constructor(
 
     private val TAG = "DENTFLOW_CATALOG_DEBUG"
 
+    private val _allCatalog = mutableStateOf<List<ServiceCatalogItemDTO>>(emptyList())
+    val allCatalog: State<List<ServiceCatalogItemDTO>> = _allCatalog
+
     private val currentTenantId: Long
         get() {
             val id = prefs.getLong("tenant_id", -1L)
@@ -56,6 +59,21 @@ class CatalogViewModel @Inject constructor(
                 Log.e(TAG, "Błąd pobierania usług: ${e.message}")
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+
+    fun loadAllCatalog() {
+        viewModelScope.launch {
+            try {
+                val response = apiService.getAllActiveCatalog()
+                if (response.isSuccessful) {
+                    _allCatalog.value = response.body() ?: emptyList()
+                } else {
+                    Log.e(TAG, "Błąd pobierania katalogu: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Błąd pobierania katalogu: ${e.message}")
             }
         }
     }

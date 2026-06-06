@@ -1,5 +1,7 @@
 package com.dentflow.core.reservation.application;
 
+import com.dentflow.core.clinic.domain.Tenant;
+import com.dentflow.core.clinic.infrastructure.TenantRepository;
 import com.dentflow.core.reservation.infrastructure.AppointmentDetailsProjection;
 import com.dentflow.core.reservation.infrastructure.AppointmentRepository;
 import com.dentflow.pdf.DentFlowPdfGenerator;
@@ -13,19 +15,17 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 
-/**
- * Serwis generujący Raport 1: Lista wizyt.
- * SCRUM-60
- */
 @Service
 public class AppointmentListReportService {
 
     private final AppointmentRepository appointmentRepository;
-    private final DentFlowPdfGenerator pdfGenerator;
+    private final TenantRepository tenantRepository;
+    private final DentFlowPdfGenerator pdfGenerator = new DentFlowPdfGenerator();
 
-    public AppointmentListReportService(AppointmentRepository appointmentRepository) {
+    public AppointmentListReportService(AppointmentRepository appointmentRepository,
+                                         TenantRepository tenantRepository) {
         this.appointmentRepository = appointmentRepository;
-        this.pdfGenerator = new DentFlowPdfGenerator();
+        this.tenantRepository = tenantRepository;
     }
 
     public byte[] generateReport(Long tenantId, LocalDate from, LocalDate to,
@@ -35,14 +35,15 @@ public class AppointmentListReportService {
                     "Parametr 'to' musi być >= 'from'");
         }
 
+        String clinicName = tenantRepository.findById(tenantId)
+                .map(Tenant::getName)
+                .orElse("Gabinet");
+
         OffsetDateTime fromDt = from.atStartOfDay().atOffset(ZoneOffset.UTC);
         OffsetDateTime toDt   = to.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC);
 
         List<AppointmentDetailsProjection> rows = appointmentRepository
-                .searchAppointmentsDetails(tenantId, status, dentistId, null)
-                .stream()
-                .filter(r -> !r.getStartAt().isBefore(fromDt) && r.getStartAt().isBefore(toDt))
-                .toList();
+                .searchAppointmentsDetails(tenantId, status, dentistId, null, fromDt, toDt);
 
         List<AppointmentListReportData.AppointmentRow> appointmentRows = rows.stream()
                 .map(r -> new AppointmentListReportData.AppointmentRow(
@@ -55,7 +56,7 @@ public class AppointmentListReportService {
                 .toList();
 
         AppointmentListReportData data = new AppointmentListReportData(
-                "DentFlow Clinic",
+                clinicName,
                 from,
                 to,
                 dentistId != null ? "Lekarz ID: " + dentistId : null,

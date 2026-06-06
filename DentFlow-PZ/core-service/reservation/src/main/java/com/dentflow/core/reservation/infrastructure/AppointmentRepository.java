@@ -76,7 +76,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
                 a.status as status,
                 p.first_name as patientFirstName,
                 p.last_name as patientLastName,
-                s.display_name as dentistName,
+                s.first_name || ' ' || s.last_name as dentistName,
                 l.name as locationName,
                 r.name as roomName,
                 a.notes as notes
@@ -89,13 +89,16 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             AND (:status IS NULL OR a.status = :status)
             AND (:dentistId IS NULL OR a.dentist_staff_id = :dentistId)
             AND (:patientId IS NULL OR a.patient_id = :patientId)
+            AND a.start_at >= :from AND a.start_at < :to
             ORDER BY a.start_at DESC
             """, nativeQuery = true)
     List<AppointmentDetailsProjection> searchAppointmentsDetails(
             @Param("tenantId") Long tenantId,
             @Param("status") String status,
             @Param("dentistId") Long dentistId,
-            @Param("patientId") Long patientId
+            @Param("patientId") Long patientId,
+            @Param("from") OffsetDateTime from,
+            @Param("to") OffsetDateTime to
     );
 
     @Query("SELECT a FROM Appointment a WHERE a.status = 'SCHEDULED' " +

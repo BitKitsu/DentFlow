@@ -46,8 +46,10 @@ class AppointmentRepositoryTest {
         appointmentRepository.save(appointment);
 
         // when
+        OffsetDateTime from = OffsetDateTime.parse("2026-05-01T00:00:00Z");
+        OffsetDateTime to = OffsetDateTime.parse("2026-05-31T23:59:59Z");
         List<AppointmentDetailsProjection> results = appointmentRepository.searchAppointmentsDetails(
-                10L, null, null, null);
+                10L, null, null, null, from, to);
 
         // then
         assertThat(results).hasSize(1);

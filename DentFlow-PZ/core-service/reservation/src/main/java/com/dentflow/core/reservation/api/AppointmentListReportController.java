@@ -32,7 +32,7 @@ public class AppointmentListReportController {
         this.reportService = reportService;
     }
 
-    @GetMapping(produces = MediaType.APPLICATION_PDF_VALUE)
+    @GetMapping
     public ResponseEntity<byte[]> getAppointmentListReport(
             @PathVariable Long tenantId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
@@ -45,6 +45,7 @@ public class AppointmentListReportController {
         String filename = "lista_wizyt_" + from + "_" + to + ".pdf";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
                 .body(pdf);
     }
 }

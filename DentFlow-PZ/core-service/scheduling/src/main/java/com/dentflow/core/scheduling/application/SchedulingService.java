@@ -44,6 +44,12 @@ public class SchedulingService {
         if (!request.endAt().isAfter(request.startAt())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endAt musi być po startAt");
         }
+        List<WorkScheduleSlot> overlapping = slotRepository.findOverlapping(
+                tenantId, request.staffId(), request.startAt(), request.endAt());
+        if (!overlapping.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Slot koliduje z istniejącymi slotami tego pracownika");
+        }
         WorkScheduleSlot slot = WorkScheduleSlot.builder()
                 .tenantId(tenantId)
                 .staffId(request.staffId())
@@ -63,6 +69,13 @@ public class SchedulingService {
         WorkScheduleSlot slot = slotRepository.findById(slotId)
                 .filter(s -> s.getTenantId().equals(tenantId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Slot nie istnieje"));
+        List<WorkScheduleSlot> overlapping = slotRepository.findOverlapping(
+                tenantId, slot.getStaffId(), request.startAt(), request.endAt());
+        overlapping = overlapping.stream().filter(s -> !s.getId().equals(slotId)).toList();
+        if (!overlapping.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Slot koliduje z istniejącymi slotami tego pracownika");
+        }
         slot.setLocationId(request.locationId());
         slot.setRoomId(request.roomId());
         slot.setStartAt(request.startAt());
@@ -89,6 +102,12 @@ public class SchedulingService {
     public BlockerResponse addBlocker(Long tenantId, CreateBlockerRequest request) {
         if (!request.endAt().isAfter(request.startAt())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endAt musi być po startAt");
+        }
+        List<Blocker> conflicting = blockerRepository.findConflicting(
+                tenantId, request.staffId(), request.roomId(), request.startAt(), request.endAt());
+        if (!conflicting.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Blokada koliduje z istniejącymi blokadami");
         }
         Blocker blocker = Blocker.builder()
                 .tenantId(tenantId)

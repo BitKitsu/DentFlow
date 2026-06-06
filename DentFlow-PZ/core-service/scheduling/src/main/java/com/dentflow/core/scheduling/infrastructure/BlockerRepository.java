@@ -15,8 +15,10 @@ public interface BlockerRepository extends JpaRepository<Blocker, Long> {
     List<Blocker> findByTenantId(Long tenantId);
 
     @Query("SELECT b FROM Blocker b WHERE b.tenantId = :tenantId " +
-           "AND (b.staffId = :staffId OR b.roomId = :roomId) " +
-           "AND b.startAt < :end AND b.endAt > :start")
+           "AND b.startAt < :end AND b.endAt > :start " +
+           "AND ((:staffId IS NOT NULL AND b.staffId = :staffId) OR " +
+           "     (:staffId IS NULL AND b.staffId IS NULL) OR " +
+           "     (:roomId IS NOT NULL AND b.roomId = :roomId))")
     List<Blocker> findConflicting(
             @Param("tenantId") Long tenantId,
             @Param("staffId") Long staffId,

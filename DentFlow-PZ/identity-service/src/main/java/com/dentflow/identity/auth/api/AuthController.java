@@ -121,10 +121,10 @@ public class AuthController {
     @PostMapping("/assign-role")
     @Operation(summary = "Przypisz rolę użytkownikowi")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Void> assignRole(@RequestBody AssignRoleRequest request) {
+    public ResponseEntity<AuthResponse> assignRole(@RequestBody AssignRoleRequest request) {
         log.info("Przypisywanie roli {} użytkownikowi {}", request.role(), request.userId());
-        authService.assignRoleToUser(request.userId(), request.role());
-        return ResponseEntity.noContent().build();
+        AuthResponse response = authService.assignRoleToUser(request.userId(), request.role());
+        return ResponseEntity.ok(response);
     }
 
 }

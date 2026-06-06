@@ -213,7 +213,7 @@ public class AuthService {
     // -------------------------------------------------------------------------
 
     @Transactional
-    public void assignRoleToUser(Long userId, Role role) {
+    public AuthResponse assignRoleToUser(Long userId, Role role) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Użytkownik nie istnieje"));
@@ -233,6 +233,9 @@ public class AuthService {
         } else {
             log.info("User {} already has role {}", userId, role);
         }
+
+        String token = jwtService.generateToken(user);
+        return toAuthResponse(token, user);
     }
 
     // -------------------------------------------------------------------------

@@ -525,7 +525,6 @@ fun AccountDataScreen(
                     Text("Zmień hasło", fontWeight = FontWeight.SemiBold)
                 }
             }
-
             Spacer(modifier = Modifier.height(24.dp))
         }
     }

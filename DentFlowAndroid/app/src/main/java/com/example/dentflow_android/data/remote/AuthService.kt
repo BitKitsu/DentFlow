@@ -38,7 +38,7 @@ interface AuthService {
     suspend fun getUserByEmail(@Query("email") email: String): Response<AuthResponse>
 
     @POST("auth/assign-role")
-    suspend fun assignRole(@Body request: AssignRoleRequest): Response<Unit>
+    suspend fun assignRole(@Body request: AssignRoleRequest): Response<AuthResponse>
 }
 
 data class ChangePasswordRequest(

@@ -52,6 +52,15 @@ class AuthViewModel @Inject constructor(
     private val _sessionState = MutableStateFlow(loadSessionState())
     val sessionState: StateFlow<SessionState> = _sessionState
 
+    fun refreshSession() {
+        val jwt = prefs.getString("jwt_token", null)
+        if (!jwt.isNullOrBlank()) {
+            val role = decodeRoleFromJwt(jwt)
+            prefs.edit().putString("user_role", role).apply()
+        }
+        _sessionState.value = loadSessionState()
+    }
+
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -278,19 +287,20 @@ class AuthViewModel @Inject constructor(
     private fun decodeRoleFromJwt(token: String): String {
         return try {
             val parts = token.split(".")
-            if (parts.size < 2) return "UNKNOWN"
+            if (parts.size < 2) return "PATIENT"
             val payload = parts[1]
             val decoded = android.util.Base64.decode(
                 payload.replace('-', '+').replace('_', '/'),
                 android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
             )
             val json = String(decoded, Charsets.UTF_8)
-            val rolesRegex = Regex("\"roles\":\\s*\\[\"([^\"]+)\"")
-            val match = rolesRegex.find(json)
-            match?.groupValues?.get(1) ?: "USER"
+            val knownRoles = listOf("OWNER", "DENTIST", "RECEPTIONIST", "ASSISTANT", "PATIENT")
+            val foundRoles = knownRoles.filter { role -> json.contains("\"$role\"") }
+            val priority = listOf("OWNER", "DENTIST", "RECEPTIONIST", "ASSISTANT", "PATIENT")
+            priority.firstOrNull { it in foundRoles } ?: "PATIENT"
         } catch (e: Exception) {
             Log.e("AUTH_DEBUG", "JWT decode error: ${e.message}")
-            "UNKNOWN"
+            "PATIENT"
         }
     }
 }

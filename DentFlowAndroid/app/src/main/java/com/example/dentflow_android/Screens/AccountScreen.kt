@@ -43,7 +43,8 @@ fun AccountScreen(
     onLogoutClick: () -> Unit,
     onEditBusinessClick: () -> Unit,
     onAccountDataClick: () -> Unit,
-    onCreateBusinessClick: () -> Unit
+    onCreateBusinessClick: () -> Unit,
+    onReportsClick: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
     val context = LocalContext.current
@@ -174,7 +175,14 @@ fun AccountScreen(
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = if (isOwner) "Właściciel Kliniki" else "Pracownik",
+            text = when (userRole) {
+                "OWNER" -> "Właściciel Kliniki"
+                "DENTIST" -> "Dentysta"
+                "RECEPTIONIST" -> "Recepcjonista"
+                "ASSISTANT" -> "Asystent"
+                "PATIENT" -> "Pacjent"
+                else -> "Pracownik"
+            },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.primary
         )
@@ -182,90 +190,101 @@ fun AccountScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         // Clinic
-        if (isOwner) {
-            Text(
-                text = "Twoja Firma",
-                modifier = Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
+        Text(
+            text = "Twoja Firma",
+            modifier = Modifier.fillMaxWidth(),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
 
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    if (tenantData == null || tenantData?.id == 0L) {
-                        // Creating new clinic
-                        Text(
-                            "Brak przypisanej kliniki",
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            "Utwórz profil firmy, aby rozpocząć konfigurację kalendarza i dodawanie personelu.",
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
-                        )
-                        Button(
-                            onClick = onCreateBusinessClick,
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                if (tenantData == null || tenantData?.id == 0L) {
+                    // Creating new clinic
+                    Text(
+                        "Brak przypisanej kliniki",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        "Utwórz profil firmy, aby rozpocząć konfigurację kalendarza i dodawanie personelu.",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
+                    )
+                    Button(
+                        onClick = onCreateBusinessClick,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                    ) {
+                        Icon(Icons.Default.AddBusiness, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("UTWÓRZ KLINIKĘ")
+                    }
+                } else {
+                    // Managing existing clinic
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                            modifier = Modifier
+                                .size(60.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.surface)
+                                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.AddBusiness, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("UTWÓRZ KLINIKĘ")
-                        }
-                    } else {
-                        // Managing existing clinic
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                modifier = Modifier
-                                    .size(60.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(MaterialTheme.colorScheme.surface)
-                                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                if (logoUrl.isNotBlank()) {
-                                    AsyncImage(
-                                        model = logoUrl,
-                                        contentDescription = null,
-                                        modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                } else {
-                                    Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = MaterialTheme.colorScheme.outline)
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Column {
-                                val businessName = tenantData?.name ?: "Brak nazwy"
-                                val cityName = tenantData?.locations?.firstOrNull()?.addressCity ?: "Brak adresu"
-
-                                Text(businessName, fontWeight = FontWeight.Bold)
-                                Text(cityName, style = MaterialTheme.typography.bodySmall)
+                            if (logoUrl.isNotBlank()) {
+                                AsyncImage(
+                                    model = logoUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(8.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else {
+                                Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = MaterialTheme.colorScheme.outline)
                             }
                         }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            val businessName = tenantData?.name ?: "Brak nazwy"
+                            val cityName = tenantData?.locations?.firstOrNull()?.addressCity ?: "Brak adresu"
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                            Text(businessName, fontWeight = FontWeight.Bold)
+                            Text(cityName, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
 
-                        Button(
-                            onClick = onEditBusinessClick,
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = onEditBusinessClick,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                    ) {
+                        Icon(Icons.Default.Business, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("ZARZĄDZAJ KLINIKĄ")
+                    }
+
+                    if (isOwner) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = onReportsClick,
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                            shape = RoundedCornerShape(8.dp)
                         ) {
-                            Icon(Icons.Default.Business, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.PictureAsPdf, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("ZARZĄDZAJ KLINIKĄ")
+                            Text("RAPORTY PDF")
                         }
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
         }
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Account
         Text(

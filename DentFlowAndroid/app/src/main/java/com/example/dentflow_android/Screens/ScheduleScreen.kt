@@ -24,6 +24,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.dentflow_android.data.ViewModel.ScheduleViewModel
 import com.example.dentflow_android.data.ViewModel.StaffViewModel
 import com.example.dentflow_android.data.ViewModel.TenantViewModel
+import com.example.dentflow_android.data.ViewModel.VisitViewModel
 import com.example.dentflow_android.data.remote.ScheduleBlockerDTO
 import com.example.dentflow_android.data.remote.ScheduleSlotDTO
 import com.example.dentflow_android.data.remote.StaffMemberResponse
@@ -41,7 +42,8 @@ fun ScheduleScreen(
     onBackClick: () -> Unit = {},
     viewModel: ScheduleViewModel = hiltViewModel(),
     tenantViewModel: TenantViewModel = hiltViewModel(),
-    staffViewModel: StaffViewModel = hiltViewModel()
+    staffViewModel: StaffViewModel = hiltViewModel(),
+    visitViewModel: VisitViewModel = hiltViewModel()
 ) {
     val slots by viewModel.slots.collectAsState()
     val blockers by viewModel.blockers.collectAsState()
@@ -49,6 +51,7 @@ fun ScheduleScreen(
     val tenantData by tenantViewModel.tenantState
     val rooms by tenantViewModel.rooms.collectAsState()
     val staff by staffViewModel.staffMembers.collectAsState()
+    val visits by visitViewModel.visits.collectAsState()
 
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
@@ -73,8 +76,12 @@ fun ScheduleScreen(
     val filteredSlots = remember(slots, selectedDate) {
         slots.filter { it.startAt.take(10) == selectedDate.toString() }.sortedBy { it.startAt }
     }
-    val filteredBlockers = remember(blockers, selectedDate) {
-        blockers.filter { it.startAt.take(10) == selectedDate.toString() }.sortedBy { it.startAt }
+    val filteredVisits = remember(visits, selectedDate) {
+        visits.filter { it.visit.startAt.take(10) == selectedDate.toString() }.sortedBy { it.visit.startAt }
+    }
+
+    LaunchedEffect(selectedDate) {
+        visitViewModel.refreshVisits()
     }
 
     Scaffold(
@@ -88,8 +95,11 @@ fun ScheduleScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    if (selectedTab == 0) { editingSlot = null; showSlotDialog = true }
-                    else showBlockerDialog = true
+                    when (selectedTab) {
+                        0 -> { editingSlot = null; showSlotDialog = true }
+                        1 -> { editingSlot = null; showSlotDialog = true }
+                        2 -> showBlockerDialog = true
+                    }
                 },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White
@@ -174,8 +184,12 @@ fun ScheduleScreen(
 
                     // Tabs
                     TabRow(selectedTabIndex = selectedTab, modifier = Modifier.fillMaxWidth()) {
-                        Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text("Dostępność (${filteredSlots.size})") })
-                        Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }, text = { Text("Przerwy (${filteredBlockers.size})") })
+                        Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text("Wizyty (${filteredVisits.size})") })
+                        Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }, text = { Text("Sloty (${filteredSlots.size})") })
+                        val filteredBlockers = remember(blockers, selectedDate) {
+                            blockers.filter { it.startAt.take(10) == selectedDate.toString() }.sortedBy { it.startAt }
+                        }
+                        Tab(selected = selectedTab == 2, onClick = { selectedTab = 2 }, text = { Text("Przerwy (${filteredBlockers.size})") })
                     }
                 }
             }
@@ -185,18 +199,37 @@ fun ScheduleScreen(
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             } else {
                 when (selectedTab) {
-                    0 -> SlotsList(
+                    0 -> {
+                        LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            items(filteredVisits) { v ->
+                                val st = staff.find { it.id == v.visit.dentistStaffId }
+                                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+                                    Column(Modifier.padding(16.dp)) {
+                                        Text("${v.visit.startAt.substring(11,16)} - ${v.visit.endAt.substring(11,16)}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                        Text("Pacjent: ${v.patient?.firstName} ${v.patient?.lastName}")
+                                        if (st != null) Text("Lekarz: ${st.firstName} ${st.lastName}", style = MaterialTheme.typography.bodySmall)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    1 -> SlotsList(
                         slots = filteredSlots,
                         staffList = staff,
                         roomMap = roomMap,
                         onEdit = { editingSlot = it; showSlotDialog = true },
                         onDelete = { showDeleteSlotConfirm = it }
                     )
-                    1 -> BlockersList(
-                        blockers = filteredBlockers,
-                        staffList = staff,
-                        onDelete = { showDeleteBlockerConfirm = it }
-                    )
+                    2 -> {
+                        val filteredBlockers = remember(blockers, selectedDate) {
+                            blockers.filter { it.startAt.take(10) == selectedDate.toString() }.sortedBy { it.startAt }
+                        }
+                        BlockersList(
+                            blockers = filteredBlockers,
+                            staffList = staff,
+                            onDelete = { showDeleteBlockerConfirm = it }
+                        )
+                    }
                 }
             }
         }
@@ -344,7 +377,7 @@ private fun BlockersList(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(blockers, key = { it.id }) { blocker ->
-                val staffName = staffList.find { it.id == blocker.staffId }?.let { "${it.firstName} ${it.lastName}" } ?: "Wszyscy"
+                val staffName = if (blocker.staffId <= 0) "Wszyscy" else staffList.find { it.id == blocker.staffId }?.let { "${it.firstName} ${it.lastName}" } ?: "Nieznany"
                 val start = try { blocker.startAt.substringAfter("T").take(5) } catch (e: Exception) { "?" }
                 val end = try { blocker.endAt.substringAfter("T").take(5) } catch (e: Exception) { "?" }
                 Card(
@@ -408,10 +441,10 @@ fun SlotEditDialog(
         onDismissRequest = onDismiss,
         title = { 
             Column {
-                Text(if (initialSlot != null) "Edytuj slot dostępności" else "Dodaj slot dostępności", fontWeight = FontWeight.Bold)
+                Text(if (initialSlot != null) "Edytuj przerwę w pracy" else "Dodaj przerwę w pracy", fontWeight = FontWeight.Bold)
                 if (initialSlot == null) {
                     Spacer(Modifier.height(4.dp))
-                    Text("Określ czas, kiedy lekarz jest dostępny do wizyt", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Określ czas przerwy (np. obiadowa, inne obowiązki)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         },

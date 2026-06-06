@@ -53,17 +53,14 @@ class ScheduleViewModel @Inject constructor(
             Log.d(TAG, "Ładowanie grafiku dla tenantId: $currentTenantId, role: $currentUserRole")
             try {
                 val now = OffsetDateTime.now()
-                val fromStr = now.minusMonths(1).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-                val toStr = now.plusMonths(3).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+                val fromStr = now.minusMonths(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z"
+                val toStr = now.plusMonths(3).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z"
 
                 // Pobieranie slotów (terminów)
                 val slotsRes = apiService.getSlots(currentTenantId, fromStr, toStr)
                 if (slotsRes.isSuccessful) {
                     val allSlots = slotsRes.body() ?: emptyList()
-                    // Jeśli to lekarz, filtrujemy tylko jego sloty (o ile backend nie robi tego sam)
-                    _slots.value = if (currentUserRole == "DENTIST") {
-                        allSlots.filter { it.staffId == currentUserId }
-                    } else allSlots
+                    _slots.value = allSlots
                     Log.d(TAG, "Pobrano ${_slots.value.size} slotów")
                 } else {
                     Log.e(TAG, "Błąd slotów: ${slotsRes.code()}")
@@ -73,9 +70,7 @@ class ScheduleViewModel @Inject constructor(
                 val blockersRes = apiService.getBlockers(currentTenantId)
                 if (blockersRes.isSuccessful) {
                     val allBlockers = blockersRes.body() ?: emptyList()
-                    _blockers.value = if (currentUserRole == "DENTIST") {
-                        allBlockers.filter { it.staffId == currentUserId }
-                    } else allBlockers
+                    _blockers.value = allBlockers
                     Log.d(TAG, "Pobrano ${_blockers.value.size} blokerów")
                 }
 
@@ -158,9 +153,10 @@ class ScheduleViewModel @Inject constructor(
 
         viewModelScope.launch {
             Log.d(TAG, "Dodawanie blokady: ${blocker.reason}")
+            val effectiveStaffId = if (blocker.staffId > 0) blocker.staffId else null
             val request = CreateBlockerRequest(
-                staffId = blocker.staffId,
-                roomId = blocker.roomId,
+                staffId = effectiveStaffId,
+                roomId = if (blocker.roomId > 0) blocker.roomId else null,
                 startAt = blocker.startAt,
                 endAt = blocker.endAt,
                 reason = blocker.reason

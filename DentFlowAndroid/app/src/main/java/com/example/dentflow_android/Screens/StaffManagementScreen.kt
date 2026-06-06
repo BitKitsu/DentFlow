@@ -1,5 +1,6 @@
 package com.example.dentflow_android.Screens
-
+import android.app.TimePickerDialog
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,15 +26,18 @@ import coil.compose.AsyncImage
 import com.example.dentflow_android.data.ViewModel.StaffViewModel
 import com.example.dentflow_android.data.remote.AuthResponse
 import com.example.dentflow_android.data.remote.StaffMemberResponse
+import com.example.dentflow_android.data.remote.StaffWorkingHoursDTO
+import com.example.dentflow_android.data.remote.WorkingHoursEntry
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddStaffDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, String, String, String, String, String, String, Boolean, Long?, String?) -> Unit,
+    onConfirm: (String, String, String, String, String, String, String, Boolean, Long?, String?, String, String) -> Unit,
     onCheckEmail: suspend (String) -> AuthResponse?
 ) {
+    val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var emailChecked by remember { mutableStateOf(false) }
     var userExists by remember { mutableStateOf(false) }
@@ -48,6 +52,11 @@ fun AddStaffDialog(
     var bio by remember { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
     var showError by remember { mutableStateOf(false) }
+
+    var startWH by remember { mutableStateOf("08:00") }
+    var endWH by remember { mutableStateOf("16:00") }
+    val startPicker = TimePickerDialog(context, { _: android.widget.TimePicker, h: Int, m: Int -> startWH = "%02d:%02d".format(h, m) }, 8, 0, true)
+    val endPicker = TimePickerDialog(context, { _: android.widget.TimePicker, h: Int, m: Int -> endWH = "%02d:%02d".format(h, m) }, 16, 0, true)
 
     val isEmailValid = email.contains("@") && email.contains(".")
     val isPassValid = pass.length >= 8 || userExists
@@ -179,6 +188,13 @@ fun AddStaffDialog(
                         shape = RoundedCornerShape(12.dp)
                     )
                     
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    Text("Godziny pracy", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { startPicker.show() }, Modifier.weight(1f)) { Text("Od: $startWH") }
+                        OutlinedButton(onClick = { endPicker.show() }, Modifier.weight(1f)) { Text("Do: $endWH") }
+                    }
+
                     if (!userExists) {
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                         Text("4. Konto logowania", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
@@ -204,7 +220,7 @@ fun AddStaffDialog(
             Button(
                 onClick = {
                     if (emailChecked && fName.isNotBlank() && lName.isNotBlank() && prof.isNotBlank() && isPassValid) {
-                        onConfirm(fName, lName, prof, email, pass, phone, bio, userExists, existingUserId, userAvatarUrl)
+                        onConfirm(fName, lName, prof, email, pass, phone, bio, userExists, existingUserId, userAvatarUrl, "$startWH:00", "$endWH:00")
                     } else { showError = true }
                 },
                 shape = RoundedCornerShape(12.dp),
@@ -221,12 +237,18 @@ fun AddStaffDialog(
 fun EditStaffDialog(
     member: StaffMemberResponse,
     onDismiss: () -> Unit,
-    onConfirm: (String, String, String, String) -> Unit
+    onConfirm: (String, String, String, String, String, String) -> Unit
 ) {
+    val context = LocalContext.current
     var fName by remember { mutableStateOf(member.firstName) }
     var lName by remember { mutableStateOf(member.lastName) }
     var prof by remember { mutableStateOf(member.profession) }
     var bio by remember { mutableStateOf(member.bio ?: "") }
+    
+    var startWH by remember { mutableStateOf(member.workingHoursStart?.take(5) ?: "08:00") }
+    var endWH by remember { mutableStateOf(member.workingHoursEnd?.take(5) ?: "16:00") }
+    val startPicker = TimePickerDialog(context, { _: android.widget.TimePicker, h: Int, m: Int -> startWH = "%02d:%02d".format(h, m) }, startWH.split(":")[0].toIntOrNull() ?: 8, startWH.split(":")[1].toIntOrNull() ?: 0, true)
+    val endPicker = TimePickerDialog(context, { _: android.widget.TimePicker, h: Int, m: Int -> endWH = "%02d:%02d".format(h, m) }, endWH.split(":")[0].toIntOrNull() ?: 16, endWH.split(":")[1].toIntOrNull() ?: 0, true)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -237,10 +259,16 @@ fun EditStaffDialog(
                 OutlinedTextField(value = lName, onValueChange = { lName = it }, label = { Text("Nazwisko") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp))
                 OutlinedTextField(value = prof, onValueChange = { prof = it }, label = { Text("Profesja") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp))
                 OutlinedTextField(value = bio, onValueChange = { bio = it }, label = { Text("Krótkie Bio / O mnie") }, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 4, shape = RoundedCornerShape(12.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                Text("Godziny pracy", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { startPicker.show() }, Modifier.weight(1f)) { Text("Od: $startWH") }
+                    OutlinedButton(onClick = { endPicker.show() }, Modifier.weight(1f)) { Text("Do: $endWH") }
+                }
             }
         },
         confirmButton = {
-            Button(onClick = { onConfirm(fName, lName, prof, bio) }, shape = RoundedCornerShape(12.dp)) { Text("ZAPISZ") }
+            Button(onClick = { onConfirm(fName, lName, prof, bio, "$startWH:00", "$endWH:00") }, shape = RoundedCornerShape(12.dp)) { Text("ZAPISZ") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("ANULUJ") } }
     )
@@ -255,6 +283,8 @@ fun StaffManagementScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var editingMember by remember { mutableStateOf<StaffMemberResponse?>(null) }
     var selectedMember by remember { mutableStateOf<StaffMemberResponse?>(null) }
+    var editingMemberHours by remember { mutableStateOf<StaffMemberResponse?>(null) }
+    var currentWorkingHours by remember { mutableStateOf<List<StaffWorkingHoursDTO>>(emptyList()) }
 
     val staffList by viewModel.staffMembers.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -263,6 +293,14 @@ fun StaffManagementScreen(
 
     LaunchedEffect(Unit) {
         viewModel.loadStaff()
+    }
+
+    LaunchedEffect(selectedMember) {
+        selectedMember?.let { member ->
+            viewModel.loadWorkingHours(member.id) { hours ->
+                currentWorkingHours = hours
+            }
+        }
     }
 
     LaunchedEffect(errorMessage) {
@@ -310,8 +348,8 @@ fun StaffManagementScreen(
             if (showAddDialog) {
                 AddStaffDialog(
                     onDismiss = { showAddDialog = false },
-                    onConfirm = { fn, ln, pr, em, ps, ph, bo, exists, userId, avatarUrl ->
-                        viewModel.addStaff(fn, ln, pr, em, ps, ph, bo, exists, userId, avatarUrl)
+                    onConfirm = { fn, ln, pr, em, ps, ph, bo, exists, userId, avatarUrl, whStart, whEnd ->
+                        viewModel.addStaff(fn, ln, pr, em, ps, ph, bo, exists, userId, avatarUrl, whStart, whEnd)
                         showAddDialog = false
                     },
                     onCheckEmail = { email ->
@@ -324,8 +362,8 @@ fun StaffManagementScreen(
                 EditStaffDialog(
                     member = member,
                     onDismiss = { editingMember = null },
-                    onConfirm = { fn, ln, pr, bo ->
-                        viewModel.updateStaff(member.id, fn, ln, pr, member.userId, bo)
+                    onConfirm = { fn, ln, pr, bo, whStart, whEnd ->
+                        viewModel.updateStaff(member.id, fn, ln, pr, member.userId, bo, whStart, whEnd)
                         editingMember = null
                     }
                 )
@@ -334,7 +372,27 @@ fun StaffManagementScreen(
             selectedMember?.let { member ->
                 StaffDetailDialog(
                     member = member,
+                    workingHours = currentWorkingHours,
+                    onEditHours = { editingMemberHours = member; selectedMember = null },
                     onDismiss = { selectedMember = null }
+                )
+            }
+
+            editingMemberHours?.let { member ->
+                WorkingHoursEditorDialog(
+                    workingHours = currentWorkingHours,
+                    onSave = { entries ->
+                        viewModel.updateWorkingHours(member.id, entries) { success ->
+                            if (success) {
+                                selectedMember = member
+                                viewModel.loadWorkingHours(member.id) { hours ->
+                                    currentWorkingHours = hours
+                                }
+                            }
+                        }
+                        editingMemberHours = null
+                    },
+                    onDismiss = { editingMemberHours = null }
                 )
             }
         }
@@ -425,8 +483,12 @@ fun StaffItem(
 @Composable
 fun StaffDetailDialog(
     member: StaffMemberResponse,
+    workingHours: List<StaffWorkingHoursDTO>,
+    onEditHours: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val dayNames = listOf("Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Ndz")
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -512,10 +574,146 @@ fun StaffDetailDialog(
                         Text(member.bio, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(8.dp))
+                // Godziny pracy
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Godziny pracy", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                    IconButton(onClick = onEditHours, modifier = Modifier.size(24.dp)) {
+                        Icon(Icons.Default.Edit, "Edytuj godziny", modifier = Modifier.size(16.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                if (workingHours.isEmpty()) {
+                    Text("Brak ustawionych godzin pracy", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    val sortedHours = workingHours.sortedBy { it.dayOfWeek }
+                    sortedHours.forEach { wh ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(dayNames.getOrElse(wh.dayOfWeek - 1) { "?" }, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+                            Text("${wh.startTime} - ${wh.endTime}", style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) { Text("Zamknij") }
+        }
+    )
+}
+
+data class DayHoursEdit(
+    val dayOfWeek: Int,
+    val label: String,
+    val startHour: Int,
+    val startMinute: Int,
+    val endHour: Int,
+    val endMinute: Int,
+    val enabled: Boolean
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun WorkingHoursEditorDialog(
+    workingHours: List<StaffWorkingHoursDTO>,
+    onSave: (List<WorkingHoursEntry>) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val dayLabels = listOf("Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Ndz")
+
+    val initialDays = (1..7).map { day ->
+        val existing = workingHours.find { it.dayOfWeek == day }
+        if (existing != null) {
+            val startParts = existing.startTime.split(":")
+            val endParts = existing.endTime.split(":")
+            DayHoursEdit(
+                dayOfWeek = day,
+                label = dayLabels[day - 1],
+                startHour = startParts.getOrNull(0)?.toIntOrNull() ?: 8,
+                startMinute = startParts.getOrNull(1)?.toIntOrNull() ?: 0,
+                endHour = endParts.getOrNull(0)?.toIntOrNull() ?: 16,
+                endMinute = endParts.getOrNull(1)?.toIntOrNull() ?: 0,
+                enabled = true
+            )
+        } else {
+            DayHoursEdit(dayOfWeek = day, label = dayLabels[day - 1], startHour = 8, startMinute = 0, endHour = 16, endMinute = 0, enabled = false)
+        }
+    }
+
+    val days = remember { mutableStateListOf(*initialDays.toTypedArray()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Godziny pracy", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                days.forEachIndexed { index, day ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = day.enabled,
+                            onCheckedChange = { checked ->
+                                days[index] = day.copy(enabled = checked)
+                            },
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = day.label,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.width(40.dp)
+                        )
+                        if (day.enabled) {
+                            Text(
+                                text = "${day.startHour.toString().padStart(2, '0')}:${day.startMinute.toString().padStart(2, '0')}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(" - ", style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                text = "${day.endHour.toString().padStart(2, '0')}:${day.endMinute.toString().padStart(2, '0')}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        } else {
+                            Text(
+                                text = "Wolne",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val entries = days.filter { it.enabled }.map { d ->
+                    WorkingHoursEntry(
+                        dayOfWeek = d.dayOfWeek,
+                        startTime = "${d.startHour.toString().padStart(2, '0')}:${d.startMinute.toString().padStart(2, '0')}",
+                        endTime = "${d.endHour.toString().padStart(2, '0')}:${d.endMinute.toString().padStart(2, '0')}"
+                    )
+                }
+                onSave(entries)
+            }) { Text("Zapisz") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Anuluj") }
         }
     )
 }

@@ -22,6 +22,9 @@ class StaffViewModel @Inject constructor(
     private val _staffMembers = MutableStateFlow<List<StaffMemberResponse>>(emptyList())
     val staffMembers: StateFlow<List<StaffMemberResponse>> = _staffMembers
 
+    private val _allStaff = MutableStateFlow<List<StaffMemberResponse>>(emptyList())
+    val allStaff: StateFlow<List<StaffMemberResponse>> = _allStaff
+
     private val _services = MutableStateFlow<List<ServiceCatalogItemDTO>>(emptyList())
     val services: StateFlow<List<ServiceCatalogItemDTO>> = _services
 
@@ -111,6 +114,21 @@ class StaffViewModel @Inject constructor(
         }
     }
 
+    fun loadAllStaff() {
+        viewModelScope.launch {
+            try {
+                val response = apiService.getAllStaffMembers()
+                if (response.isSuccessful) {
+                    _allStaff.value = response.body() ?: emptyList()
+                } else {
+                    Log.e(TAG, "Błąd pobierania wszystkich pracowników: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Błąd pobierania wszystkich pracowników: ${e.message}")
+            }
+        }
+    }
+
 
     // --- ZARZĄDZANIE PERSONELEM ---
 
@@ -130,7 +148,7 @@ class StaffViewModel @Inject constructor(
         }
     }
 
-    fun addStaff(fName: String, lName: String, profession: String, email: String, password: String, phone: String, bio: String, userExists: Boolean, existingUserId: Long?, avatarUrl: String? = null) {
+    fun addStaff(fName: String, lName: String, profession: String, email: String, pass: String, phone: String, bio: String, userExists: Boolean, existingUserId: Long?, existingAvatarUrl: String?, workingHoursStart: String? = null, workingHoursEnd: String? = null) {
         if (!hasValidSession()) return
 
         viewModelScope.launch {
@@ -138,14 +156,14 @@ class StaffViewModel @Inject constructor(
             Log.d(TAG, "Dodawanie pracownika: $email, userExists=$userExists")
             try {
                 var userId: Long? = existingUserId
-                var userAvatarUrl: String? = avatarUrl
+                var userAvatarUrl: String? = existingAvatarUrl
 
                 // 1. Jeśli użytkownik nie istnieje - utwórz nowe konto
                 if (!userExists) {
                     Log.d(TAG, "Tworzenie nowego konta dla: $email")
                     val registerRequest = RegisterRequest(
                         email = email,
-                        password = password,
+                        password = pass,
                         firstName = fName,
                         lastName = lName,
                         phone = phone
@@ -184,7 +202,9 @@ class StaffViewModel @Inject constructor(
                         bio = bio,
                         avatarUrl = userAvatarUrl,
                         phone = phone,
-                        email = email
+                        email = email,
+                        workingHoursStart = workingHoursStart,
+                        workingHoursEnd = workingHoursEnd
                     )
 
                     val coreResponse = apiService.createStaffMember(currentTenantId, staffRequest)
@@ -205,7 +225,7 @@ class StaffViewModel @Inject constructor(
         }
     }
 
-    fun updateStaff(staffId: Long, fName: String, lName: String, profession: String, userId: Long, bio: String) {
+    fun updateStaff(staffId: Long, fName: String, lName: String, profession: String, userId: Long, bio: String, workingHoursStart: String? = null, workingHoursEnd: String? = null) {
         if (!hasValidSession()) return
 
         viewModelScope.launch {
@@ -216,7 +236,9 @@ class StaffViewModel @Inject constructor(
                     firstName = fName,
                     lastName = lName,
                     profession = profession,
-                    bio = bio
+                    bio = bio,
+                    workingHoursStart = workingHoursStart,
+                    workingHoursEnd = workingHoursEnd
                 )
                 val response = apiService.updateStaffMember(currentTenantId, staffId, updateRequest)
                 if (response.isSuccessful) {
@@ -242,6 +264,32 @@ class StaffViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Exception deleteStaff: ${e.message}")
+            }
+        }
+    }
+
+    fun loadWorkingHours(staffId: Long, onResult: (List<StaffWorkingHoursDTO>) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val response = apiService.getWorkingHours(currentTenantId, staffId)
+                if (response.isSuccessful) {
+                    onResult(response.body() ?: emptyList())
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Błąd pobierania godzin pracy: ${e.message}")
+            }
+        }
+    }
+
+    fun updateWorkingHours(staffId: Long, schedule: List<WorkingHoursEntry>, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val request = UpdateWorkingHoursRequest(schedule = schedule)
+                val response = apiService.updateWorkingHours(currentTenantId, staffId, request)
+                onResult(response.isSuccessful)
+            } catch (e: Exception) {
+                Log.e(TAG, "Błąd aktualizacji godzin pracy: ${e.message}")
+                onResult(false)
             }
         }
     }

@@ -58,4 +58,4 @@ springdoc:
 
 logging:
   level:
-    pl.edu.ur.dentflow: DEBUG
+    pl.edu.ur.dentflow: WARN

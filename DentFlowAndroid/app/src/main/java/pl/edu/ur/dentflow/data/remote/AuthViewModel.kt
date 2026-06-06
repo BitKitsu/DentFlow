@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val TAG = "AuthViewModel"
+
 data class SessionState(
     val email: String = "",
     val role: String = "STAFF",
@@ -80,14 +82,13 @@ class AuthViewModel @Inject constructor(
                     if (!token.isNullOrBlank()) {
                         val role = decodeRoleFromJwt(token)
                         saveSession(body, role)
-                        Log.d("AUTH_DEBUG", "Login successful. TenantID: ${body.tenantId}, Role: $role")
                         onSuccess(body.tenantId)
                     } else {
                         _errorMessage.value = "Błąd: Serwer nie przesłał tokenu."
                     }
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    Log.e("AUTH_DEBUG", "Login error. Code: ${response.code()}, Body: $errorBody")
+                    Log.e(TAG, "Login error. Code: ${response.code()}, Body: $errorBody")
                     _errorMessage.value = when (response.code()) {
                         401 -> "Błędny e-mail lub hasło."
                         403 -> "Dostęp zabroniony. Sprawdź konfigurację kliniki."
@@ -97,7 +98,7 @@ class AuthViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Błąd połączenia. Upewnij się, że backend działa."
-                Log.e("AUTH_DEBUG", "Login exception: ${e.message}")
+                Log.e(TAG, "Login exception: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
@@ -114,11 +115,10 @@ class AuthViewModel @Inject constructor(
                     val body = response.body()!!
                     val role = decodeRoleFromJwt(body.token)
                     saveSession(body, role)
-                    Log.d("AUTH_DEBUG", "Registration successful")
                     onSuccess()
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    Log.e("AUTH_DEBUG", "Registration error. Code: ${response.code()}, Body: $errorBody")
+                    Log.e(TAG, "Registration error. Code: ${response.code()}, Body: $errorBody")
                     _errorMessage.value = when (response.code()) {
                         409 -> "Ten adres e-mail jest już zarejestrowany."
                         400 -> "Nieprawidłowe dane w formularzu."
@@ -127,7 +127,7 @@ class AuthViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Błąd sieci: Brak odpowiedzi od serwera."
-                Log.e("AUTH_DEBUG", "Registration exception: ${e.message}")
+                Log.e(TAG, "Registration exception: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
@@ -137,12 +137,11 @@ class AuthViewModel @Inject constructor(
     fun logout() {
         prefs.edit().clear().apply()
         _sessionState.value = SessionState()
-        Log.d("AUTH_DEBUG", "Logged out, session data cleared locally.")
         viewModelScope.launch {
             try {
                 authService.logout()
             } catch (e: Exception) {
-                Log.e("AUTH_DEBUG", "Logout API error: ${e.message}")
+                Log.e(TAG, "Logout API error: ${e.message}")
             }
         }
     }
@@ -223,7 +222,6 @@ class AuthViewModel @Inject constructor(
                     val body = response.body()!!
                     val role = decodeRoleFromJwt(body.token)
                     saveSession(body, role)
-                    Log.d("AUTH_DEBUG", "Profile updated successfully")
                     
                     // Sync staff member data
                     val tenantId = body.tenantId
@@ -257,7 +255,7 @@ class AuthViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 onError("Błąd połączenia z serwerem.")
-                Log.e("AUTH_DEBUG", "updateProfile exception: ${e.message}")
+                Log.e(TAG, "updateProfile exception: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
@@ -299,7 +297,7 @@ class AuthViewModel @Inject constructor(
             val priority = listOf("OWNER", "DENTIST", "RECEPTIONIST", "ASSISTANT", "PATIENT")
             priority.firstOrNull { it in foundRoles } ?: "PATIENT"
         } catch (e: Exception) {
-            Log.e("AUTH_DEBUG", "JWT decode error: ${e.message}")
+            Log.e(TAG, "JWT decode error: ${e.message}")
             "PATIENT"
         }
     }

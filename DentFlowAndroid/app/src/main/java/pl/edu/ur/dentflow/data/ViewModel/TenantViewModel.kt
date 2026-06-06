@@ -37,7 +37,6 @@ class TenantViewModel @Inject constructor(
     private val currentTenantId: Long
         get() {
             val id = prefs.getLong("tenant_id", -1L)
-            Log.d(TAG, "Odczytano tenant_id z SharedPreferences: $id")
             return if (id <= 0L) -1L else id
         }
 
@@ -52,7 +51,6 @@ class TenantViewModel @Inject constructor(
             return
         }
 
-        Log.d(TAG, "Rozpoczynam sekwencyjne pobieranie wszystkich danych dla kliniki ID: $id")
         viewModelScope.launch {
             _isLoading.value = true
             try {
@@ -79,10 +77,8 @@ class TenantViewModel @Inject constructor(
 
     private suspend fun fetchTenantData(id: Long) {
         try {
-            Log.d(TAG, "API -> Pobieranie danych kliniki (getTenantDetails) dla ID: $id")
             val response = apiService.getTenantDetails(id)
             if (response.isSuccessful) {
-                Log.d(TAG, "API -> Pobrano szczegóły kliniki pomyślnie.")
                 _tenantState.value = response.body()
             } else {
                 val errorMsg = response.errorBody()?.string()
@@ -104,7 +100,6 @@ class TenantViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             _isLoading.value = true
-            Log.d(TAG, "Rejestracja nowej kliniki: $name, Miejscowość: $city")
             prefs.edit().remove("tenant_id").apply()
 
             val request = RegisterTenantRequest(
@@ -120,7 +115,6 @@ class TenantViewModel @Inject constructor(
                 val response = apiService.registerTenant(request)
                 if (response.isSuccessful && response.body() != null) {
                     val newTenant = response.body()!!
-                    Log.d(TAG, "API -> Zarejestrowano klinikę. Nowe ID: ${newTenant.id}")
                     prefs.edit().putLong("tenant_id", newTenant.id).apply()
 
                     assignTenantOnIdentityService(newTenant.id)
@@ -144,11 +138,9 @@ class TenantViewModel @Inject constructor(
 
     private suspend fun assignTenantOnIdentityService(tenantId: Long) {
         try {
-            Log.d(TAG, "API -> Przypisywanie kliniki w IdentityService dla ID: $tenantId")
             val response = authService.assignTenant(AssignTenantRequest(tenantId = tenantId))
             if (response.isSuccessful && response.body() != null) {
                 val authResponse = response.body()!!
-                Log.d(TAG, "API -> Przypisano klinikę. Nowy token JWT wygenerowany.")
 
                 prefs.edit()
                     .putString("jwt_token", authResponse.token)
@@ -170,7 +162,6 @@ class TenantViewModel @Inject constructor(
             return
         }
         try {
-            Log.d(TAG, "API -> Przypisywanie roli OWNER dla userId: $userId")
             val response = authService.assignRole(AssignRoleRequest(userId = userId, role = "OWNER"))
             if (response.isSuccessful && response.body() != null) {
                 val authResponse = response.body()!!
@@ -179,7 +170,6 @@ class TenantViewModel @Inject constructor(
                     .putString("jwt_token", authResponse.token)
                     .putLong("tenant_id", authResponse.tenantId)
                     .apply()
-                Log.d(TAG, "API -> Przypisano rolę OWNER pomyślnie, nowy JWT zapisany")
             } else {
                 val errorMsg = response.errorBody()?.string()
                 Log.e(TAG, "API BŁĄD -> assignRole: Kod=${response.code()}, Body=$errorMsg")
@@ -197,10 +187,8 @@ class TenantViewModel @Inject constructor(
 
     private suspend fun fetchRooms(id: Long) {
         try {
-            Log.d(TAG, "API -> Pobieranie pokoi/gabinetów dla ID: $id")
             val res = apiService.getRooms(id)
             if (res.isSuccessful) {
-                Log.d(TAG, "API -> Pobrano pokoje pomyślnie.")
                 _rooms.value = res.body() ?: emptyList()
             } else {
                 val errorMsg = res.errorBody()?.string()
@@ -213,7 +201,6 @@ class TenantViewModel @Inject constructor(
 
     fun saveBusinessData(name: String, locName: String, street: String, city: String, zip: String, logoUrl: String? = null) {
         val id = prefs.getLong("tenant_id", 0L)
-        Log.d(TAG, "Aktualizacja danych biznesowych kliniki ID: $id")
         viewModelScope.launch {
             _isLoading.value = true
             val request = TenantRequest(
@@ -228,7 +215,6 @@ class TenantViewModel @Inject constructor(
             try {
                 val response = apiService.updateTenant(id, request)
                 if (response.isSuccessful) {
-                    Log.d(TAG, "API -> Zaktualizowano dane biznesowe pomyślnie.")
                     _tenantState.value = response.body()
                     response.body()?.id?.let {
                         prefs.edit().putLong("tenant_id", it).commit()
@@ -247,13 +233,11 @@ class TenantViewModel @Inject constructor(
 
     fun deleteClinic(onSuccess: () -> Unit, onError: (String) -> Unit) {
         val id = prefs.getLong("tenant_id", 0L)
-        Log.d(TAG, "Usuwanie kliniki ID: $id")
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val response = apiService.deleteTenant(id)
                 if (response.isSuccessful) {
-                    Log.d(TAG, "API -> Usunięto klinikę pomyślnie.")
                     prefs.edit().remove("tenant_id").apply()
                     _tenantState.value = null
                     onSuccess()

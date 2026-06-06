@@ -1,5 +1,6 @@
 package pl.edu.ur.dentflow.data.ViewModel
 
+import android.util.Log
 import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,10 +11,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private const val TAG = "AdminViewModel"
+
 @HiltViewModel
 class AdminViewModel @Inject constructor(
     private val apiService: ApiService,
-    private val prefs: SharedPreferences // Wstrzykujemy SharedPreferences
+    private val prefs: SharedPreferences
 ) : ViewModel() {
 
     private val _visitCount = MutableStateFlow("0")
@@ -43,7 +46,7 @@ class AdminViewModel @Inject constructor(
                     _patientCount.value = (patientsRes.body()?.size ?: 0).toString()
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e(TAG, "loadStats error", e)
             }
         }
     }

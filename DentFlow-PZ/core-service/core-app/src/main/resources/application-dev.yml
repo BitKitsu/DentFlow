@@ -3,18 +3,18 @@
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/dentflow
-    username: dentflow
-    password: dentflow
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/dentflow}
+    username: ${DB_USERNAME:dentflow}
+    password: ${DB_PASSWORD:dentflow}
   mail:
     host: smtp.sendgrid.net
     port: 587
-    username: apikey
-    password: fake-dev-key
+    username: ${MAIL_USERNAME:apikey}
+    password: ${MAIL_PASSWORD:}
 
 jwt:
-  secret: dev-only-secret-key-replace-in-production-min-256bit
+  secret: ${JWT_SECRET:dev-only-secret-key-replace-in-production-min-256bit}
 
 supabase:
-  url: https://fake.supabase.co
-  service-key: fake-dev-key
+  url: ${SUPABASE_URL:https://fake.supabase.co}
+  service-key: ${SUPABASE_SERVICE_KEY:}

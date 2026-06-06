@@ -1,5 +1,6 @@
 package pl.edu.ur.dentflow.data.ViewModel
 
+import android.util.Log
 import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,6 +11,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+private const val TAG = "NotificationViewModel"
 
 @HiltViewModel
 class NotificationViewModel @Inject constructor(
@@ -65,7 +68,7 @@ class NotificationViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Błąd połączenia z serwerem."
-                e.printStackTrace()
+                Log.e(TAG, "fetchNotifications error", e)
             } finally {
                 _isLoading.value = false
             }
@@ -89,7 +92,7 @@ class NotificationViewModel @Inject constructor(
                     _unreadCount.value = (_unreadCount.value - 1).coerceAtLeast(0)
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e(TAG, "markRead error", e)
             }
         }
     }
@@ -109,7 +112,7 @@ class NotificationViewModel @Inject constructor(
                     _unreadCount.value = 0
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e(TAG, "markAllAsRead error", e)
             }
         }
     }

@@ -50,7 +50,6 @@ class ScheduleViewModel @Inject constructor(
 
         viewModelScope.launch {
             _isLoading.value = true
-            Log.d(TAG, "Ładowanie grafiku dla tenantId: $currentTenantId, role: $currentUserRole")
             try {
                 val now = OffsetDateTime.now()
                 val fromStr = now.minusMonths(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z"
@@ -61,7 +60,6 @@ class ScheduleViewModel @Inject constructor(
                 if (slotsRes.isSuccessful) {
                     val allSlots = slotsRes.body() ?: emptyList()
                     _slots.value = allSlots
-                    Log.d(TAG, "Pobrano ${_slots.value.size} slotów")
                 } else {
                     Log.e(TAG, "Błąd slotów: ${slotsRes.code()}")
                 }
@@ -71,7 +69,6 @@ class ScheduleViewModel @Inject constructor(
                 if (blockersRes.isSuccessful) {
                     val allBlockers = blockersRes.body() ?: emptyList()
                     _blockers.value = allBlockers
-                    Log.d(TAG, "Pobrano ${_blockers.value.size} blokerów")
                 }
 
             } catch (e: Exception) {
@@ -87,7 +84,6 @@ class ScheduleViewModel @Inject constructor(
         if (!hasValidSession()) return
 
         viewModelScope.launch {
-            Log.d(TAG, "Dodawanie slotu: Staff: ${slot.staffId}, Start: ${slot.startAt}")
             val request = CreateSlotRequest(
                 staffId = slot.staffId,
                 locationId = slot.locationId,
@@ -98,7 +94,6 @@ class ScheduleViewModel @Inject constructor(
             try {
                 val res = apiService.createSlot(currentTenantId, request)
                 if (res.isSuccessful) {
-                    Log.d(TAG, "Slot dodany pomyślnie")
                     loadSchedule()
                 } else {
                     Log.e(TAG, "Błąd dodawania slotu: ${res.code()}")
@@ -113,7 +108,6 @@ class ScheduleViewModel @Inject constructor(
         if (!hasValidSession()) return
 
         viewModelScope.launch {
-            Log.d(TAG, "Aktualizacja slotu ID: $slotId")
             val request = UpdateSlotRequest(
                 locationId = slot.locationId,
                 roomId = slot.roomId,
@@ -122,7 +116,6 @@ class ScheduleViewModel @Inject constructor(
             )
             try {
                 if (apiService.updateSlot(currentTenantId, slotId, request).isSuccessful) {
-                    Log.d(TAG, "Slot zaktualizowany")
                     loadSchedule()
                 }
             } catch (e: Exception) {
@@ -135,10 +128,8 @@ class ScheduleViewModel @Inject constructor(
         if (!hasValidSession()) return
 
         viewModelScope.launch {
-            Log.d(TAG, "Usuwanie slotu ID: $slotId")
             try {
                 if (apiService.deleteSlot(currentTenantId, slotId).isSuccessful) {
-                    Log.d(TAG, "Slot usunięty")
                     loadSchedule()
                 }
             } catch (e: Exception) {
@@ -152,7 +143,6 @@ class ScheduleViewModel @Inject constructor(
         if (!hasValidSession()) return
 
         viewModelScope.launch {
-            Log.d(TAG, "Dodawanie blokady: ${blocker.reason}")
             val effectiveStaffId = if (blocker.staffId > 0) blocker.staffId else null
             val request = CreateBlockerRequest(
                 staffId = effectiveStaffId,
@@ -163,7 +153,6 @@ class ScheduleViewModel @Inject constructor(
             )
             try {
                 if (apiService.createBlocker(currentTenantId, request).isSuccessful) {
-                    Log.d(TAG, "Blokada dodana")
                     loadSchedule()
                 }
             } catch (e: Exception) {
@@ -176,10 +165,8 @@ class ScheduleViewModel @Inject constructor(
         if (!hasValidSession()) return
 
         viewModelScope.launch {
-            Log.d(TAG, "Usuwanie blokady ID: $blockerId")
             try {
                 if (apiService.deleteBlocker(currentTenantId, blockerId).isSuccessful) {
-                    Log.d(TAG, "Blokada usunięta")
                     loadSchedule()
                 }
             } catch (e: Exception) {

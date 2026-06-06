@@ -1,6 +1,7 @@
 package com.dentflow.core.clinic.api;
 
 import com.dentflow.core.clinic.application.StaffMemberService;
+import com.dentflow.core.clinic.application.StaffWorkingHoursService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,9 +20,12 @@ import java.util.List;
 public class StaffMemberController {
 
     private final StaffMemberService staffMemberService;
+    private final StaffWorkingHoursService workingHoursService;
 
-    public StaffMemberController(StaffMemberService staffMemberService) {
+    public StaffMemberController(StaffMemberService staffMemberService,
+                                  StaffWorkingHoursService workingHoursService) {
         this.staffMemberService = staffMemberService;
+        this.workingHoursService = workingHoursService;
     }
 
     @GetMapping
@@ -72,6 +76,26 @@ public class StaffMemberController {
     @Operation(summary = "Synchronizacja danych pracownika z profilem użytkownika")
     public ResponseEntity<Void> syncFromUser(@RequestBody SyncFromUserRequest request) {
         staffMemberService.syncFromUser(request.userId(), request.firstName(), request.lastName(), request.avatarUrl(), request.phone(), request.email());
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{staffId}/working-hours")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
+    @Operation(summary = "Pobranie godzin pracy pracownika (per dzień tygodnia)")
+    public ResponseEntity<List<StaffWorkingHoursDTO>> getWorkingHours(
+            @PathVariable Long tenantId,
+            @PathVariable Long staffId) {
+        return ResponseEntity.ok(workingHoursService.getWorkingHours(tenantId, staffId));
+    }
+
+    @PutMapping("/{staffId}/working-hours")
+    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
+    @Operation(summary = "Aktualizacja godzin pracy pracownika (per dzień tygodnia)")
+    public ResponseEntity<Void> updateWorkingHours(
+            @PathVariable Long tenantId,
+            @PathVariable Long staffId,
+            @RequestBody UpdateWorkingHoursRequest request) {
+        workingHoursService.updateWorkingHours(tenantId, staffId, request);
         return ResponseEntity.ok().build();
     }
 }

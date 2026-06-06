@@ -2,6 +2,7 @@ package com.dentflow.core.clinic.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "staff_member")
@@ -43,4 +44,12 @@ public class StaffMember {
 
     @Column(name = "email", length = 255)
     private String email;
+
+    @Column(name = "working_hours_start")
+    @Builder.Default
+    private LocalTime workingHoursStart = LocalTime.of(8, 0);
+
+    @Column(name = "working_hours_end")
+    @Builder.Default
+    private LocalTime workingHoursEnd = LocalTime.of(16, 0);
 }

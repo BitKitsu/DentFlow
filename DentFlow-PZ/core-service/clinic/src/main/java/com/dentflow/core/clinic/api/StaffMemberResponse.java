@@ -1,6 +1,7 @@
 package com.dentflow.core.clinic.api;
 
 import com.dentflow.core.clinic.domain.StaffMember;
+import java.time.LocalTime;
 
 public record StaffMemberResponse(
         Long id,
@@ -12,7 +13,9 @@ public record StaffMemberResponse(
         String bio,
         String avatarUrl,
         String phone,
-        String email
+        String email,
+        LocalTime workingHoursStart,
+        LocalTime workingHoursEnd
 ) {
     public static StaffMemberResponse from(StaffMember staffMember) {
         return new StaffMemberResponse(
@@ -25,7 +28,9 @@ public record StaffMemberResponse(
                 staffMember.getBio(),
                 staffMember.getAvatarUrl(),
                 staffMember.getPhone(),
-                staffMember.getEmail()
+                staffMember.getEmail(),
+                staffMember.getWorkingHoursStart(),
+                staffMember.getWorkingHoursEnd()
         );
     }
 }

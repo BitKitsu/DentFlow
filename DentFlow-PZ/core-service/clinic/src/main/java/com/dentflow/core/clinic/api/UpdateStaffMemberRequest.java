@@ -2,6 +2,7 @@ package com.dentflow.core.clinic.api;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import java.time.LocalTime;
 
 public record UpdateStaffMemberRequest(
         Long userId,
@@ -15,5 +16,9 @@ public record UpdateStaffMemberRequest(
         @NotBlank @Size(max = 20)
         String profession,
 
-        String bio
+        String bio,
+
+        LocalTime workingHoursStart,
+
+        LocalTime workingHoursEnd
 ) {}

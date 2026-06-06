@@ -67,7 +67,7 @@ class StaffMemberServiceTest {
 
     @Test
     void shouldAddStaffMember() {
-        CreateStaffMemberRequest req = new CreateStaffMemberRequest(200L, "Dr.", "Jones", "Assistant", "I am an assistant", null, null, null);
+        CreateStaffMemberRequest req = new CreateStaffMemberRequest(200L, "Dr.", "Jones", "Assistant", "I am an assistant", null, null, null, java.time.LocalTime.of(8,0), java.time.LocalTime.of(16,0));
         when(tenantRepository.findById(1L)).thenReturn(Optional.of(tenant));
         
         StaffMember newStaff = StaffMember.builder()
@@ -85,7 +85,7 @@ class StaffMemberServiceTest {
 
     @Test
     void shouldUpdateStaffMember() {
-        UpdateStaffMemberRequest req = new UpdateStaffMemberRequest(100L, "Dr.", "Smith Updated", "Lead Dentist", "Updated bio");
+        UpdateStaffMemberRequest req = new UpdateStaffMemberRequest(100L, "Dr.", "Smith Updated", "Lead Dentist", "Updated bio", java.time.LocalTime.of(8,0), java.time.LocalTime.of(16,0));
         when(staffMemberRepository.findByIdAndTenantId(10L, 1L)).thenReturn(Optional.of(staffMember));
         when(staffMemberRepository.save(any(StaffMember.class))).thenReturn(staffMember);
 

@@ -32,6 +32,12 @@ public class StaffMemberService {
                 .toList();
     }
 
+    public List<StaffMemberResponse> getAllStaffMembers() {
+        return staffMemberRepository.findAll().stream()
+                .map(StaffMemberResponse::from)
+                .toList();
+    }
+
     public StaffMemberResponse getStaffMember(Long tenantId, Long staffId) {
         StaffMember staff = staffMemberRepository.findByIdAndTenantId(staffId, tenantId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pracownik nie istnieje w tym gabinecie"));
@@ -53,6 +59,8 @@ public class StaffMemberService {
                 .avatarUrl(request.avatarUrl())
                 .phone(request.phone())
                 .email(request.email())
+                .workingHoursStart(request.workingHoursStart() != null ? request.workingHoursStart() : java.time.LocalTime.of(8, 0))
+                .workingHoursEnd(request.workingHoursEnd() != null ? request.workingHoursEnd() : java.time.LocalTime.of(16, 0))
                 .build();
 
         return StaffMemberResponse.from(staffMemberRepository.save(staff));
@@ -69,6 +77,12 @@ public class StaffMemberService {
         staff.setBio(request.bio());
         if (request.userId() != null) {
             staff.setUserId(request.userId());
+        }
+        if (request.workingHoursStart() != null) {
+            staff.setWorkingHoursStart(request.workingHoursStart());
+        }
+        if (request.workingHoursEnd() != null) {
+            staff.setWorkingHoursEnd(request.workingHoursEnd());
         }
 
         return StaffMemberResponse.from(staffMemberRepository.save(staff));

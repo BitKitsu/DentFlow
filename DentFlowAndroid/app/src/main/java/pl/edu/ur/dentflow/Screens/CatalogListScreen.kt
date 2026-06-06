@@ -1,6 +1,5 @@
 package pl.edu.ur.dentflow.Screens
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,8 +23,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import pl.edu.ur.dentflow.data.ViewModel.CatalogViewModel
 import pl.edu.ur.dentflow.data.remote.ServiceCatalogItemDTO
 
-private const val UI_TAG = "DENTFLOW_DEBUG"
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatalogListScreen(
@@ -41,7 +38,6 @@ fun CatalogListScreen(
     var selectedService by remember { mutableStateOf<ServiceCatalogItemDTO?>(null) }
 
     LaunchedEffect(Unit) {
-        Log.d(UI_TAG, "CatalogListScreen -> LaunchedEffect: Żądanie załadowania usług z CatalogViewModel.")
         catalogViewModel.loadServices()
     }
 
@@ -61,7 +57,6 @@ fun CatalogListScreen(
                 windowInsets = WindowInsets(0, 0, 0, 0),
                 actions = {
                     IconButton(onClick = {
-                        Log.d(UI_TAG, "Kliknięto przycisk DODAJ nową usługę.")
                         selectedService = null
                         showAddEditDialog = true
                     }) {
@@ -99,12 +94,10 @@ fun CatalogListScreen(
                         ServiceItemCard(
                             service = service,
                             onEdit = {
-                                Log.d(UI_TAG, "Kliknięto EDYCJĘ usługi ID: ${service.id} (${service.name})")
                                 selectedService = service
                                 showAddEditDialog = true
                             },
                             onDelete = {
-                                Log.d(UI_TAG, "Kliknięto USUNIĘCIE usługi ID: ${service.id}")
                                 catalogViewModel.deleteService(service.id) // Wywołanie z nowego ViewModelu
                             }
                         )
@@ -117,15 +110,12 @@ fun CatalogListScreen(
             ServiceAddEditDialog(
                 service = selectedService,
                 onDismiss = {
-                    Log.d(UI_TAG, "Zamknięto okno dialogowe bez zapisu.")
                     showAddEditDialog = false
                 },
                 onConfirm = { name, priceCents, duration, isActive ->
                     if (selectedService == null) {
-                        Log.d(UI_TAG, "Zatwierdzono formularz: Wywołuję addService.")
                         catalogViewModel.addService(name, priceCents, duration, isActive)
                     } else {
-                        Log.d(UI_TAG, "Zatwierdzono formularz: Wywołuję updateService dla ID: ${selectedService!!.id}")
                         catalogViewModel.updateService( // Nowy ViewModel
                             serviceId = selectedService!!.id,
                             name = name,
@@ -286,7 +276,6 @@ fun ServiceAddEditDialog(
                     val pDouble = price.toDoubleOrNull() ?: 0.0
                     val pCents = (pDouble * 100).toInt()
                     val dMinutes = duration.toIntOrNull() ?: 0
-                    Log.d(UI_TAG, "Kliknięto Zapisz w Dialogu. Walidacja OK. Przekazuję do onConfirm -> Cents: $pCents, Mins: $dMinutes")
                     onConfirm(name.trim(), pCents, dMinutes, isActive)
                 },
                 enabled = isFormReady

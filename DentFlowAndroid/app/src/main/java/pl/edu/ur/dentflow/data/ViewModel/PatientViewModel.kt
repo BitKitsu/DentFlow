@@ -50,17 +50,11 @@ class PatientViewModel @Inject constructor(
 
         viewModelScope.launch {
             _isLoading.value = true
-            Log.d(TAG, "Pobieranie pacjentów dla tenantId: $currentTenantId")
             try {
                 val response = apiService.getPatients(currentTenantId)
                 if (response.isSuccessful) {
                     val list = response.body() ?: emptyList()
                     _patients.value = list
-                    Log.d(TAG, "Pobrano pomyślnie ${list.size} pacjentów")
-
-                    list.forEach {
-                        Log.d(TAG, "Pacjent w bazie -> ID: ${it.id}, Nazwisko: ${it.lastName}, Telefon: ${it.phone}")
-                    }
                 } else {
                     Log.e(TAG, "Błąd pobierania: Kod ${response.code()} - ${response.errorBody()?.string()}")
                 }
@@ -79,10 +73,8 @@ class PatientViewModel @Inject constructor(
         return try {
             val response = authService.getUserByEmail(email)
             if (response.isSuccessful && response.body() != null) {
-                Log.d(TAG, "Użytkownik znaleziony: ${response.body()?.email}")
                 response.body()
             } else {
-                Log.d(TAG, "Użytkownik nie istnieje: $email")
                 null
             }
         } catch (e: Exception) {
@@ -100,7 +92,6 @@ class PatientViewModel @Inject constructor(
         if (!checkTenantId()) return
 
         viewModelScope.launch {
-            Log.d(TAG, "Próba dodania pacjenta: $firstName $lastName, tel: $phone")
             try {
                 val request = CreatePatientRequest(
                     userId = userId,
@@ -121,7 +112,6 @@ class PatientViewModel @Inject constructor(
 
                 val response = apiService.createPatient(currentTenantId, request)
                 if (response.isSuccessful) {
-                    Log.d(TAG, "Dodano pacjenta pomyślnie. Nowe ID: ${response.body()?.id}")
                     fetchPatients() // Odświeżamy listę
                 } else {
                     Log.e(TAG, "Serwer odrzucił żądanie dodania: ${response.code()}")
@@ -140,7 +130,6 @@ class PatientViewModel @Inject constructor(
         if (!checkTenantId()) return
 
         viewModelScope.launch {
-            Log.d(TAG, "Edycja pacjenta ID: $id -> Nowe dane: $lastName, $phone")
             try {
                 val request = UpdatePatientRequest(
                     firstName = firstName,
@@ -159,7 +148,6 @@ class PatientViewModel @Inject constructor(
 
                 val response = apiService.updatePatient(currentTenantId, id, request)
                 if (response.isSuccessful) {
-                    Log.d(TAG, "Zaktualizowano pacjenta pomyślnie (ID: $id)")
                     fetchPatients()
                 } else {
                     Log.e(TAG, "Błąd edycji: ${response.code()}")
@@ -175,11 +163,9 @@ class PatientViewModel @Inject constructor(
         if (!checkTenantId()) return
 
         viewModelScope.launch {
-            Log.d(TAG, "Próba usunięcia pacjenta ID: $id")
             try {
                 val response = apiService.deletePatient(currentTenantId, id)
                 if (response.isSuccessful) {
-                    Log.d(TAG, "Pacjent ID: $id usunięty z bazy")
                     _patients.value = _patients.value.filter { it.id != id }
                 } else {
                     Log.e(TAG, "Serwer nie pozwolił usunąć pacjenta: ${response.code()}")

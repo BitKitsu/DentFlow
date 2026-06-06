@@ -55,7 +55,6 @@ class StaffViewModel @Inject constructor(
 
         viewModelScope.launch {
             _isLoading.value = true
-            Log.d(TAG, "Rozpoczynam pobieranie personelu i usług dla tenantId: $currentTenantId")
             try {
                 // Wykonujemy zapytania równolegle dla szybkości
                 val staffDef = async { apiService.getStaffMembers(currentTenantId) }
@@ -66,7 +65,6 @@ class StaffViewModel @Inject constructor(
 
                 if (sRes.isSuccessful) {
                     _staffMembers.value = sRes.body() ?: emptyList()
-                    Log.d(TAG, "Pobrano pracowników: ${sRes.body()?.size}")
                 } else if (sRes.code() == 403) {
                     _errorMessage.value = "Brak uprawnień do przeglądania personelu."
                     Log.e(TAG, "403 Forbidden: getStaffMembers")
@@ -76,7 +74,6 @@ class StaffViewModel @Inject constructor(
 
                 if (vRes.isSuccessful) {
                     _services.value = vRes.body() ?: emptyList()
-                    Log.d(TAG, "Pobrano usługi z katalogu: ${vRes.body()?.size}")
                 }
 
             } catch (e: Exception) {
@@ -97,7 +94,6 @@ class StaffViewModel @Inject constructor(
                 when {
                     response.isSuccessful -> {
                         _staffMembers.value = response.body() ?: emptyList()
-                        Log.d(TAG, "Odświeżono listę personelu")
                     }
                     response.code() == 403 -> {
                         _errorMessage.value = "Brak uprawnień do zarządzania personelem."
@@ -136,10 +132,8 @@ class StaffViewModel @Inject constructor(
         return try {
             val response = authService.getUserByEmail(email)
             if (response.isSuccessful && response.body() != null) {
-                Log.d(TAG, "Użytkownik znaleziony: ${response.body()?.email}")
                 response.body()
             } else {
-                Log.d(TAG, "Użytkownik nie istnieje: $email")
                 null
             }
         } catch (e: Exception) {
@@ -153,14 +147,12 @@ class StaffViewModel @Inject constructor(
 
         viewModelScope.launch {
             _isLoading.value = true
-            Log.d(TAG, "Dodawanie pracownika: $email, userExists=$userExists")
             try {
                 var userId: Long? = existingUserId
                 var userAvatarUrl: String? = existingAvatarUrl
 
                 // 1. Jeśli użytkownik nie istnieje - utwórz nowe konto
                 if (!userExists) {
-                    Log.d(TAG, "Tworzenie nowego konta dla: $email")
                     val registerRequest = RegisterRequest(
                         email = email,
                         password = pass,
@@ -173,23 +165,18 @@ class StaffViewModel @Inject constructor(
                     if (authResponse.isSuccessful && authResponse.body() != null) {
                         userId = authResponse.body()!!.userId
                         userAvatarUrl = authResponse.body()!!.avatarUrl
-                        Log.d(TAG, "Konto utworzone pomyślnie. UserId: $userId")
                     } else {
                         Log.e(TAG, "Błąd tworzenia konta: ${authResponse.code()}")
                         _isLoading.value = false
                         return@launch
                     }
-                } else {
-                    Log.d(TAG, "Używam istniejącego użytkownika. UserId: $userId")
                 }
 
                 // 2. Przypisz rolę DENTIST użytkownikowi
                 if (userId != null && userId != 0L) {
                     val roleRequest = AssignRoleRequest(userId = userId, role = "DENTIST")
                     val roleResponse = authService.assignRole(roleRequest)
-                    if (roleResponse.isSuccessful) {
-                        Log.d(TAG, "Rola DENTIST przypisana użytkownikowi $userId")
-                    } else {
+                    if (!roleResponse.isSuccessful) {
                         Log.w(TAG, "Nie udało się przypisać roli DENTIST: ${roleResponse.code()}")
                     }
 
@@ -209,7 +196,6 @@ class StaffViewModel @Inject constructor(
 
                     val coreResponse = apiService.createStaffMember(currentTenantId, staffRequest)
                     if (coreResponse.isSuccessful) {
-                        Log.d(TAG, "Pracownik pomyślnie przypisany do kliniki $currentTenantId")
                         loadStaff()
                     } else {
                         Log.e(TAG, "Błąd przypisania do kliniki: ${coreResponse.code()}")
@@ -229,7 +215,6 @@ class StaffViewModel @Inject constructor(
         if (!hasValidSession()) return
 
         viewModelScope.launch {
-            Log.d(TAG, "Aktualizacja pracownika ID: $staffId")
             try {
                 val updateRequest = UpdateStaffMemberRequest(
                     userId = userId,
@@ -242,7 +227,6 @@ class StaffViewModel @Inject constructor(
                 )
                 val response = apiService.updateStaffMember(currentTenantId, staffId, updateRequest)
                 if (response.isSuccessful) {
-                    Log.d(TAG, "Pracownik zaktualizowany")
                     loadStaff()
                 }
             } catch (e: Exception) {
@@ -255,11 +239,9 @@ class StaffViewModel @Inject constructor(
         if (!hasValidSession()) return
 
         viewModelScope.launch {
-            Log.d(TAG, "Usuwanie pracownika ID: $staffId z kliniki $currentTenantId")
             try {
                 val response = apiService.deleteStaffMember(currentTenantId, staffId)
                 if (response.isSuccessful) {
-                    Log.d(TAG, "Pracownik usunięty")
                     loadStaff()
                 }
             } catch (e: Exception) {

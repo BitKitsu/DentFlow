@@ -2,7 +2,6 @@ package pl.edu.ur.dentflow.di
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
 import pl.edu.ur.dentflow.BuildConfig
 import pl.edu.ur.dentflow.data.remote.ApiService
 import pl.edu.ur.dentflow.data.remote.AuthService
@@ -39,7 +38,6 @@ object NetworkModule {
     fun provideAuthInterceptor(prefs: SharedPreferences): Interceptor {
         return Interceptor { chain ->
             val token = prefs.getString(TOKEN_KEY, "")
-            Log.d("AUTH_DEBUG", "Token z prefs: '${token?.take(20)}...' (długość: ${token?.length})")
             val requestBuilder = chain.request().newBuilder()
             if (!token.isNullOrBlank()) {
                 requestBuilder.header("Authorization", "Bearer $token")
@@ -53,7 +51,8 @@ object NetworkModule {
     @Named("auth_retrofit")
     fun provideAuthRetrofit(@Named("auth_interceptor") authInterceptor: Interceptor): Retrofit {
         val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
+                    else HttpLoggingInterceptor.Level.NONE
         }
         val client = OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
@@ -72,7 +71,8 @@ object NetworkModule {
     @Named("core_retrofit")
     fun provideCoreRetrofit(@Named("auth_interceptor") authInterceptor: Interceptor): Retrofit {
         val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
+                    else HttpLoggingInterceptor.Level.NONE
         }
         val client = OkHttpClient.Builder()
             .addInterceptor(authInterceptor)

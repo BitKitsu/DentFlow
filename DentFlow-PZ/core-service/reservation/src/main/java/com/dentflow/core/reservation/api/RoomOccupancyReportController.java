@@ -1,103 +1,89 @@
 package com.dentflow.core.reservation.api;
 
+import com.dentflow.core.clinic.domain.Tenant;
+import com.dentflow.core.clinic.infrastructure.TenantRepository;
 import com.dentflow.core.reservation.application.RoomOccupancyReportService;
-import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import com.dentflow.pdf.DentFlowPdfGenerator;
 import com.dentflow.pdf.model.RoomOccupancyReportData;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.util.List;
+import java.time.ZoneOffset;
 
 @RestController
 @RequestMapping("/tenants/{tenantId}/reports/room-occupancy")
 public class RoomOccupancyReportController {
 
     private final RoomOccupancyReportService reportService;
+    private final TenantRepository tenantRepository;
+    private final DentFlowPdfGenerator pdfGenerator = new DentFlowPdfGenerator();
 
-    public RoomOccupancyReportController(RoomOccupancyReportService reportService) {
+    public RoomOccupancyReportController(RoomOccupancyReportService reportService,
+                                          TenantRepository tenantRepository) {
         this.reportService = reportService;
+        this.tenantRepository = tenantRepository;
     }
 
-    /**
-     * GET /tenants/{tenantId}/reports/room-occupancy?from=...&to=...
-     * Zwraca raport obłożenia wszystkich gabinetów w formacie PDF.
-     */
     @GetMapping(produces = MediaType.APPLICATION_PDF_VALUE)
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<byte[]> getRoomOccupancyReport(
             @PathVariable Long tenantId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to) {
-        
-        List<RoomOccupancyDTO> stats = reportService.getRoomOccupancyReport(tenantId, from, to);
-        
-        // Mocking advanced statistics required by PDF Generator as they are not yet fully implemented in service
-        List<RoomOccupancyReportData.DailyStats> dailyStats = List.of(
-            new RoomOccupancyReportData.DailyStats(1, stats.size() * 2L),
-            new RoomOccupancyReportData.DailyStats(2, stats.size() * 3L)
-        );
-        List<RoomOccupancyReportData.DoctorStats> doctorStats = List.of(
-            new RoomOccupancyReportData.DoctorStats("Dr Kowalski", stats.size() * 5L, 40.0, 85.0)
-        );
-        
-        RoomOccupancyReportData data = new RoomOccupancyReportData(
-                "DentFlow Clinic",
-                from.getMonthValue(),
-                from.getYear(),
-                "Wszystkie gabinety",
-                dailyStats,
-                doctorStats,
-                30.0,
-                List.of("Przegląd", "Wypełnienie"),
-                5.0
-        );
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+
+        String clinicName = getClinicName(tenantId);
+        OffsetDateTime fromDt = from.atStartOfDay().atOffset(ZoneOffset.UTC);
+        OffsetDateTime toDt = to.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC);
+        RoomOccupancyReportData data = reportService.buildReportData(tenantId, clinicName, fromDt, toDt, "Wszystkie gabinety");
 
         try {
-            byte[] pdf = new DentFlowPdfGenerator().generateRoomOccupancy(data);
+            byte[] pdf = pdfGenerator.generateRoomOccupancy(data);
+            String filename = "raport_oblozenia_" + from + "_" + to + ".pdf";
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"raport_oblozenia.pdf\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                     .body(pdf);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Błąd generowania PDF: " + e.getMessage());
         }
     }
 
-    /**
-     * GET /tenants/{tenantId}/reports/room-occupancy/{roomId}?from=...&to=...
-     * Zwraca raport obłożenia konkretnego gabinetu w formacie PDF.
-     */
     @GetMapping(value = "/{roomId}", produces = MediaType.APPLICATION_PDF_VALUE)
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<byte[]> getRoomOccupancy(
             @PathVariable Long tenantId,
             @PathVariable Long roomId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to) {
-        
-        RoomOccupancyDTO stat = reportService.getRoomOccupancy(tenantId, roomId, from, to);
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
 
-        RoomOccupancyReportData data = new RoomOccupancyReportData(
-                "DentFlow Clinic",
-                from.getMonthValue(),
-                from.getYear(),
-                "Gabinet " + roomId,
-                List.of(new RoomOccupancyReportData.DailyStats(1, stat.appointmentCount())),
-                List.of(),
-                30.0,
-                List.of(),
-                0.0
-        );
+        String clinicName = getClinicName(tenantId);
+        OffsetDateTime fromDt = from.atStartOfDay().atOffset(ZoneOffset.UTC);
+        OffsetDateTime toDt = to.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC);
+        RoomOccupancyReportData data = reportService.buildSingleRoomReportData(tenantId, clinicName, roomId, fromDt, toDt);
 
         try {
-            byte[] pdf = new DentFlowPdfGenerator().generateRoomOccupancy(data);
+            byte[] pdf = pdfGenerator.generateRoomOccupancy(data);
+            String filename = "raport_oblozenia_gabinet_" + roomId + "_" + from + "_" + to + ".pdf";
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"raport_oblozenia_gabinet_" + roomId + ".pdf\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                     .body(pdf);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Błąd generowania PDF: " + e.getMessage());
         }
+    }
+
+    private String getClinicName(Long tenantId) {
+        return tenantRepository.findById(tenantId)
+                .map(Tenant::getName)
+                .orElse("Gabinet");
     }
 }

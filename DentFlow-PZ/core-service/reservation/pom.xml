@@ -71,6 +71,11 @@
             <artifactId>core-notification</artifactId>
             <version>0.1.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.dentflow</groupId>
+            <artifactId>core-catalog</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
 </project>

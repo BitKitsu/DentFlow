@@ -18,11 +18,11 @@ if (localPropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.example.dentflow_android"
+    namespace = "pl.edu.ur.dentflow"
     compileSdk = 36 // Poprawiony zapis wersji
 
     defaultConfig {
-        applicationId = "com.example.dentflow_android"
+        applicationId = "pl.edu.ur.dentflow"
         minSdk = 31
         targetSdk = 36
         versionCode = 1

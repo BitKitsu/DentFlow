@@ -1,0 +1,1 @@
+ALTER TABLE staff_member ADD COLUMN IF NOT EXISTS avatar_url VARCHAR(1000);

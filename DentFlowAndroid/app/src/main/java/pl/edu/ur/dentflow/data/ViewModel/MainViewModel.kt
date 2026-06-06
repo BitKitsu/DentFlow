@@ -1,0 +1,31 @@
+package pl.edu.ur.dentflow.data.ViewModel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import pl.edu.ur.dentflow.data.remote.ApiService
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    private val apiService: ApiService
+) : ViewModel() {
+
+    fun fetchData(tenantId: Long) {
+        viewModelScope.launch {
+            try {
+                val response = apiService.getStaffMembers(tenantId)
+
+                if (response.isSuccessful) {
+                    val staffMembers = response.body()
+                    println("Pobrano personel: ${staffMembers?.size ?: 0}")
+                } else {
+                    println("Błąd serwera: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+}

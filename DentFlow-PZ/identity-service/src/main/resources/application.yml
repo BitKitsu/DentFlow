@@ -36,5 +36,5 @@ springdoc:
 
 logging:
   level:
-    com.dentflow: DEBUG
+    pl.edu.ur.dentflow: DEBUG
     org.springframework.security: DEBUG

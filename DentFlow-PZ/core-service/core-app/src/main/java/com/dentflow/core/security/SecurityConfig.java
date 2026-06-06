@@ -31,7 +31,7 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Publiczne: rejestracja gabinetu, Swagger, pobieranie plików
-                        .requestMatchers("/tenants/register", "/swagger-ui/**", "/api-docs/**", "/public/files/**").permitAll()
+                        .requestMatchers("/tenants/register", "/tenants", "/tenants/catalog/all", "/tenants/staff/all", "/swagger-ui/**", "/api-docs/**", "/public/files/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

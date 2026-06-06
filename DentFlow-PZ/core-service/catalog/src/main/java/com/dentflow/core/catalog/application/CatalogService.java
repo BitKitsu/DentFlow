@@ -38,6 +38,14 @@ public class CatalogService {
     }
 
     @Transactional(readOnly = true)
+    public List<ServiceCatalogItemDTO> getAllActiveServices() {
+        return repository.findAll().stream()
+                .filter(ServiceCatalogItem::getActive)
+                .map(this::toDTO)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public ServiceCatalogItemDTO getService(Long tenantId, Long id) {
         return repository.findByIdAndTenantId(id, tenantId)
                 .map(this::toDTO)

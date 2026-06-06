@@ -1,30 +1,32 @@
 package com.dentflow.core.clinic.api;
 
+import com.dentflow.core.catalog.application.CatalogService;
+import com.dentflow.core.catalog.api.ServiceCatalogItemDTO;
+import com.dentflow.core.clinic.application.StaffMemberService;
 import com.dentflow.core.clinic.application.TenantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/tenants")
-@Tag(name = "Tenants", description = "Rejestracja i zarządzanie gabinetem (tenant)")
 public class TenantController {
 
     private final TenantService tenantService;
+    private final CatalogService catalogService;
+    private final StaffMemberService staffMemberService;
 
-    public TenantController(TenantService tenantService) {
+    public TenantController(TenantService tenantService, CatalogService catalogService, StaffMemberService staffMemberService) {
         this.tenantService = tenantService;
+        this.catalogService = catalogService;
+        this.staffMemberService = staffMemberService;
     }
 
-    /**
-     * POST /tenants/register
-     * Rejestracja gabinetu - wywoływana zaraz po rejestracji OWNER w identity-service.
-     * Publiczny endpoint (bez JWT), ponieważ jest wywoływany w toku rejestracji.
-     */
     @PostMapping("/register")
     @Operation(summary = "Rejestracja gabinetu (tenant) z pierwszą lokalizacją")
     public ResponseEntity<TenantResponse> register(@Valid @RequestBody RegisterTenantRequest request) {
@@ -32,10 +34,12 @@ public class TenantController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * GET /tenants/{tenantId}
-     * Pobranie danych gabinetu. Wymaga JWT.
-     */
+    @GetMapping
+    @Operation(summary = "Lista wszystkich gabinetów")
+    public ResponseEntity<List<TenantResponse>> getAllTenants() {
+        return ResponseEntity.ok(tenantService.getAllTenants());
+    }
+
     @GetMapping("/{tenantId}")
     @Operation(summary = "Pobranie danych gabinetu")
     @SecurityRequirement(name = "bearerAuth")
@@ -58,5 +62,17 @@ public class TenantController {
     public ResponseEntity<Void> deleteTenant(@PathVariable Long tenantId) {
         tenantService.deleteTenant(tenantId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/catalog/all")
+    @Operation(summary = "Wszystkie aktywne usługi ze wszystkich gabinetów")
+    public ResponseEntity<List<ServiceCatalogItemDTO>> getAllActiveCatalog() {
+        return ResponseEntity.ok(catalogService.getAllActiveServices());
+    }
+
+    @GetMapping("/staff/all")
+    @Operation(summary = "Wszyscy pracownicy ze wszystkich gabinetów")
+    public ResponseEntity<List<StaffMemberResponse>> getAllStaffMembers() {
+        return ResponseEntity.ok(staffMemberService.getAllStaffMembers());
     }
 }

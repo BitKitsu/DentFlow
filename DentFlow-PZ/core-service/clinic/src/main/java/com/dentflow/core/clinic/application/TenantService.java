@@ -49,6 +49,12 @@ public class TenantService {
         return TenantResponse.from(saved);
     }
 
+    public List<TenantResponse> getAllTenants() {
+        return tenantRepository.findAll().stream()
+                .map(TenantResponse::from)
+                .toList();
+    }
+
     public TenantResponse getTenant(Long tenantId) {
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,

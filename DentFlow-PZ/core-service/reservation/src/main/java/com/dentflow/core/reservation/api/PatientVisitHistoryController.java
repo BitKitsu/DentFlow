@@ -1,13 +1,14 @@
 package com.dentflow.core.reservation.api;
 
+import com.dentflow.core.clinic.domain.Tenant;
+import com.dentflow.core.clinic.infrastructure.TenantRepository;
 import com.dentflow.core.reservation.application.PatientVisitHistoryService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import com.dentflow.pdf.DentFlowPdfGenerator;
-import com.dentflow.pdf.model.PatientVisitHistoryReportData;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
@@ -16,19 +17,16 @@ import java.util.List;
 public class PatientVisitHistoryController {
 
     private final PatientVisitHistoryService historyService;
+    private final TenantRepository tenantRepository;
 
-    public PatientVisitHistoryController(PatientVisitHistoryService historyService) {
+    public PatientVisitHistoryController(PatientVisitHistoryService historyService,
+                                          TenantRepository tenantRepository) {
         this.historyService = historyService;
+        this.tenantRepository = tenantRepository;
     }
 
-    /**
-     * GET /tenants/{tenantId}/patients/{patientId}/visits
-     * Zwraca pełną historię wizyt pacjenta w formacie PDF.
-     *
-     * Opcjonalny parametr ?status=COMPLETED filtruje po statusie.
-     */
-    @GetMapping(produces = MediaType.APPLICATION_PDF_VALUE)
-    public ResponseEntity<byte[]> getPatientVisitHistory(
+    @GetMapping
+    public ResponseEntity<List<PatientVisitHistoryDTO>> getPatientVisitHistoryJson(
             @PathVariable Long tenantId,
             @PathVariable Long patientId,
             @RequestParam(required = false) String status) {
@@ -36,31 +34,31 @@ public class PatientVisitHistoryController {
         List<PatientVisitHistoryDTO> result = (status != null && !status.isBlank())
                 ? historyService.getPatientHistoryByStatus(tenantId, patientId, status)
                 : historyService.getPatientHistory(tenantId, patientId);
+        return ResponseEntity.ok(result);
+    }
 
-        List<PatientVisitHistoryReportData.VisitRow> visits = result.stream()
-                .map(dto -> new PatientVisitHistoryReportData.VisitRow(
-                        dto.startAt().toString(),
-                        "Lekarz ID: " + dto.dentistStaffId(),
-                        "Usługa ID: " + dto.serviceItemId(),
-                        dto.status(),
-                        dto.notes()
-                )).toList();
+    @GetMapping("/pdf")
+    public ResponseEntity<byte[]> getPatientVisitHistoryPdf(
+            @PathVariable Long tenantId,
+            @PathVariable Long patientId,
+            @RequestParam(required = false) String status) {
 
-        PatientVisitHistoryReportData data = new PatientVisitHistoryReportData(
-                "DentFlow Clinic",
-                "Pacjent " + patientId, "",
-                "", "",
-                (status != null && !status.isBlank()) ? "Status: " + status : "Wszystkie",
-                visits
-        );
+        String clinicName = tenantRepository.findById(tenantId)
+                .map(Tenant::getName)
+                .orElse("Gabinet");
 
         try {
-            byte[] pdf = new DentFlowPdfGenerator().generatePatientHistory(data);
+            byte[] pdf = historyService.generatePdf(tenantId, patientId, clinicName, status);
+            String filename = "historia_pacjenta_" + patientId + ".pdf";
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"historia_pacjenta_" + patientId + ".pdf\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                    .contentType(MediaType.APPLICATION_PDF)
                     .body(pdf);
+        } catch (ResponseStatusException e) {
+            throw e;
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Błąd generowania PDF: " + e.getMessage());
         }
     }
 }

@@ -7,6 +7,9 @@ import retrofit2.http.*
 interface ApiService {
 
     // --- TENANTS (KLINIKI) ---
+    @GET("tenants")
+    suspend fun getAllTenants(): Response<List<TenantResponse>>
+
     @POST("tenants/register")
     suspend fun registerTenant(
         @Body request: RegisterTenantRequest
@@ -77,6 +80,9 @@ interface ApiService {
         @Path("tenantId") tenantId: Long
     ): Response<List<StaffMemberResponse>>
 
+    @GET("tenants/staff/all")
+    suspend fun getAllStaffMembers(): Response<List<StaffMemberResponse>>
+
     @POST("tenants/{tenantId}/staff")
     suspend fun createStaffMember(
         @Path("tenantId") tenantId: Long,
@@ -100,6 +106,20 @@ interface ApiService {
     suspend fun syncStaffFromUser(
         @Path("tenantId") tenantId: Long,
         @Body request: SyncFromUserRequest
+    ): Response<Unit>
+
+    // --- WORKING HOURS (GODZINY PRACY) ---
+    @GET("tenants/{tenantId}/staff/{staffId}/working-hours")
+    suspend fun getWorkingHours(
+        @Path("tenantId") tenantId: Long,
+        @Path("staffId") staffId: Long
+    ): Response<List<StaffWorkingHoursDTO>>
+
+    @PUT("tenants/{tenantId}/staff/{staffId}/working-hours")
+    suspend fun updateWorkingHours(
+        @Path("tenantId") tenantId: Long,
+        @Path("staffId") staffId: Long,
+        @Body request: UpdateWorkingHoursRequest
     ): Response<Unit>
 
     // --- APPOINTMENTS (WIZYTY) ---
@@ -146,12 +166,26 @@ interface ApiService {
         @Path("appointmentId") appointmentId: Long
     ): Response<AppointmentResponse>
 
+    // --- REPORTS (RAPORTY) ---
+    @Streaming
+    @GET("tenants/{tenantId}/reports/appointments")
+    suspend fun getAppointmentReportPdf(
+        @Path("tenantId") tenantId: Long,
+        @Query("from") from: String,
+        @Query("to") to: String,
+        @Query("status") status: String? = null,
+        @Query("dentistId") dentistId: Long? = null
+    ): Response<okhttp3.ResponseBody>
+
     // --- CATALOG (USŁUGI) ---
     @GET("tenants/{tenantId}/catalog")
     suspend fun getServices(
         @Path("tenantId") tenantId: Long,
         @Query("activeOnly") activeOnly: Boolean = false
     ): Response<List<ServiceCatalogItemDTO>>
+
+    @GET("tenants/catalog/all")
+    suspend fun getAllActiveCatalog(): Response<List<ServiceCatalogItemDTO>>
 
     @POST("tenants/{tenantId}/catalog")
     suspend fun createService(
@@ -251,6 +285,14 @@ interface ApiService {
         @Path("patientId") patientId: Long,
         @Query("status") status: String? = null
     ): Response<List<AppointmentResponse>>
+
+    @Streaming
+    @GET("tenants/{tenantId}/patients/{patientId}/visits/pdf")
+    suspend fun getPatientHistoryReportPdf(
+        @Path("tenantId") tenantId: Long,
+        @Path("patientId") patientId: Long,
+        @Query("status") status: String? = null
+    ): Response<ResponseBody>
 
     // --- REPORTS (RAPORTY) ---
     @Streaming

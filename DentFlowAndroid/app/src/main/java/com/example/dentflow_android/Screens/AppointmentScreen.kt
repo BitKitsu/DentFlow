@@ -27,6 +27,7 @@ fun CreateAppointmentScreen(
     staffViewModel: StaffViewModel = hiltViewModel(),
     catalogViewModel: CatalogViewModel = hiltViewModel(),
     tenantViewModel: TenantViewModel = hiltViewModel(),
+    authViewModel: com.example.dentflow_android.data.remote.AuthViewModel = hiltViewModel(),
     initialDoctorId: String = "",
     onSuccess: () -> Unit
 ) {
@@ -63,6 +64,19 @@ fun CreateAppointmentScreen(
     var doctorExpanded by remember { mutableStateOf(false) }
     var roomExpanded by remember { mutableStateOf(false) }
     var locationExpanded by remember { mutableStateOf(false) }
+
+    val sessionState by authViewModel.sessionState.collectAsState()
+    val isPatientRole = sessionState.role == "PATIENT"
+
+    // Auto-select if patient
+    LaunchedEffect(patients, isPatientRole) {
+        if (isPatientRole && patients.isNotEmpty()) {
+            val me = patients.find { it.userId == sessionState.userId }
+            if (me != null) {
+                selectedPatientId = me.id
+            }
+        }
+    }
 
     val isLoading by viewModel.isLoading.collectAsState()
 
@@ -108,8 +122,8 @@ fun CreateAppointmentScreen(
 
         // Patient Dropdown
         ExposedDropdownMenuBox(
-            expanded = patientExpanded,
-            onExpandedChange = { patientExpanded = it }
+            expanded = if (isPatientRole) false else patientExpanded,
+            onExpandedChange = { if (!isPatientRole) patientExpanded = it }
         ) {
             val patientName = patients.find { it.id == selectedPatientId }?.let { "${it.firstName} ${it.lastName}" } ?: "Wybierz pacjenta"
             OutlinedTextField(

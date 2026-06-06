@@ -48,6 +48,7 @@ private val CLINIC_NAME_VAL = Regex("^[\\w\\s\\-\\.ąćęłńóśźżĄĆĘŁŃ�
 @Composable
 fun BusinessScreen(
     onNavigateToSettings: () -> Unit,
+    onClinicDeleted: () -> Unit,
     fileViewModel: FileViewModel = hiltViewModel(),
     tenantViewModel: TenantViewModel = hiltViewModel(),
     patientViewModel: PatientViewModel = hiltViewModel(),
@@ -150,7 +151,8 @@ fun BusinessScreen(
             EditClinicScreen(
                 tenantData = tenantData,
                 onBack = { showEditScreen = false },
-                tenantViewModel = tenantViewModel
+                tenantViewModel = tenantViewModel,
+                onClinicDeleted = onClinicDeleted
             )
         }
         else -> {
@@ -274,7 +276,8 @@ fun BizMenuRow(title: String, icon: ImageVector, onClick: () -> Unit) {
 fun EditClinicScreen(
     tenantData: com.example.dentflow_android.data.remote.TenantResponse?,
     onBack: () -> Unit,
-    tenantViewModel: TenantViewModel
+    tenantViewModel: TenantViewModel,
+    onClinicDeleted: () -> Unit
 ) {
     val context = LocalContext.current
     val location = tenantData?.locations?.firstOrNull()
@@ -318,7 +321,9 @@ fun EditClinicScreen(
                 TextButton(onClick = {
                     showDeleteDialog = false
                     tenantViewModel.deleteClinic(
-                        onSuccess = { onBack() },
+                        onSuccess = {
+                            onClinicDeleted()
+                        },
                         onError = { msg -> saveError = msg }
                     )
                 }) { Text("Usuń", color = MaterialTheme.colorScheme.error) }

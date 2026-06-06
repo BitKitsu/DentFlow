@@ -136,7 +136,9 @@ data class StaffMemberResponse(
     val bio: String? = null,
     val avatarUrl: String? = null,
     val phone: String? = null,
-    val email: String? = null
+    val email: String? = null,
+    val workingHoursStart: String? = null,
+    val workingHoursEnd: String? = null
 )
 
 data class CreateStaffMemberRequest(
@@ -147,7 +149,9 @@ data class CreateStaffMemberRequest(
     val bio: String? = null,
     val avatarUrl: String? = null,
     val phone: String? = null,
-    val email: String? = null
+    val email: String? = null,
+    val workingHoursStart: String? = null,
+    val workingHoursEnd: String? = null
 )
 
 data class SyncFromUserRequest(
@@ -164,7 +168,9 @@ data class UpdateStaffMemberRequest(
     val firstName: String,
     val lastName: String,
     val profession: String,
-    val bio: String? = null
+    val bio: String? = null,
+    val workingHoursStart: String? = null,
+    val workingHoursEnd: String? = null
 )
 
 // --- APPOINTMENTS (Wizyty) ---
@@ -227,8 +233,8 @@ data class ScheduleBlockerDTO(
 )
 
 data class CreateBlockerRequest(
-    val staffId: Long,
-    val roomId: Long,
+    val staffId: Long?,
+    val roomId: Long?,
     val startAt: String,
     val endAt: String,
     val reason: String
@@ -281,4 +287,23 @@ data class UpdateAppointmentRequest(
     val serviceItemId: Long,
     val roomId: Long,
     val notes: String
+)
+
+// --- WORKING HOURS ---
+data class StaffWorkingHoursDTO(
+    val id: Long,
+    val staffMemberId: Long,
+    val dayOfWeek: Int,
+    val startTime: String,
+    val endTime: String
+)
+
+data class WorkingHoursEntry(
+    val dayOfWeek: Int,
+    val startTime: String,
+    val endTime: String
+)
+
+data class UpdateWorkingHoursRequest(
+    val schedule: List<WorkingHoursEntry>
 )

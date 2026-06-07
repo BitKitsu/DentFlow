@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,12 +25,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import pl.edu.ur.dentflow.data.ViewModel.ScheduleViewModel
 import pl.edu.ur.dentflow.data.ViewModel.StaffViewModel
 import pl.edu.ur.dentflow.data.ViewModel.TenantViewModel
-import pl.edu.ur.dentflow.data.ViewModel.VisitViewModel
 import pl.edu.ur.dentflow.data.remote.ScheduleBlockerDTO
-import pl.edu.ur.dentflow.data.remote.ScheduleSlotDTO
 import pl.edu.ur.dentflow.data.remote.StaffMemberResponse
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -40,74 +38,55 @@ import java.util.Locale
 @Composable
 fun ScheduleScreen(
     onBackClick: () -> Unit = {},
+    isOwner: Boolean = true,
     viewModel: ScheduleViewModel = hiltViewModel(),
     tenantViewModel: TenantViewModel = hiltViewModel(),
-    staffViewModel: StaffViewModel = hiltViewModel(),
-    visitViewModel: VisitViewModel = hiltViewModel()
+    staffViewModel: StaffViewModel = hiltViewModel()
 ) {
-    val slots by viewModel.slots.collectAsState()
     val blockers by viewModel.blockers.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+
     val tenantData by tenantViewModel.tenantState
-    val rooms by tenantViewModel.rooms.collectAsState()
     val staff by staffViewModel.staffMembers.collectAsState()
-    val visits by visitViewModel.visits.collectAsState()
 
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     var currentMonth by remember { mutableStateOf(YearMonth.now()) }
-    var selectedTab by remember { mutableIntStateOf(0) }
 
-    // Dialog state
-    var showSlotDialog by remember { mutableStateOf(false) }
-    var editingSlot by remember { mutableStateOf<ScheduleSlotDTO?>(null) }
     var showBlockerDialog by remember { mutableStateOf(false) }
-    var showDeleteSlotConfirm by remember { mutableStateOf<ScheduleSlotDTO?>(null) }
     var showDeleteBlockerConfirm by remember { mutableStateOf<ScheduleBlockerDTO?>(null) }
-
-    val locationMap = tenantData?.locations?.associate { it.id to it.name } ?: emptyMap()
-    val roomMap = rooms.associate { it.id to it.name }
 
     LaunchedEffect(tenantData?.id) {
         viewModel.loadSchedule()
         staffViewModel.loadStaff()
-        tenantData?.id?.let { tenantViewModel.loadRooms(it) }
     }
 
-    val filteredSlots = remember(slots, selectedDate) {
-        slots.filter { it.startAt.take(10) == selectedDate.toString() }.sortedBy { it.startAt }
-    }
-    val filteredVisits = remember(visits, selectedDate) {
-        visits.filter { it.visit.startAt.take(10) == selectedDate.toString() }.sortedBy { it.visit.startAt }
-    }
-
-    LaunchedEffect(selectedDate) {
-        visitViewModel.refreshVisits()
+    val filteredBlockers = remember(blockers, selectedDate) {
+        blockers.filter { it.startAt.take(10) == selectedDate.toString() }.sortedBy { it.startAt }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Grafik Pracy", fontWeight = FontWeight.Bold) },
-                navigationIcon = { IconButton(onClick = onBackClick) { Icon(Icons.Default.ArrowBack, null) } },
+                title = { Text("Przerwy", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
+                    }
+                },
                 windowInsets = WindowInsets(0, 0, 0, 0)
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    when (selectedTab) {
-                        0 -> { editingSlot = null; showSlotDialog = true }
-                        1 -> { editingSlot = null; showSlotDialog = true }
-                        2 -> showBlockerDialog = true
-                    }
-                },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White
-            ) { Icon(Icons.Default.Add, "Dodaj") }
+            if (isOwner) {
+                FloatingActionButton(
+                    onClick = { showBlockerDialog = true },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = Color.White
+                ) { Icon(Icons.Default.Add, "Dodaj") }
+            }
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            // Header + calendar
             Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 4.dp) {
                 Column(modifier = Modifier.padding(bottom = 8.dp)) {
                     Row(
@@ -117,27 +96,25 @@ fun ScheduleScreen(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             IconButton(onClick = { currentMonth = currentMonth.minusMonths(1) }) {
-                                Icon(Icons.Default.KeyboardArrowLeft, null, tint = MaterialTheme.colorScheme.primary)
+                                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, null, tint = MaterialTheme.colorScheme.primary)
                             }
                             Text(
                                 "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale("pl")).uppercase()} ${currentMonth.year}",
                                 fontWeight = FontWeight.Bold, fontSize = 15.sp
                             )
                             IconButton(onClick = { currentMonth = currentMonth.plusMonths(1) }) {
-                                Icon(Icons.Default.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.primary)
+                                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.primary)
                             }
                         }
                     }
 
-                    // Day headers
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-                        listOf("Pn","Wt","Śr","Cz","Pt","Sb","Nd").forEach { d ->
+                        listOf("Pn", "Wt", "Sr", "Cz", "Pt", "Sb", "Nd").forEach { d ->
                             Text(d, Modifier.weight(1f), textAlign = TextAlign.Center, fontSize = 12.sp, color = Color.Gray)
                         }
                     }
                     Spacer(Modifier.height(6.dp))
 
-                    // Calendar grid
                     val firstDay = currentMonth.atDay(1)
                     val startOffset = firstDay.dayOfWeek.value - 1
                     val daysInMonth = currentMonth.lengthOfMonth()
@@ -181,80 +158,23 @@ fun ScheduleScreen(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         fontSize = 12.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold
                     )
-
-                    // Tabs
-                    TabRow(selectedTabIndex = selectedTab, modifier = Modifier.fillMaxWidth()) {
-                        Tab(selected = selectedTab == 0, onClick = { selectedTab = 0 }, text = { Text("Wizyty (${filteredVisits.size})") })
-                        Tab(selected = selectedTab == 1, onClick = { selectedTab = 1 }, text = { Text("Sloty (${filteredSlots.size})") })
-                        val filteredBlockers = remember(blockers, selectedDate) {
-                            blockers.filter { it.startAt.take(10) == selectedDate.toString() }.sortedBy { it.startAt }
-                        }
-                        Tab(selected = selectedTab == 2, onClick = { selectedTab = 2 }, text = { Text("Przerwy (${filteredBlockers.size})") })
-                    }
                 }
             }
 
-            // Content
             if (isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
             } else {
-                when (selectedTab) {
-                    0 -> {
-                        LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            items(filteredVisits) { v ->
-                                val st = staff.find { it.id == v.visit.dentistStaffId }
-                                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-                                    Column(Modifier.padding(16.dp)) {
-                                        Text("${v.visit.startAt.substring(11,16)} - ${v.visit.endAt.substring(11,16)}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                                        Text("Pacjent: ${v.patient?.firstName} ${v.patient?.lastName}")
-                                        if (st != null) Text("Lekarz: ${st.firstName} ${st.lastName}", style = MaterialTheme.typography.bodySmall)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    1 -> SlotsList(
-                        slots = filteredSlots,
-                        staffList = staff,
-                        roomMap = roomMap,
-                        onEdit = { editingSlot = it; showSlotDialog = true },
-                        onDelete = { showDeleteSlotConfirm = it }
-                    )
-                    2 -> {
-                        val filteredBlockers = remember(blockers, selectedDate) {
-                            blockers.filter { it.startAt.take(10) == selectedDate.toString() }.sortedBy { it.startAt }
-                        }
-                        BlockersList(
-                            blockers = filteredBlockers,
-                            staffList = staff,
-                            onDelete = { showDeleteBlockerConfirm = it }
-                        )
-                    }
-                }
+                BlockersList(
+                    blockers = filteredBlockers,
+                    staffList = staff,
+                    isOwner = isOwner,
+                    onDelete = { showDeleteBlockerConfirm = it }
+                )
             }
         }
     }
 
-    // Slot dialog
-    if (showSlotDialog) {
-        SlotEditDialog(
-            initialSlot = editingSlot,
-            locationMap = locationMap,
-            roomMap = roomMap,
-            staffList = staff,
-            currentTenantId = tenantData?.id ?: -1L,
-            selectedDate = selectedDate,
-            onDismiss = { showSlotDialog = false; editingSlot = null },
-            onConfirm = { slotData ->
-                if (editingSlot != null) viewModel.updateSlot(editingSlot!!.id, slotData)
-                else viewModel.addSlot(slotData)
-                showSlotDialog = false; editingSlot = null
-            }
-        )
-    }
-
-    // Blocker dialog
-    if (showBlockerDialog) {
+    if (showBlockerDialog && isOwner) {
         BlockerAddDialog(
             staffList = staff,
             currentTenantId = tenantData?.id ?: -1L,
@@ -267,37 +187,18 @@ fun ScheduleScreen(
         )
     }
 
-    // Delete slot confirm
-    showDeleteSlotConfirm?.let { slot ->
-        AlertDialog(
-            onDismissRequest = { showDeleteSlotConfirm = null },
-            icon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
-            title = { Text("Usunąć slot?") },
-            text = { Text("Slot zostanie trwale usunięty z grafiku.") },
-            confirmButton = {
-                Button(
-                    onClick = { viewModel.deleteSlot(slot.id); showDeleteSlotConfirm = null },
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                    shape = RoundedCornerShape(12.dp)
-                ) { Text("Usuń") }
-            },
-            dismissButton = { TextButton(onClick = { showDeleteSlotConfirm = null }) { Text("Anuluj") } }
-        )
-    }
-
-    // Delete blocker confirm
     showDeleteBlockerConfirm?.let { blocker ->
         AlertDialog(
             onDismissRequest = { showDeleteBlockerConfirm = null },
             icon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
-            title = { Text("Usunąć przerwę?") },
-            text = { Text("Blokada zostanie usunięta.") },
+            title = { Text("Usunac przerwe?") },
+            text = { Text("Blokada zostanie usunieta.") },
             confirmButton = {
                 Button(
                     onClick = { viewModel.deleteBlocker(blocker.id); showDeleteBlockerConfirm = null },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     shape = RoundedCornerShape(12.dp)
-                ) { Text("Usuń") }
+                ) { Text("Usun") }
             },
             dismissButton = { TextButton(onClick = { showDeleteBlockerConfirm = null }) { Text("Anuluj") } }
         )
@@ -305,62 +206,10 @@ fun ScheduleScreen(
 }
 
 @Composable
-private fun SlotsList(
-    slots: List<ScheduleSlotDTO>,
-    staffList: List<StaffMemberResponse>,
-    roomMap: Map<Long, String>,
-    onEdit: (ScheduleSlotDTO) -> Unit,
-    onDelete: (ScheduleSlotDTO) -> Unit
-) {
-    if (slots.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(Icons.Default.EventBusy, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.outline)
-                Spacer(Modifier.height(8.dp))
-                Text("Brak slotów dostępności na ten dzień", color = Color.Gray)
-            }
-        }
-    } else {
-        LazyColumn(
-            Modifier.fillMaxSize().padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            items(slots, key = { it.id }) { slot ->
-                val staffName = staffList.find { it.id == slot.staffId }?.let { "${it.firstName} ${it.lastName}" } ?: "Lekarz ID: ${slot.staffId}"
-                val roomName = roomMap[slot.roomId] ?: "Gabinet ID: ${slot.roomId}"
-                val start = try { slot.startAt.substringAfter("T").take(5) } catch (e: Exception) { "?" }
-                val end = try { slot.endAt.substringAfter("T").take(5) } catch (e: Exception) { "?" }
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                ) {
-                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.width(70.dp)) {
-                            Text(start, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                            Text(end, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                        }
-                        Column(Modifier.weight(1f)) {
-                            Text(staffName, fontWeight = FontWeight.SemiBold)
-                            Text(roomName, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                        }
-                        IconButton(onClick = { onEdit(slot) }) {
-                            Icon(Icons.Default.Edit, null, tint = MaterialTheme.colorScheme.primary)
-                        }
-                        IconButton(onClick = { onDelete(slot) }) {
-                            Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun BlockersList(
     blockers: List<ScheduleBlockerDTO>,
     staffList: List<StaffMemberResponse>,
+    isOwner: Boolean = true,
     onDelete: (ScheduleBlockerDTO) -> Unit
 ) {
     if (blockers.isEmpty()) {
@@ -368,7 +217,7 @@ private fun BlockersList(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(Icons.Default.Block, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.outline)
                 Spacer(Modifier.height(8.dp))
-                Text("Brak przerw / urlopów na ten dzień", color = Color.Gray)
+                Text("Brak przerw / urlopow na ten dzien", color = Color.Gray)
             }
         }
     } else {
@@ -390,147 +239,18 @@ private fun BlockersList(
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text(blocker.reason.ifBlank { "Przerwa" }, fontWeight = FontWeight.SemiBold)
-                            Text("$staffName • $start – $end", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            Text("$staffName - $start - $end", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                         }
-                        IconButton(onClick = { onDelete(blocker) }) {
-                            Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error)
+                        if (isOwner) {
+                            IconButton(onClick = { onDelete(blocker) }) {
+                                Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error)
+                            }
                         }
                     }
                 }
             }
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SlotEditDialog(
-    initialSlot: ScheduleSlotDTO?,
-    locationMap: Map<Long, String>,
-    roomMap: Map<Long, String>,
-    staffList: List<StaffMemberResponse>,
-    currentTenantId: Long,
-    selectedDate: LocalDate,
-    onDismiss: () -> Unit,
-    onConfirm: (ScheduleSlotDTO) -> Unit
-) {
-    val context = LocalContext.current
-    var date by remember { mutableStateOf(initialSlot?.startAt?.take(10) ?: selectedDate.toString()) }
-    var startT by remember { mutableStateOf(initialSlot?.startAt?.substringAfter("T")?.take(5) ?: "09:00") }
-    var endT by remember { mutableStateOf(initialSlot?.endAt?.substringAfter("T")?.take(5) ?: "17:00") }
-
-    var locExpanded by remember { mutableStateOf(false) }
-    var roomExpanded by remember { mutableStateOf(false) }
-    var staffExpanded by remember { mutableStateOf(false) }
-
-    var selectedLocId by remember { mutableStateOf(initialSlot?.locationId ?: locationMap.keys.firstOrNull() ?: 1L) }
-    var selectedRoomId by remember { mutableStateOf(initialSlot?.roomId ?: roomMap.keys.firstOrNull() ?: 1L) }
-    var selectedStaffId by remember { mutableStateOf(initialSlot?.staffId ?: staffList.firstOrNull()?.id ?: 1L) }
-
-    val cal = Calendar.getInstance()
-    val datePickerDialog = DatePickerDialog(context, { _, y, m, d ->
-        date = LocalDate.of(y, m + 1, d).toString()
-    }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH))
-
-    val startPicker = TimePickerDialog(context, { _, h, m -> startT = "%02d:%02d".format(h, m) },
-        startT.split(":")[0].toIntOrNull() ?: 9, startT.split(":")[1].toIntOrNull() ?: 0, true)
-    val endPicker = TimePickerDialog(context, { _, h, m -> endT = "%02d:%02d".format(h, m) },
-        endT.split(":")[0].toIntOrNull() ?: 17, endT.split(":")[1].toIntOrNull() ?: 0, true)
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { 
-            Column {
-                Text(if (initialSlot != null) "Edytuj przerwę w pracy" else "Dodaj przerwę w pracy", fontWeight = FontWeight.Bold)
-                if (initialSlot == null) {
-                    Spacer(Modifier.height(4.dp))
-                    Text("Określ czas przerwy (np. obiadowa, inne obowiązki)", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                // Date
-                OutlinedButton(onClick = { datePickerDialog.show() }, modifier = Modifier.fillMaxWidth()) {
-                    Icon(Icons.Default.DateRange, null); Spacer(Modifier.width(8.dp)); Text(date)
-                }
-                // Time
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { startPicker.show() }, Modifier.weight(1f)) { Text("Od: $startT") }
-                    OutlinedButton(onClick = { endPicker.show() }, Modifier.weight(1f)) { Text("Do: $endT") }
-                }
-                // Staff dropdown
-                if (staffList.isNotEmpty()) {
-                    ExposedDropdownMenuBox(expanded = staffExpanded, onExpandedChange = { staffExpanded = it }) {
-                        OutlinedTextField(
-                            value = staffList.find { it.id == selectedStaffId }?.let { "${it.firstName} ${it.lastName}" } ?: "Wybierz lekarza",
-                            onValueChange = {}, readOnly = true,
-                            label = { Text("Lekarz") },
-                            leadingIcon = { Icon(Icons.Default.Badge, null) },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(staffExpanded) },
-                            modifier = Modifier.menuAnchor().fillMaxWidth()
-                        )
-                        ExposedDropdownMenu(expanded = staffExpanded, onDismissRequest = { staffExpanded = false }) {
-                            staffList.forEach { s ->
-                                DropdownMenuItem(
-                                    text = { Text("${s.firstName} ${s.lastName} (${s.profession})") },
-                                    onClick = { selectedStaffId = s.id; staffExpanded = false }
-                                )
-                            }
-                        }
-                    }
-                }
-                // Location dropdown
-                if (locationMap.isNotEmpty()) {
-                    ExposedDropdownMenuBox(expanded = locExpanded, onExpandedChange = { locExpanded = it }) {
-                        OutlinedTextField(
-                            value = locationMap[selectedLocId] ?: "Wybierz lokalizację",
-                            onValueChange = {}, readOnly = true,
-                            label = { Text("Lokalizacja") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(locExpanded) },
-                            modifier = Modifier.menuAnchor().fillMaxWidth()
-                        )
-                        ExposedDropdownMenu(expanded = locExpanded, onDismissRequest = { locExpanded = false }) {
-                            locationMap.forEach { (id, name) ->
-                                DropdownMenuItem(text = { Text(name) }, onClick = { selectedLocId = id; locExpanded = false })
-                            }
-                        }
-                    }
-                }
-                // Room dropdown
-                if (roomMap.isNotEmpty()) {
-                    ExposedDropdownMenuBox(expanded = roomExpanded, onExpandedChange = { roomExpanded = it }) {
-                        OutlinedTextField(
-                            value = roomMap[selectedRoomId] ?: "Wybierz gabinet",
-                            onValueChange = {}, readOnly = true,
-                            label = { Text("Gabinet") },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(roomExpanded) },
-                            modifier = Modifier.menuAnchor().fillMaxWidth()
-                        )
-                        ExposedDropdownMenu(expanded = roomExpanded, onDismissRequest = { roomExpanded = false }) {
-                            roomMap.forEach { (id, name) ->
-                                DropdownMenuItem(text = { Text(name) }, onClick = { selectedRoomId = id; roomExpanded = false })
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(onClick = {
-                onConfirm(ScheduleSlotDTO(
-                    id = initialSlot?.id ?: 0L,
-                    tenantId = if (initialSlot != null && initialSlot.tenantId > 0) initialSlot.tenantId else currentTenantId,
-                    staffId = selectedStaffId,
-                    locationId = selectedLocId,
-                    roomId = selectedRoomId,
-                    startAt = "${date}T${startT}:00Z",
-                    endAt = "${date}T${endT}:00Z"
-                ))
-            }, shape = RoundedCornerShape(12.dp)) { Text("Zapisz") }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Anuluj") } }
-    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -559,7 +279,7 @@ fun BlockerAddDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Dodaj przerwę / urlop", fontWeight = FontWeight.Bold) },
+        title = { Text("Dodaj przerwe / urlop", fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { datePicker.show() }, Modifier.fillMaxWidth()) {
@@ -571,10 +291,9 @@ fun BlockerAddDialog(
                 }
                 OutlinedTextField(
                     value = reason, onValueChange = { reason = it },
-                    label = { Text("Powód (np. urlop, przerwa)") },
+                    label = { Text("Powod (np. urlop, przerwa)") },
                     modifier = Modifier.fillMaxWidth()
                 )
-                // Optional: staff selection
                 if (staffList.isNotEmpty()) {
                     ExposedDropdownMenuBox(expanded = staffExpanded, onExpandedChange = { staffExpanded = it }) {
                         OutlinedTextField(
@@ -582,7 +301,7 @@ fun BlockerAddDialog(
                             onValueChange = {}, readOnly = true,
                             label = { Text("Lekarz") },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(staffExpanded) },
-                            modifier = Modifier.menuAnchor().fillMaxWidth()
+                            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth()
                         )
                         ExposedDropdownMenu(expanded = staffExpanded, onDismissRequest = { staffExpanded = false }) {
                             DropdownMenuItem(text = { Text("Wszyscy") }, onClick = { selectedStaffId = null; staffExpanded = false })

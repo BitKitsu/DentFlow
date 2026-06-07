@@ -54,6 +54,9 @@ fun VisitsScreen(
 ) {
     val visits by viewModel.visits.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val isPatient by remember { derivedStateOf { viewModel.isPatient } }
+    val isReadOnly by remember { derivedStateOf { viewModel.isReadOnly } }
+    val currentUserId by remember { derivedStateOf { viewModel.currentUserId } }
     val services by catalogViewModel.servicesState
     val rooms by tenantViewModel.rooms.collectAsState()
 
@@ -76,12 +79,11 @@ fun VisitsScreen(
         catalogViewModel.loadServices()
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-        ) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
             // ─── Header ────────────────────────────────────────────────────────────
             Row(
                 modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -143,9 +145,16 @@ fun VisitsScreen(
                     }
                 }
 
+                val visitDates = remember(visits) {
+                    visits.mapNotNull {
+                        try { LocalDate.parse(it.visit.startAt.substring(0, 10)) } catch (e: Exception) { null }
+                    }.toSet()
+                }
+
                 CalendarGrid(
                     currentMonth = currentMonth,
                     selectedDate = selectedDate,
+                    visitDates = visitDates,
                     onDateSelected = { selectedDate = it }
                 )
             }
@@ -159,9 +168,14 @@ fun VisitsScreen(
                 }
             } else {
                 val displayList = if (isHistoryMode) {
-                    visits
+                    visits.sortedByDescending { it.visit.startAt }
                 } else {
-                    visits.filter { it.visit.startAt.startsWith(selectedDate.toString()) }
+                    visits.filter {
+                        try {
+                            val visitDate = LocalDate.parse(it.visit.startAt.substring(0, 10))
+                            visitDate == selectedDate
+                        } catch (e: Exception) { false }
+                    }.sortedBy { it.visit.startAt }
                 }
 
                 if (displayList.isEmpty()) {
@@ -181,6 +195,7 @@ fun VisitsScreen(
                         items(displayList, key = { it.visit.id }) { item ->
                             UniversalVisitCard(
                                 item = item,
+                                services = services,
                                 showDate = isHistoryMode,
                                 onClick = { selectedVisit = item }
                             )
@@ -190,24 +205,12 @@ fun VisitsScreen(
             }
         }
 
-        // ─── FAB ───────────────────────────────────────────────────────────────────
-        FloatingActionButton(
-            onClick = onCreateClick,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "Nowa wizyta")
-        }
-    }
-
     // ─── Appointment detail bottom sheet ───────────────────────────────────────
     selectedVisit?.let { visitWithPatient ->
         val visit = visitWithPatient.visit
-        val canModify = visit.status.uppercase() in listOf("SCHEDULED", "CONFIRMED")
-        val canComplete = visit.status.uppercase() == "CONFIRMED"
+        val isOwnAppointment = visit.createdByUserId == currentUserId
+        val canModify = !isPatient && !isReadOnly && !isOwnAppointment && visit.status.uppercase() in listOf("SCHEDULED", "CONFIRMED")
+        val canComplete = !isPatient && !isReadOnly && !isOwnAppointment && visit.status.uppercase() == "CONFIRMED"
 
         ModalBottomSheet(onDismissRequest = { selectedVisit = null }) {
             Column(
@@ -224,7 +227,8 @@ fun VisitsScreen(
                     Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = visitWithPatient.patient?.let { "${it.firstName} ${it.lastName}" } ?: "Pacjent ID: ${visit.patientId}",
+                        text = visitWithPatient.patient?.let { "${it.firstName} ${it.lastName}" }
+                            ?: "Pacjent ID: ${visit.patientId ?: "brak"}",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -263,6 +267,7 @@ fun VisitsScreen(
                     "COMPLETED" -> Pair(MaterialTheme.colorScheme.outline, "Zakończona")
                     "CANCELLED" -> Pair(MaterialTheme.colorScheme.error, "Anulowana")
                     "SCHEDULED" -> Pair(Color(0xFFFF9800), "Zaplanowana")
+                    "NO_SHOW" -> Pair(Color(0xFF9C27B0), "Nieobecność")
                     else -> Pair(MaterialTheme.colorScheme.outline, visit.status)
                 }
                 Surface(shape = RoundedCornerShape(8.dp), color = statusColor.copy(alpha = 0.15f)) {
@@ -459,7 +464,7 @@ fun EditAppointmentDialog(
     services: List<pl.edu.ur.dentflow.data.remote.ServiceCatalogItemDTO>,
     rooms: List<pl.edu.ur.dentflow.data.remote.RoomResponse>,
     onDismiss: () -> Unit,
-    onConfirm: (String, String, Long, Long, String) -> Unit
+    onConfirm: (String, String, Long?, Long?, String) -> Unit
 ) {
     val context = LocalContext.current
     var selectedDate by remember { mutableStateOf(
@@ -573,7 +578,7 @@ fun EditAppointmentDialog(
 
 // ─── Visit card ────────────────────────────────────────────────────────────────
 @Composable
-fun UniversalVisitCard(item: VisitWithPatient, showDate: Boolean = false, onClick: () -> Unit = {}) {
+fun UniversalVisitCard(item: VisitWithPatient, services: List<pl.edu.ur.dentflow.data.remote.ServiceCatalogItemDTO> = emptyList(), showDate: Boolean = false, onClick: () -> Unit = {}) {
     val appointment = item.visit
     val patient = item.patient
 
@@ -584,6 +589,7 @@ fun UniversalVisitCard(item: VisitWithPatient, showDate: Boolean = false, onClic
         "CONFIRMED" -> Color(0xFF4CAF50)
         "COMPLETED" -> Color.LightGray
         "CANCELLED" -> Color.Red
+        "NO_SHOW" -> Color(0xFF9C27B0)
         else -> Color(0xFFFF9800)
     }
 
@@ -601,11 +607,12 @@ fun UniversalVisitCard(item: VisitWithPatient, showDate: Boolean = false, onClic
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = patient?.let { "${it.firstName} ${it.lastName}" } ?: "Pacjent ID: ${appointment.patientId}",
+                    text = patient?.let { "${it.firstName} ${it.lastName}" } ?: "Pacjent ID: ${appointment.patientId ?: "brak"}",
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "Usługa ID: ${appointment.serviceItemId}",
+                    text = services.find { it.id == appointment.serviceItemId }?.name
+                        ?: if (appointment.serviceItemId != null) "Usługa ID: ${appointment.serviceItemId}" else "Brak usługi",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )
@@ -622,6 +629,7 @@ fun UniversalVisitCard(item: VisitWithPatient, showDate: Boolean = false, onClic
 fun CalendarGrid(
     currentMonth: YearMonth,
     selectedDate: LocalDate,
+    visitDates: Set<LocalDate> = emptySet(),
     onDateSelected: (LocalDate) -> Unit
 ) {
     val daysInMonth = currentMonth.lengthOfMonth()
@@ -645,13 +653,18 @@ fun CalendarGrid(
                 val date = currentMonth.atDay(day)
                 val isSelected = date == selectedDate
                 val isToday = date == LocalDate.now()
-                Box(
+                val hasVisit = date in visitDates
+                Column(
                     modifier = Modifier.aspectRatio(1f).padding(4.dp).clip(CircleShape)
                         .background(if (isSelected) MaterialTheme.colorScheme.primary else if (isToday) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
                         .clickable { onDateSelected(date) },
-                    contentAlignment = Alignment.Center
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Text(text = day.toString(), color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface)
+                    Text(text = day.toString(), color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurface, fontSize = 13.sp)
+                    if (hasVisit) {
+                        Box(modifier = Modifier.size(4.dp).clip(CircleShape).background(if (isSelected) Color.White else MaterialTheme.colorScheme.primary))
+                    }
                 }
             }
         }

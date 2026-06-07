@@ -1,6 +1,7 @@
 package pl.edu.ur.dentflow.core.scheduling.api;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.OffsetDateTime;
 
 public record CreateBlockerRequest(
@@ -8,5 +9,5 @@ public record CreateBlockerRequest(
         Long roomId,
         @NotNull OffsetDateTime startAt,
         @NotNull OffsetDateTime endAt,
-        String reason
+        @Size(max = 255) String reason
 ) {}

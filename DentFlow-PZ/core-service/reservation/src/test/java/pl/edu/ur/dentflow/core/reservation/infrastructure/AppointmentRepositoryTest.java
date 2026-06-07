@@ -26,7 +26,7 @@ class AppointmentRepositoryTest {
     @Test
     void shouldSearchAppointmentsDetailsWithFilters() {
         // given
-        // Wstawiamy mockowe dane do tabel z innych modułów za pomocą jdbcTemplate
+        // We insert mock data into tables from other modules using jdbcTemplate
         jdbcTemplate.execute("INSERT INTO patient (id, first_name, last_name) VALUES (1, 'Jan', 'Kowalski')");
         jdbcTemplate.execute("INSERT INTO staff_member (id, first_name, last_name) VALUES (2, 'Dr.', 'Ząb')");
         jdbcTemplate.execute("INSERT INTO location (id, name) VALUES (3, 'Klinika Główna')");

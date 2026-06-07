@@ -7,20 +7,20 @@ Zbudowana z użyciem **iText 8** (AGPL).
 
 ```
 pdf-generator/
-├── pom.xml
-└── src/
-    └── main/java/com/dentflow/pdf/
-        ├── DentFlowPdfGenerator.java       ← publiczne API (fasada)
-        ├── generator/
-        │   ├── AppointmentListPdfGenerator.java    (Raport 1)
-        │   ├── RoomOccupancyPdfGenerator.java      (Raport 2)
-        │   └── PatientVisitHistoryPdfGenerator.java (Raport 3)
-        ├── model/
-        │   ├── AppointmentListReportData.java
-        │   ├── RoomOccupancyReportData.java
-        │   └── PatientVisitHistoryReportData.java
-        └── util/
-            └── PdfStyles.java                      (kolory, fonty, tabele)
+|-- pom.xml
++-- src/
+    +-- main/java/com/dentflow/pdf/
+        |-- DentFlowPdfGenerator.java       <- publiczne API (fasada)
+        |-- generator/
+        |   |-- AppointmentListPdfGenerator.java    (Raport 1)
+        |   |-- RoomOccupancyPdfGenerator.java      (Raport 2)
+        |   +-- PatientVisitHistoryPdfGenerator.java (Raport 3)
+        |-- model/
+        |   |-- AppointmentListReportData.java
+        |   |-- RoomOccupancyReportData.java
+        |   +-- PatientVisitHistoryReportData.java
+        +-- util/
+            +-- PdfStyles.java                      (kolory, fonty, tabele)
 ```
 
 ## Raporty

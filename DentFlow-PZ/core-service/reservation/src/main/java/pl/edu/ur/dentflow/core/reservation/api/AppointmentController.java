@@ -12,6 +12,24 @@ import org.springframework.web.bind.annotation.*;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+/**
+ * REST controller managing appointments (reservations) in the DentFlow system.
+ *
+ * <p>Endpoints:
+ * <ul>
+ *   <li>GET /tenants/{tenantId}/appointments - list appointments (optional date filter)</li>
+ *   <li>GET /tenants/{tenantId}/appointments/my - logged-in user's appointments</li>
+ *   <li>GET /tenants/{tenantId}/appointments/{id} - appointment details</li>
+ *   <li>POST /tenants/{tenantId}/appointments - create new appointment</li>
+ *   <li>PUT /tenants/{tenantId}/appointments/{id} - update appointment</li>
+ *   <li>POST /tenants/{tenantId}/appointments/{id}/cancel - cancel appointment</li>
+ *   <li>POST /tenants/{tenantId}/appointments/{id}/complete - mark as completed</li>
+ * </ul>
+ *
+ * <p>Access: OWNER, DENTIST, RECEPTIONIST (management) or isAuthenticated (own appointments).</p>
+ *
+ * @see pl.edu.ur.dentflow.core.reservation.application.AppointmentService
+ */
 @RestController
 @RequestMapping("/tenants/{tenantId}/appointments")
 public class AppointmentController {
@@ -23,7 +41,7 @@ public class AppointmentController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST', 'RECEPTIONIST', 'ASSISTANT')")
     public ResponseEntity<List<AppointmentResponse>> getAppointments(
             @PathVariable Long tenantId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
@@ -32,9 +50,9 @@ public class AppointmentController {
     }
 
     /**
-     * Endpoint dla zalogowanego pacjenta — zwraca wyłącznie jego własne wizyty.
-     * Dostępny dla każdego uwierzytelnionego użytkownika.
-     * userId jest wyciągany z tokenu JWT (claim "userId") przekazanego jako credentials.
+     * Endpoint for logged-in patient - returns only their own appointments.
+     * Available to any authenticated user.
+     * userId is extracted from the JWT token (claim "userId") passed as credentials.
      */
     @GetMapping("/my")
     @PreAuthorize("isAuthenticated()")
@@ -55,7 +73,7 @@ public class AppointmentController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST', 'RECEPTIONIST')")
     public ResponseEntity<AppointmentResponse> createAppointment(
             @PathVariable Long tenantId,
             @Valid @RequestBody CreateAppointmentRequest request) {
@@ -64,7 +82,7 @@ public class AppointmentController {
     }
 
     @PutMapping("/{appointmentId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST', 'RECEPTIONIST')")
     public ResponseEntity<AppointmentResponse> updateAppointment(
             @PathVariable Long tenantId,
             @PathVariable Long appointmentId,
@@ -72,8 +90,16 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.updateAppointment(tenantId, appointmentId, request));
     }
 
+    @PostMapping("/{appointmentId}/confirm")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST', 'RECEPTIONIST')")
+    public ResponseEntity<AppointmentResponse> confirmAppointment(
+            @PathVariable Long tenantId,
+            @PathVariable Long appointmentId) {
+        return ResponseEntity.ok(appointmentService.confirmAppointment(tenantId, appointmentId));
+    }
+
     @PostMapping("/{appointmentId}/cancel")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST', 'RECEPTIONIST')")
     public ResponseEntity<AppointmentResponse> cancelAppointment(
             @PathVariable Long tenantId,
             @PathVariable Long appointmentId) {
@@ -81,7 +107,7 @@ public class AppointmentController {
     }
 
     @PostMapping("/{appointmentId}/complete")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST', 'RECEPTIONIST')")
     public ResponseEntity<AppointmentResponse> completeAppointment(
             @PathVariable Long tenantId,
             @PathVariable Long appointmentId) {

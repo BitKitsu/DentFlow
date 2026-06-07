@@ -16,9 +16,9 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 /**
- * Cron job wysyłający przypomnienia o wizytach 24h przed terminem.
- * Uruchamia się codziennie o 8:00 i szuka wizyt zaplanowanych
- * na następny dzień (od 8:00 do 8:00 + 24h).
+ * Cron job sending appointment reminders 24h before the scheduled time.
+ * Runs daily at 8:00 AM and finds appointments scheduled
+ * for the next day (from 8:00 to 8:00 + 24h).
  */
 @Component
 public class AppointmentReminderJob {
@@ -41,8 +41,8 @@ public class AppointmentReminderJob {
     }
 
     /**
-     * Uruchamia się codziennie o 8:00 UTC.
-     * Wysyła przypomnienia o wizytach zaplanowanych na za 24h (±30 min okno).
+     * Runs daily at 8:00 AM UTC.
+     * Sends reminders for appointments scheduled in 24h (±30 min window).
      */
     @Scheduled(cron = "0 0 8 * * *")
     public void sendReminders() {
@@ -51,7 +51,7 @@ public class AppointmentReminderJob {
         OffsetDateTime to   = now.plusHours(24).plusMinutes(30);
 
         List<Appointment> upcoming = appointmentRepository.findUpcomingScheduled(from, to);
-        log.info("Cron przypomnienia: znaleziono {} wizyt do przypomnienia (okno {} – {})",
+        log.info("Reminder cron: found {} appointments to remind (window {} – {})",
                 upcoming.size(), from, to);
 
         for (Appointment appointment : upcoming) {
@@ -64,7 +64,7 @@ public class AppointmentReminderJob {
                         .orElse(null);
 
                 if (patient == null || patient.getEmail() == null || patient.getEmail().isBlank()) {
-                    log.debug("Wizyta {}: brak emaila pacjenta, pomijam.", appointment.getId());
+                    log.debug("Appointment {}: no patient email, skipping.", appointment.getId());
                     continue;
                 }
 
@@ -79,9 +79,9 @@ public class AppointmentReminderJob {
                         appointment.getStartAt(),
                         "Gabinet"
                 );
-                log.info("Wysłano przypomnienie dla wizyty {} do {}", appointment.getId(), patient.getEmail());
+                log.info("Reminder sent for appointment {} to {}", appointment.getId(), patient.getEmail());
             } catch (Exception e) {
-                log.error("Błąd wysyłania przypomnienia dla wizyty {}: {}", appointment.getId(), e.getMessage());
+                log.error("Error sending reminder for appointment {}: {}", appointment.getId(), e.getMessage());
             }
         }
     }

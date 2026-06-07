@@ -12,6 +12,21 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+/**
+ * Service managing clinics (tenants) in the DentFlow system.
+ * Handles clinic registration, clinic data management
+ * and location (branch) management.
+ *
+ * <p>Multi-tenant model: each clinic is a separate tenant, and all
+ * business data (patients, appointments, schedules) is linked via tenantId.</p>
+ *
+ * <p>Clinic registration occurs after user registration (OWNER)
+ * and creates a clinic with the first location.</p>
+ *
+ * @see pl.edu.ur.dentflow.core.clinic.domain.Tenant
+ * @see pl.edu.ur.dentflow.core.clinic.domain.Location
+ * @see pl.edu.ur.dentflow.core.clinic.infrastructure.TenantRepository
+ */
 @Service
 public class TenantService {
 
@@ -127,10 +142,10 @@ public class TenantService {
         requireTenantExists(tenantId);
         Location location = locationRepository.findById(locationId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Lokalizacja nie istnieje"));
+                        "Location does not exist"));
         if (!location.getTenant().getId().equals(tenantId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Lokalizacja nie należy do tego gabinetu");
+                    "Location does not belong to this clinic");
         }
         locationRepository.delete(location);
     }
@@ -139,10 +154,10 @@ public class TenantService {
         requireTenantExists(tenantId);
         Location location = locationRepository.findById(locationId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Lokalizacja nie istnieje"));
+                        "Location does not exist"));
         if (!location.getTenant().getId().equals(tenantId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Lokalizacja nie należy do tego gabinetu");
+                    "Location does not belong to this clinic");
         }
         return LocationResponse.from(location);
     }
@@ -152,10 +167,10 @@ public class TenantService {
         requireTenantExists(tenantId);
         Location location = locationRepository.findById(locationId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Lokalizacja nie istnieje"));
+                        "Location does not exist"));
         if (!location.getTenant().getId().equals(tenantId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Lokalizacja nie należy do tego gabinetu");
+                    "Location does not belong to this clinic");
         }
 
         location.setName(request.name());

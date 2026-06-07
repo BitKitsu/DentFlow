@@ -1,11 +1,15 @@
 package pl.edu.ur.dentflow.core.reservation.infrastructure;
 
 import pl.edu.ur.dentflow.core.reservation.domain.Appointment;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import jakarta.persistence.QueryHint;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -106,4 +110,14 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findUpcomingScheduled(
             @Param("from") OffsetDateTime from,
             @Param("to") OffsetDateTime to);
+
+    @Query("SELECT a FROM Appointment a WHERE a.status = 'SCHEDULED' " +
+           "AND a.endAt < :now")
+    List<Appointment> findPastScheduled(
+            @Param("now") OffsetDateTime now);
+
+    @Query("SELECT a FROM Appointment a WHERE a.status = 'CONFIRMED' " +
+           "AND a.endAt < :now")
+    List<Appointment> findPastConfirmed(
+            @Param("now") OffsetDateTime now);
 }

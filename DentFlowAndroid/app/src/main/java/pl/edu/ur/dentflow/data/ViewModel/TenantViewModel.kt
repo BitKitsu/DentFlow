@@ -34,7 +34,7 @@ class TenantViewModel @Inject constructor(
 
     private val TAG = "DENTFLOW_DEBUG"
 
-    private val currentTenantId: Long
+    val currentTenantId: Long
         get() {
             val id = prefs.getLong("tenant_id", -1L)
             return if (id <= 0L) -1L else id
@@ -196,6 +196,95 @@ class TenantViewModel @Inject constructor(
             }
         } catch (e: Exception) {
             Log.e(TAG, "WYJĄTEK przy pobieraniu pokoi: ${e.message}", e)
+        }
+    }
+
+    fun createRoom(name: String, locationId: Long) {
+        val tenantId = currentTenantId
+        if (tenantId == -1L) return
+
+        viewModelScope.launch {
+            try {
+                val response = apiService.createRoom(tenantId, name, locationId)
+                if (response.isSuccessful) {
+                    fetchRooms(tenantId)
+                } else {
+                    val errorMsg = response.errorBody()?.string()
+                    Log.e(TAG, "API error createRoom: ${response.code()} $errorMsg")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception createRoom: ${e.message}", e)
+            }
+        }
+    }
+
+    fun updateRoom(roomId: Long, name: String, locationId: Long) {
+        val tenantId = currentTenantId
+        if (tenantId == -1L) return
+
+        viewModelScope.launch {
+            try {
+                val response = apiService.updateRoom(tenantId, roomId, name, locationId)
+                if (response.isSuccessful) {
+                    fetchRooms(tenantId)
+                } else {
+                    val errorMsg = response.errorBody()?.string()
+                    Log.e(TAG, "API error updateRoom: ${response.code()} $errorMsg")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception updateRoom: ${e.message}", e)
+            }
+        }
+    }
+
+    fun deleteRoom(roomId: Long) {
+        val tenantId = currentTenantId
+        if (tenantId == -1L) return
+
+        viewModelScope.launch {
+            try {
+                val response = apiService.deleteRoom(tenantId, roomId)
+                if (response.isSuccessful) {
+                    fetchRooms(tenantId)
+                } else {
+                    val errorMsg = response.errorBody()?.string()
+                    Log.e(TAG, "API error deleteRoom: ${response.code()} $errorMsg")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception deleteRoom: ${e.message}", e)
+            }
+        }
+    }
+
+    fun assignStaffToRoom(roomId: Long, staffId: Long) {
+        val tenantId = currentTenantId
+        if (tenantId == -1L) return
+
+        viewModelScope.launch {
+            try {
+                val response = apiService.assignStaffToRoom(tenantId, roomId, staffId)
+                if (response.isSuccessful) {
+                    fetchRooms(tenantId)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception assignStaffToRoom: ${e.message}", e)
+            }
+        }
+    }
+
+    fun removeStaffFromRoom(roomId: Long, staffId: Long) {
+        val tenantId = currentTenantId
+        if (tenantId == -1L) return
+
+        viewModelScope.launch {
+            try {
+                val response = apiService.removeStaffFromRoom(tenantId, roomId, staffId)
+                if (response.isSuccessful) {
+                    fetchRooms(tenantId)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception removeStaffFromRoom: ${e.message}", e)
+            }
         }
     }
 

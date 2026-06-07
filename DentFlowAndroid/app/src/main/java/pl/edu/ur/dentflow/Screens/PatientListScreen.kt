@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,6 +28,7 @@ import pl.edu.ur.dentflow.data.ViewModel.VisitViewModel
 import pl.edu.ur.dentflow.data.remote.AuthResponse
 import pl.edu.ur.dentflow.data.remote.PatientResponse
 import pl.edu.ur.dentflow.data.remote.AppointmentResponse
+import pl.edu.ur.dentflow.utils.ValidationUtils
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import kotlinx.coroutines.launch
@@ -60,7 +62,7 @@ fun PatientListScreen(
                 title = { Text("Baza Pacjentów", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
                     }
                 },
                 windowInsets = WindowInsets(0, 0, 0, 0)
@@ -258,10 +260,16 @@ fun PatientDialog(
     var addressCity by remember { mutableStateOf(patient?.addressCity ?: "") }
     var addressZip by remember { mutableStateOf(patient?.addressZip ?: "") }
 
-    val isEmailValid = email.isEmpty() || (email.contains("@") && email.contains("."))
-    val isPhoneValid = phone.length >= 9
+    val isEmailValid = email.isEmpty() || ValidationUtils.isEmailValid(email)
+    val isPhoneValid = phone.isEmpty() || ValidationUtils.isPhoneValid(phone)
+    val isFirstNameValid = ValidationUtils.isNameValid(firstName)
+    val isLastNameValid = ValidationUtils.isNameValid(lastName)
+    val isStreetValid = addressStreet.isEmpty() || ValidationUtils.isStreetValid(addressStreet)
+    val isCityValid = addressCity.isEmpty() || ValidationUtils.isCityValid(addressCity)
+    val isZipValid = addressZip.isEmpty() || ValidationUtils.isZipValid(addressZip)
     val isPeselValid = pesel.isEmpty() || pesel.length == 11
     val areFieldsValid = firstName.isNotBlank() && lastName.isNotBlank() && isPhoneValid && isPeselValid
+            && isFirstNameValid && isLastNameValid && isEmailValid && isStreetValid && isCityValid && isZipValid
 
     val calendar = Calendar.getInstance()
     val datePickerDialog = DatePickerDialog(
@@ -347,6 +355,8 @@ fun PatientDialog(
                     leadingIcon = { Icon(Icons.Default.Person, null) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
+                    isError = firstName.isNotBlank() && !isFirstNameValid,
+                    supportingText = { if (firstName.isNotBlank() && !isFirstNameValid) Text("Imię musi mieć 2-50 znaków (litery)") },
                     enabled = !userExists || isEditing
                 )
                 OutlinedTextField(
@@ -356,6 +366,8 @@ fun PatientDialog(
                     leadingIcon = { Icon(Icons.Default.Person, null) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
+                    isError = lastName.isNotBlank() && !isLastNameValid,
+                    supportingText = { if (lastName.isNotBlank() && !isLastNameValid) Text("Nazwisko musi mieć 2-50 znaków (litery)") },
                     enabled = !userExists || isEditing
                 )
                 OutlinedTextField(
@@ -365,6 +377,8 @@ fun PatientDialog(
                     leadingIcon = { Icon(Icons.Default.Phone, null) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
+                    isError = phone.isNotBlank() && !isPhoneValid,
+                    supportingText = { if (phone.isNotBlank() && !isPhoneValid) Text("Nr telefonu jest nieprawidłowy") },
                     enabled = !userExists || isEditing
                 )
                 OutlinedTextField(
@@ -375,11 +389,12 @@ fun PatientDialog(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     isError = !isEmailValid && email.isNotEmpty(),
+                    supportingText = { if (!isEmailValid && email.isNotEmpty()) Text("Email jest nieprawidłowy") },
                     enabled = !userExists || isEditing
                 )
                 
                 // Medical section
-                Divider(modifier = Modifier.padding(vertical = 4.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                 Text("3. Dane medyczne", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                 
                 OutlinedTextField(
@@ -406,7 +421,7 @@ fun PatientDialog(
                         readOnly = true,
                         label = { Text("Płeć") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedGender) },
-                        modifier = Modifier.menuAnchor().fillMaxWidth(),
+                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
                     )
                     ExposedDropdownMenu(
@@ -451,7 +466,7 @@ fun PatientDialog(
                 }
                 
                 // Address section
-                Divider(modifier = Modifier.padding(vertical = 4.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                 Text("4. Adres (opcjonalny)", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                 
                 OutlinedTextField(
@@ -460,22 +475,28 @@ fun PatientDialog(
                     label = { Text("Ulica i numer") },
                     leadingIcon = { Icon(Icons.Default.Home, null) },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    isError = addressStreet.isNotBlank() && !isStreetValid,
+                    supportingText = { if (addressStreet.isNotBlank() && !isStreetValid) Text("Ulica musi mieć co najmniej 3 znaki") }
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = addressZip,
-                        onValueChange = { addressZip = it },
+                        onValueChange = { if (it.length <= 5) addressZip = it.filter { c -> c.isDigit() } },
                         label = { Text("Kod pocztowy") },
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        isError = addressZip.isNotBlank() && !isZipValid,
+                        supportingText = { if (addressZip.isNotBlank() && !isZipValid) Text("Kod: 5 cyfr") }
                     )
                     OutlinedTextField(
                         value = addressCity,
                         onValueChange = { addressCity = it },
                         label = { Text("Miasto") },
                         modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        isError = addressCity.isNotBlank() && !isCityValid,
+                        supportingText = { if (addressCity.isNotBlank() && !isCityValid) Text("Miasto musi mieć co najmniej 2 znaki") }
                     )
                 }
                 } // end if (emailChecked || isEditing)
@@ -549,7 +570,7 @@ fun PatientHistoryDialog(
                 ) {
                     items(visits) { visitItem ->
                         val visit = visitItem.visit
-                        val timeDisplay = try { visit.startAt.substring(0, 16).replace("T", " ") } catch (e: Exception) { "—" }
+                        val timeDisplay = try { visit.startAt.substring(0, 16).replace("T", " ") } catch (e: Exception) { "-" }
                         val statusColor = when (visit.status.uppercase()) {
                             "CONFIRMED" -> Color(0xFF4CAF50)
                             "COMPLETED" -> MaterialTheme.colorScheme.outline

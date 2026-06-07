@@ -45,6 +45,18 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
                      @Param("start") OffsetDateTime start,
                      @Param("end") OffsetDateTime end);
 
+       @Lock(LockModeType.PESSIMISTIC_WRITE)
+       @QueryHints({@QueryHint(name = "jakarta.persistence.lock.timeout", value = "5000")})
+       @Query("SELECT a FROM Appointment a WHERE a.tenantId = :tenantId " +
+                     "AND a.dentistStaffId = :dentistStaffId " +
+                     "AND a.status NOT IN ('CANCELLED') " +
+                     "AND a.startAt < :end AND a.endAt > :start")
+       List<Appointment> findConflictingForUpdate(
+                     @Param("tenantId") Long tenantId,
+                     @Param("dentistStaffId") Long dentistStaffId,
+                     @Param("start") OffsetDateTime start,
+                     @Param("end") OffsetDateTime end);
+
        @Query("SELECT a FROM Appointment a WHERE a.tenantId = :tenantId " +
                      "AND a.patientId = :patientId " +
                      "ORDER BY a.startAt DESC")

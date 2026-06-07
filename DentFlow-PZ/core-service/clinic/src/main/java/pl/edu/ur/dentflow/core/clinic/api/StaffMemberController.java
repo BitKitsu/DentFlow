@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/tenants/{tenantId}/staff")
-@Tag(name = "Staff", description = "Zarządzanie personelem w gabinecie")
+@Tag(name = "Staff", description = "Staff management in clinic")
 @SecurityRequirement(name = "bearerAuth")
 public class StaffMemberController {
 
@@ -29,13 +29,13 @@ public class StaffMemberController {
     }
 
     @GetMapping
-    @Operation(summary = "Lista pracowników gabinetu")
+    @Operation(summary = "List clinic staff members")
     public ResponseEntity<List<StaffMemberResponse>> getStaffMembers(@PathVariable Long tenantId) {
         return ResponseEntity.ok(staffMemberService.getStaffMembers(tenantId));
     }
 
     @GetMapping("/{staffId}")
-    @Operation(summary = "Pobranie szczegółow pracownika")
+    @Operation(summary = "Get staff member details")
     public ResponseEntity<StaffMemberResponse> getStaffMember(
             @PathVariable Long tenantId,
             @PathVariable Long staffId) {
@@ -43,8 +43,8 @@ public class StaffMemberController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
-    @Operation(summary = "Dodanie pracownika do gabinetu")
+    @PreAuthorize("hasAnyRole('OWNER')")
+    @Operation(summary = "Add staff member to clinic")
     public ResponseEntity<StaffMemberResponse> addStaffMember(
             @PathVariable Long tenantId,
             @Valid @RequestBody CreateStaffMemberRequest request) {
@@ -53,8 +53,8 @@ public class StaffMemberController {
     }
 
     @PutMapping("/{staffId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
-    @Operation(summary = "Zaktualizowanie danych pracownika")
+    @PreAuthorize("hasAnyRole('OWNER')")
+    @Operation(summary = "Update staff member data")
     public ResponseEntity<StaffMemberResponse> updateStaffMember(
             @PathVariable Long tenantId,
             @PathVariable Long staffId,
@@ -63,8 +63,8 @@ public class StaffMemberController {
     }
 
     @DeleteMapping("/{staffId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
-    @Operation(summary = "Usunięcie pracownika")
+    @PreAuthorize("hasAnyRole('OWNER')")
+    @Operation(summary = "Delete staff member")
     public ResponseEntity<Void> deleteStaffMember(
             @PathVariable Long tenantId,
             @PathVariable Long staffId) {
@@ -73,15 +73,15 @@ public class StaffMemberController {
     }
 
     @PostMapping("/sync-from-user")
-    @Operation(summary = "Synchronizacja danych pracownika z profilem użytkownika")
+    @Operation(summary = "Sync staff member data with user profile")
     public ResponseEntity<Void> syncFromUser(@RequestBody SyncFromUserRequest request) {
         staffMemberService.syncFromUser(request.userId(), request.firstName(), request.lastName(), request.avatarUrl(), request.phone(), request.email());
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{staffId}/working-hours")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
-    @Operation(summary = "Pobranie godzin pracy pracownika (per dzień tygodnia)")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST')")
+    @Operation(summary = "Get staff member working hours (per day of week)")
     public ResponseEntity<List<StaffWorkingHoursDTO>> getWorkingHours(
             @PathVariable Long tenantId,
             @PathVariable Long staffId) {
@@ -89,8 +89,8 @@ public class StaffMemberController {
     }
 
     @PutMapping("/{staffId}/working-hours")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
-    @Operation(summary = "Aktualizacja godzin pracy pracownika (per dzień tygodnia)")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST')")
+    @Operation(summary = "Update staff member working hours (per day of week)")
     public ResponseEntity<Void> updateWorkingHours(
             @PathVariable Long tenantId,
             @PathVariable Long staffId,

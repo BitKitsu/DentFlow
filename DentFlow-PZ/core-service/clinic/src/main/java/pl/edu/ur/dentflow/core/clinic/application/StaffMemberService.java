@@ -14,6 +14,21 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+/**
+ * Service managing clinic staff members in the DentFlow system.
+ * Handles CRUD operations for staff (dentists, receptionists, assistants)
+ * and synchronization of data with user accounts.
+ *
+ * <p>Staff members are associated with user accounts (optionally) and assigned
+ * to a specific clinic (tenant). Each staff member has assigned working hours,
+ * profession and optional bio description.</p>
+ *
+ * <p>The {@link #syncFromUser} method synchronizes staff data (first name, last name,
+ * avatar, phone, email) with the user account after profile updates.</p>
+ *
+ * @see pl.edu.ur.dentflow.core.clinic.domain.StaffMember
+ * @see pl.edu.ur.dentflow.core.clinic.infrastructure.StaffMemberRepository
+ */
 @Service
 public class StaffMemberService {
 

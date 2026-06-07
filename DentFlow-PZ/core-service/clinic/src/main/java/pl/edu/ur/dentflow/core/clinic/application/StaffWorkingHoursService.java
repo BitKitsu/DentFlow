@@ -42,11 +42,11 @@ public class StaffWorkingHoursService {
         for (WorkingHoursEntry entry : request.schedule()) {
             if (entry.dayOfWeek() < 1 || entry.dayOfWeek() > 7) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "dayOfWeek musi być w zakresie 1-7");
+                        "dayOfWeek must be in range 1-7");
             }
             if (!entry.endTime().isAfter(entry.startTime())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "endTime musi być po startTime dla dnia " + entry.dayOfWeek());
+                        "endTime must be after startTime for day " + entry.dayOfWeek());
             }
             StaffWorkingHours wh = StaffWorkingHours.builder()
                     .staffMember(staff)

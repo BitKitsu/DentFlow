@@ -149,9 +149,7 @@ data class CreateStaffMemberRequest(
     val bio: String? = null,
     val avatarUrl: String? = null,
     val phone: String? = null,
-    val email: String? = null,
-    val workingHoursStart: String? = null,
-    val workingHoursEnd: String? = null
+    val email: String? = null
 )
 
 data class SyncFromUserRequest(
@@ -168,9 +166,7 @@ data class UpdateStaffMemberRequest(
     val firstName: String,
     val lastName: String,
     val profession: String,
-    val bio: String? = null,
-    val workingHoursStart: String? = null,
-    val workingHoursEnd: String? = null
+    val bio: String? = null
 )
 
 // --- APPOINTMENTS (Wizyty) ---
@@ -179,12 +175,12 @@ data class AppointmentResponse(
     val id: Long,
     val tenantId: Long,
     val locationId: Long,
-    val roomId: Long,
+    val roomId: Long? = null,
     val dentistStaffId: Long,
-    val patientId: Long,
-    val serviceItemId: Long,
-    val startAt: String, // Zmienione z startTime zgodnie z API
-    val endAt: String,   // Zmienione z endTime zgodnie z API
+    val patientId: Long? = null,
+    val serviceItemId: Long? = null,
+    val startAt: String,
+    val endAt: String,
     val status: String,
     val notes: String? = null,
     val createdByUserId: Long? = null
@@ -192,41 +188,23 @@ data class AppointmentResponse(
 
 data class CreateAppointmentRequest(
     val locationId: Long,
-    val roomId: Long,
+    val roomId: Long? = null,
     val dentistStaffId: Long,
-    val patientId: Long,
-    val serviceItemId: Long,
+    val patientId: Long? = null,
+    val serviceItemId: Long? = null,
     val startAt: String,
     val endAt: String,
     val createdByUserId: Long,
     val notes: String = ""
 )
 
-// --- SCHEDULING (Sloty i Blokady) ---
-
-data class ScheduleSlotDTO(
-    val id: Long,
-    val tenantId: Long,
-    val staffId: Long,
-    val locationId: Long,
-    val roomId: Long,
-    val startAt: String,
-    val endAt: String
-)
-
-data class CreateSlotRequest(
-    val staffId: Long,
-    val locationId: Long,
-    val roomId: Long,
-    val startAt: String,
-    val endAt: String
-)
+// --- SCHEDULING (Blockers) ---
 
 data class ScheduleBlockerDTO(
     val id: Long,
     val tenantId: Long,
     val staffId: Long,
-    val roomId: Long,
+    val roomId: Long? = null,
     val startAt: String,
     val endAt: String,
     val reason: String
@@ -240,20 +218,14 @@ data class CreateBlockerRequest(
     val reason: String
 )
 
-data class UpdateSlotRequest(
-    val locationId: Long,
-    val roomId: Long,
-    val startAt: String,
-    val endAt: String
-)
-
 // --- OTHERS ---
 
 data class RoomResponse(
     val id: Long,
     val tenantId: Long,
     val locationId: Long,
-    val name: String
+    val name: String,
+    val assignedStaffIds: List<Long> = emptyList()
 )
 
 data class ServiceCatalogItemDTO(
@@ -284,9 +256,9 @@ data class CreateNotificationRequest(
 data class UpdateAppointmentRequest(
     val startAt: String,
     val endAt: String,
-    val serviceItemId: Long,
-    val roomId: Long,
-    val notes: String
+    val serviceItemId: Long? = null,
+    val roomId: Long? = null,
+    val notes: String? = null
 )
 
 // --- WORKING HOURS ---

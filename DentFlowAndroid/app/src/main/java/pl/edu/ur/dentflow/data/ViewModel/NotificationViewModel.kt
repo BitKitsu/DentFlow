@@ -85,7 +85,7 @@ class NotificationViewModel @Inject constructor(
             try {
                 val response = apiService.markAsRead(tenantId, userId, notificationId)
                 if (response.isSuccessful) {
-                    // Aktualizacja lokalna — natychmiastowa reakcja UI
+                    // Aktualizacja lokalna - natychmiastowa reakcja UI
                     _notifications.value = _notifications.value.map {
                         if (it.id == notificationId) it.copy(read = true) else it
                     }

@@ -46,17 +46,19 @@ fun CreateTenantScreen(
     }
 
     val isNameValid = CLINIC_NAME_REGEX.matches(name)
+    val isLocationNameValid = locationName.isBlank() || locationName.length >= 2
     val isStreetValid = street.length >= 3
     val isCityValid = city.length >= 2
     val isZipValid = Regex("^[0-9]{5}$").matches(zip)
     val isCountryValid = country.length >= 2
 
     val nameError = (showErrors && name.isBlank()) || (name.isNotBlank() && !isNameValid)
+    val locationNameError = locationName.isNotBlank() && !isLocationNameValid
     val streetError = (showErrors && street.isBlank()) || (street.isNotBlank() && !isStreetValid)
     val cityError = (showErrors && city.isBlank()) || (city.isNotBlank() && !isCityValid)
     val zipError = (showErrors && zip.isBlank()) || (zip.isNotBlank() && !isZipValid)
 
-    val canSubmit = isNameValid && isStreetValid && isCityValid && isZipValid && isCountryValid
+    val canSubmit = isNameValid && isLocationNameValid && isStreetValid && isCityValid && isZipValid && isCountryValid
 
     val textFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -114,7 +116,9 @@ fun CreateTenantScreen(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = textFieldColors,
-                singleLine = true
+                singleLine = true,
+                isError = locationNameError,
+                supportingText = { if (locationNameError) Text("Nazwa placówki musi mieć co najmniej 2 znaki") }
             )
 
             Spacer(modifier = Modifier.height(4.dp))

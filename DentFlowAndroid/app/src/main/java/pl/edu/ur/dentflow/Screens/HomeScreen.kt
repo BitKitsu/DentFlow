@@ -33,6 +33,7 @@ fun HomeScreen(
     isDarkTheme: Boolean,
     onThemeChange: (Boolean) -> Unit,
     onStaffClick: (StaffMemberResponse) -> Unit,
+    onBookClick: (Long, Long) -> Unit = { _, _ -> },
     staffList: List<StaffMemberResponse>,
     serviceList: List<ServiceCatalogItemDTO>,
     tenantData: TenantResponse?,
@@ -53,7 +54,7 @@ fun HomeScreen(
             .map { service ->
                 val clinic = tenantsById[service.tenantId]
                 val location = clinic?.locations?.firstOrNull()
-                val specialists = allStaff.filter { it.tenantId == service.tenantId }
+                val specialists = allStaff.filter { it.tenantId == service.tenantId && !it.profession.lowercase().let { p -> p.contains("asystent") || p.contains("assistant") } }
                 ServiceDisplayModel(service, location, specialists, clinic?.name ?: "")
             }
             .filter { item ->
@@ -117,7 +118,7 @@ fun HomeScreen(
                     contentPadding = PaddingValues(bottom = 100.dp)
                 ) {
                     items(displayItems, key = { it.service.id }) { item ->
-                        ServiceTile(item, onStaffClick)
+                        ServiceTile(item, onStaffClick, onBookClick)
                     }
                 }
             }
@@ -127,7 +128,7 @@ fun HomeScreen(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ServiceTile(item: ServiceDisplayModel, onStaffClick: (StaffMemberResponse) -> Unit) {
+fun ServiceTile(item: ServiceDisplayModel, onStaffClick: (StaffMemberResponse) -> Unit, onBookClick: (Long, Long) -> Unit = { _, _ -> }) {
     var expanded by remember { mutableStateOf(false) }
     
     Card(
@@ -238,7 +239,7 @@ fun ServiceTile(item: ServiceDisplayModel, onStaffClick: (StaffMemberResponse) -
                         Text("${item.service.durationMinutes} min", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     }
                     Button(
-                        onClick = { if (item.specialists.isNotEmpty()) onStaffClick(item.specialists.first()) },
+                        onClick = { onBookClick(item.service.tenantId, item.service.id) },
                         enabled = item.specialists.isNotEmpty(),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {

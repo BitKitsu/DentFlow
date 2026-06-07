@@ -36,7 +36,7 @@ data class RegisterRequest(
     val addressCountry: String? = null
 )
 
-// Profile update — all fields optional
+// Profile update - all fields optional
 data class UpdateProfileRequest(
     val email: String? = null,
     val firstName: String? = null,

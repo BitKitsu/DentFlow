@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,6 +28,7 @@ import pl.edu.ur.dentflow.data.remote.ServiceCatalogItemDTO
 @Composable
 fun CatalogListScreen(
     onBackClick: () -> Unit,
+    isOwner: Boolean = true,
     catalogViewModel: CatalogViewModel = hiltViewModel() // Zamiana na CatalogViewModel
 ) {
     val services by catalogViewModel.servicesState
@@ -51,16 +53,18 @@ fun CatalogListScreen(
                 title = { Text("Cennik Usług", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
                     }
                 },
                 windowInsets = WindowInsets(0, 0, 0, 0),
                 actions = {
-                    IconButton(onClick = {
-                        selectedService = null
-                        showAddEditDialog = true
-                    }) {
-                        Icon(Icons.Default.Add, contentDescription = "Dodaj usługę")
+                    if (isOwner) {
+                        IconButton(onClick = {
+                            selectedService = null
+                            showAddEditDialog = true
+                        }) {
+                            Icon(Icons.Default.Add, contentDescription = "Dodaj usługę")
+                        }
                     }
                 }
             )
@@ -93,6 +97,7 @@ fun CatalogListScreen(
                     items(services) { service ->
                         ServiceItemCard(
                             service = service,
+                            isOwner = isOwner,
                             onEdit = {
                                 selectedService = service
                                 showAddEditDialog = true
@@ -134,6 +139,7 @@ fun CatalogListScreen(
 @Composable
 fun ServiceItemCard(
     service: ServiceCatalogItemDTO,
+    isOwner: Boolean = true,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -192,11 +198,13 @@ fun ServiceItemCard(
                     fontSize = 16.sp
                 )
                 Row {
-                    IconButton(onClick = onEdit) {
-                        Icon(Icons.Default.Edit, contentDescription = "Edytuj", modifier = Modifier.size(20.dp), tint = Color.Gray)
-                    }
-                    IconButton(onClick = onDelete) {
-                        Icon(Icons.Default.Delete, contentDescription = "Usuń", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
+                    if (isOwner) {
+                        IconButton(onClick = onEdit) {
+                            Icon(Icons.Default.Edit, contentDescription = "Edytuj", modifier = Modifier.size(20.dp), tint = Color.Gray)
+                        }
+                        IconButton(onClick = onDelete) {
+                            Icon(Icons.Default.Delete, contentDescription = "Usuń", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
+                        }
                     }
                 }
             }
@@ -215,9 +223,10 @@ fun ServiceAddEditDialog(
     var duration by remember { mutableStateOf(service?.durationMinutes?.toString() ?: "") }
     var isActive by remember { mutableStateOf(service?.active ?: true) }
 
+    val isNameValid = name.isBlank() || name.length >= 2
     val isPriceValid = price.isBlank() || price.toDoubleOrNull() != null
     val isDurationValid = duration.isBlank() || (duration.toIntOrNull() != null && (duration.toIntOrNull() ?: 0) > 0)
-    val isFormReady = name.isNotBlank() && price.isNotBlank() && duration.isNotBlank() && isPriceValid && isDurationValid
+    val isFormReady = name.isNotBlank() && price.isNotBlank() && duration.isNotBlank() && isPriceValid && isDurationValid && isNameValid
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -229,7 +238,8 @@ fun ServiceAddEditDialog(
                     onValueChange = { name = it },
                     label = { Text("Nazwa zabiegu") },
                     modifier = Modifier.fillMaxWidth(),
-                    isError = name.isBlank()
+                    isError = name.isNotBlank() && !isNameValid,
+                    supportingText = { if (name.isNotBlank() && !isNameValid) Text("Nazwa musi mieć co najmniej 2 znaki") }
                 )
 
                 OutlinedTextField(

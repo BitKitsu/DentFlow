@@ -17,6 +17,17 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+/**
+ * Service responsible for appointment lifecycle management.
+ *
+ * <p>Handles creation, updating, confirmation, cancellation and completion of
+ * appointments. Enforces conflict detection using pessimistic locking and
+ * blocker cross-checks. Publishes domain events for async notification delivery.</p>
+ *
+ * @see AppointmentCreatedEvent
+ * @see AppointmentCancelledEvent
+ * @see AppointmentCompletedEvent
+ */
 @Service
 public class AppointmentService {
 
@@ -34,6 +45,14 @@ public class AppointmentService {
         this.eventPublisher = eventPublisher;
     }
 
+    /**
+     * Returns appointments for a tenant, optionally filtered by date range.
+     *
+     * @param tenantId the tenant (clinic) identifier
+     * @param from     optional start of date range (inclusive)
+     * @param to       optional end of date range (inclusive)
+     * @return list of appointments ordered by start time descending
+     */
     public List<AppointmentResponse> getAppointments(Long tenantId,
                                                       OffsetDateTime from,
                                                       OffsetDateTime to) {
@@ -46,6 +65,13 @@ public class AppointmentService {
         return result.stream().map(AppointmentResponse::from).toList();
     }
 
+    /**
+     * Returns appointments created by a specific user (patient's own appointments).
+     *
+     * @param tenantId the tenant identifier
+     * @param userId   the user who created the appointments
+     * @return list of user's appointments ordered by start time descending
+     */
     public List<AppointmentResponse> getMyAppointments(Long tenantId, Long userId) {
         return appointmentRepository
                 .findByTenantIdAndCreatedByUserIdOrderByStartAtDesc(tenantId, userId)
@@ -54,10 +80,31 @@ public class AppointmentService {
                 .toList();
     }
 
+    /**
+     * Returns a single appointment by ID.
+     *
+     * @param tenantId      the tenant identifier
+     * @param appointmentId the appointment identifier
+     * @return the appointment response
+     * @throws ResponseStatusException 404 if not found
+     */
     public AppointmentResponse getAppointment(Long tenantId, Long appointmentId) {
         return AppointmentResponse.from(findOrThrow(tenantId, appointmentId));
     }
 
+    /**
+     * Creates a new appointment with conflict and blocker validation.
+     *
+     * <p>Uses pessimistic locking ({@code SELECT FOR UPDATE}) to prevent race
+     * conditions when multiple users book the same dentist slot simultaneously.
+     * Also checks for overlapping blockers (vacations, maintenance).</p>
+     *
+     * @param tenantId the tenant identifier
+     * @param request  the appointment creation payload
+     * @return the created appointment with SCHEDULED status
+     * @throws ResponseStatusException 400 if endAt is not after startAt
+     * @throws ResponseStatusException 409 if dentist has a conflicting appointment or blocker
+     */
     @Transactional
     public AppointmentResponse createAppointment(Long tenantId, CreateAppointmentRequest request) {
         if (!request.endAt().isAfter(request.startAt())) {
@@ -100,6 +147,18 @@ public class AppointmentService {
         return AppointmentResponse.from(saved);
     }
 
+    /**
+     * Updates an existing appointment's time, service, room and notes.
+     *
+     * <p>Re-checks conflict detection excluding the current appointment.</p>
+     *
+     * @param tenantId      the tenant identifier
+     * @param appointmentId the appointment to update
+     * @param request       the update payload
+     * @return the updated appointment
+     * @throws ResponseStatusException 404 if not found
+     * @throws ResponseStatusException 409 if new time conflicts with another appointment
+     */
     @Transactional
     public AppointmentResponse updateAppointment(Long tenantId, Long appointmentId,
                                                   UpdateAppointmentRequest request) {
@@ -125,6 +184,14 @@ public class AppointmentService {
         return AppointmentResponse.from(appointmentRepository.save(appointment));
     }
 
+    /**
+     * Confirms a SCHEDULED appointment (transitions to CONFIRMED status).
+     *
+     * @param tenantId      the tenant identifier
+     * @param appointmentId the appointment to confirm
+     * @return the confirmed appointment
+     * @throws ResponseStatusException 400 if current status is not SCHEDULED
+     */
     @Transactional
     public AppointmentResponse confirmAppointment(Long tenantId, Long appointmentId) {
         Appointment appointment = findOrThrow(tenantId, appointmentId);
@@ -137,6 +204,16 @@ public class AppointmentService {
         return AppointmentResponse.from(saved);
     }
 
+    /**
+     * Cancels an appointment (transitions to CANCELLED status).
+     *
+     * <p>Publishes {@link AppointmentCancelledEvent} for async notification delivery.</p>
+     *
+     * @param tenantId      the tenant identifier
+     * @param appointmentId the appointment to cancel
+     * @return the cancelled appointment
+     * @throws ResponseStatusException 400 if already cancelled
+     */
     @Transactional
     public AppointmentResponse cancelAppointment(Long tenantId, Long appointmentId) {
         Appointment appointment = findOrThrow(tenantId, appointmentId);
@@ -151,6 +228,15 @@ public class AppointmentService {
         return AppointmentResponse.from(saved);
     }
 
+    /**
+     * Marks an appointment as completed (transitions to COMPLETED status).
+     *
+     * <p>Publishes {@link AppointmentCompletedEvent} for async notification delivery.</p>
+     *
+     * @param tenantId      the tenant identifier
+     * @param appointmentId the appointment to complete
+     * @return the completed appointment
+     */
     @Transactional
     public AppointmentResponse completeAppointment(Long tenantId, Long appointmentId) {
         Appointment appointment = findOrThrow(tenantId, appointmentId);

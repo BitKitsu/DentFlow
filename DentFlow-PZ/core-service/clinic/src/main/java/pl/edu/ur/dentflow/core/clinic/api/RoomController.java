@@ -10,6 +10,25 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST controller managing dental rooms in the DentFlow system.
+ *
+ * <p>Rooms represent physical treatment rooms within a clinic location.
+ * Staff members (dentists) can be assigned to rooms to indicate which
+ * rooms they typically work in.</p>
+ *
+ * <p>Endpoints:
+ * <ul>
+ *   <li>GET /tenants/{tenantId}/rooms - list rooms</li>
+ *   <li>POST /tenants/{tenantId}/rooms - create a room (OWNER, RECEPTIONIST)</li>
+ *   <li>PUT /tenants/{tenantId}/rooms/{roomId} - update a room (OWNER, RECEPTIONIST)</li>
+ *   <li>DELETE /tenants/{tenantId}/rooms/{roomId} - delete a room (OWNER only)</li>
+ *   <li>POST /tenants/{tenantId}/rooms/{roomId}/staff/{staffId} - assign staff</li>
+ *   <li>DELETE /tenants/{tenantId}/rooms/{roomId}/staff/{staffId} - remove staff</li>
+ * </ul>
+ *
+ * @see pl.edu.ur.dentflow.core.clinic.application.RoomService
+ */
 @RestController
 @RequestMapping("/tenants/{tenantId}/rooms")
 @Tag(name = "Rooms", description = "Room management in clinic")

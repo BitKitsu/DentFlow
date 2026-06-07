@@ -12,6 +12,19 @@ import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
+/**
+ * REST controller providing patient visit history.
+ *
+ * <p>Endpoints:
+ * <ul>
+ *   <li>GET /tenants/{tenantId}/patients/{patientId}/visits - JSON visit history</li>
+ *   <li>GET /tenants/{tenantId}/patients/{patientId}/visits/pdf - PDF visit history</li>
+ * </ul>
+ *
+ * <p>Optional status parameter filters by SCHEDULED, COMPLETED, or CANCELLED.</p>
+ *
+ * @see pl.edu.ur.dentflow.core.reservation.application.PatientVisitHistoryService
+ */
 @RestController
 @RequestMapping("/tenants/{tenantId}/patients/{patientId}/visits")
 public class PatientVisitHistoryController {

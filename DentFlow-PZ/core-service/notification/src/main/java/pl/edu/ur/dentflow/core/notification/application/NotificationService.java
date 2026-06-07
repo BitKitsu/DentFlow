@@ -40,6 +40,14 @@ public class NotificationService {
         this.notificationRepository = notificationRepository;
     }
 
+    /**
+     * Returns notifications for a user, optionally filtered to unread only.
+     *
+     * @param tenantId   the tenant identifier
+     * @param userId     the user to fetch notifications for
+     * @param unreadOnly if true, only return unread notifications
+     * @return list of notifications ordered by creation time descending
+     */
     public List<NotificationResponse> getUserNotifications(Long tenantId, Long userId, boolean unreadOnly) {
         List<Notification> notifications;
         if (unreadOnly) {
@@ -50,10 +58,24 @@ public class NotificationService {
         return notifications.stream().map(NotificationResponse::from).toList();
     }
 
+    /**
+     * Counts unread notifications for a user.
+     *
+     * @param tenantId the tenant identifier
+     * @param userId   the user to count for
+     * @return the number of unread notifications
+     */
     public long getUnreadCount(Long tenantId, Long userId) {
         return notificationRepository.countByTenantIdAndUserIdAndReadFalse(tenantId, userId);
     }
 
+    /**
+     * Creates a new in-app notification.
+     *
+     * @param tenantId the tenant identifier
+     * @param request  the notification payload
+     * @return the created notification
+     */
     @Transactional
     public NotificationResponse createNotification(Long tenantId, CreateNotificationRequest request) {
         Notification notification = Notification.builder()
@@ -65,6 +87,14 @@ public class NotificationService {
         return NotificationResponse.from(notificationRepository.save(notification));
     }
 
+    /**
+     * Marks a single notification as read.
+     *
+     * @param tenantId       the tenant identifier
+     * @param notificationId the notification to mark
+     * @return the updated notification
+     * @throws ResponseStatusException 404 if notification not found
+     */
     @Transactional
     public NotificationResponse markAsRead(Long tenantId, Long notificationId) {
         Notification notification = notificationRepository.findByIdAndTenantId(notificationId, tenantId)
@@ -74,6 +104,12 @@ public class NotificationService {
         return NotificationResponse.from(notificationRepository.save(notification));
     }
 
+    /**
+     * Marks all unread notifications for a user as read.
+     *
+     * @param tenantId the tenant identifier
+     * @param userId   the user whose notifications to mark
+     */
     @Transactional
     public void markAllAsRead(Long tenantId, Long userId) {
         List<Notification> unread = notificationRepository.findByTenantIdAndUserIdAndReadFalseOrderByCreatedAtDesc(tenantId, userId);

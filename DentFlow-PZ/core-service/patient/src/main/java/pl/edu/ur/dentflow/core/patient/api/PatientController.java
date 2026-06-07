@@ -12,6 +12,25 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST controller managing patients in the DentFlow system.
+ *
+ * <p>Patient records are linked to identity users via the userId field.
+ * The /ensure endpoint automatically creates a patient record when a user
+ * first accesses patient-related functionality.</p>
+ *
+ * <p>Endpoints:
+ * <ul>
+ *   <li>GET /tenants/{tenantId}/patients - list/search patients (OWNER, DENTIST, ASSISTANT)</li>
+ *   <li>GET /tenants/{tenantId}/patients/{id} - get patient details</li>
+ *   <li>POST /tenants/{tenantId}/patients - add patient (OWNER, DENTIST)</li>
+ *   <li>PUT /tenants/{tenantId}/patients/{id} - update patient (OWNER, DENTIST)</li>
+ *   <li>DELETE /tenants/{tenantId}/patients/{id} - delete patient (OWNER only)</li>
+ *   <li>POST /tenants/{tenantId}/patients/ensure - find or create patient for user</li>
+ * </ul>
+ *
+ * @see pl.edu.ur.dentflow.core.patient.application.PatientService
+ */
 @RestController
 @RequestMapping("/tenants/{tenantId}/patients")
 @Tag(name = "Patients", description = "Patient management")

@@ -13,6 +13,28 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST controller managing staff members in the DentFlow system.
+ *
+ * <p>Staff members represent employees (dentists, assistants, receptionists)
+ * within a clinic. Each staff member is linked to an identity user via userId
+ * and has a role that determines their permissions.</p>
+ *
+ * <p>Endpoints:
+ * <ul>
+ *   <li>GET /tenants/{tenantId}/staff - list staff members</li>
+ *   <li>GET /tenants/{tenantId}/staff/{staffId} - staff member details</li>
+ *   <li>POST /tenants/{tenantId}/staff - add staff member (OWNER only)</li>
+ *   <li>PUT /tenants/{tenantId}/staff/{staffId} - update staff member (OWNER only)</li>
+ *   <li>DELETE /tenants/{tenantId}/staff/{staffId} - delete staff member (OWNER only)</li>
+ *   <li>POST /tenants/{tenantId}/staff/sync-from-user - sync profile data</li>
+ *   <li>GET /tenants/{tenantId}/staff/{staffId}/working-hours - get working hours</li>
+ *   <li>PUT /tenants/{tenantId}/staff/{staffId}/working-hours - update working hours</li>
+ * </ul>
+ *
+ * @see pl.edu.ur.dentflow.core.clinic.application.StaffMemberService
+ * @see pl.edu.ur.dentflow.core.clinic.application.StaffWorkingHoursService
+ */
 @RestController
 @RequestMapping("/tenants/{tenantId}/staff")
 @Tag(name = "Staff", description = "Staff management in clinic")

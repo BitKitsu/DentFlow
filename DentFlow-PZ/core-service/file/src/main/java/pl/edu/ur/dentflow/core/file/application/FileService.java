@@ -48,8 +48,16 @@ public class FileService {
     }
 
     /**
-     * Uploads file to S3 and saves metadata to database
-     * Returns file public url
+     * Uploads file to S3 and saves metadata to database.
+     * Returns file public url.
+     *
+     * @param tenantId       the tenant identifier (nullable for global files)
+     * @param uploadedByUserId the user uploading the file
+     * @param file           the multipart file (max 10 MB)
+     * @return the created file metadata response
+     * @throws ResponseStatusException 400 if file is empty
+     * @throws ResponseStatusException 413 if file exceeds 10 MB
+     * @throws ResponseStatusException 502 if S3 upload fails
      */
     public FileUploadResponse uploadFile(Long tenantId, Long uploadedByUserId, MultipartFile file) {
         if (file.isEmpty()) {
@@ -108,13 +116,27 @@ public class FileService {
     }
 
     /**
-     * Downloads file from S3 as bytes
+     * Downloads file from S3 as bytes.
+     *
+     * @param tenantId the tenant identifier
+     * @param fileId   the file to download
+     * @return the file content as byte array
+     * @throws ResponseStatusException 404 if file not found
+     * @throws ResponseStatusException 502 if S3 download fails
      */
     public byte[] downloadFile(Long tenantId, Long fileId) {
         FileMetadata metadata = findOrThrow(tenantId, fileId);
         return downloadFileBytes(metadata);
     }
 
+    /**
+     * Downloads file bytes from S3 using metadata.
+     *
+     * @param metadata the file metadata entity
+     * @return the file content as byte array
+     * @throws ResponseStatusException 404 if file does not exist in S3
+     * @throws ResponseStatusException 502 if S3 download fails
+     */
     public byte[] downloadFileBytes(FileMetadata metadata) {
         try {
             GetObjectRequest getRequest = GetObjectRequest.builder()
@@ -132,6 +154,12 @@ public class FileService {
         }
     }
 
+    /**
+     * Lists all files for a tenant (or global files if tenantId is null).
+     *
+     * @param tenantId the tenant identifier (nullable for global files)
+     * @return list of file metadata responses
+     */
     public List<FileUploadResponse> listFiles(Long tenantId) {
         Long actualTenantId = (tenantId != null && tenantId > 0) ? tenantId : null;
         List<FileMetadata> files = actualTenantId == null
@@ -143,6 +171,14 @@ public class FileService {
                 .toList();
     }
 
+    /**
+     * Deletes file from S3 and removes metadata from database.
+     *
+     * @param tenantId the tenant identifier
+     * @param fileId   the file to delete
+     * @throws ResponseStatusException 404 if file not found
+     * @throws ResponseStatusException 502 if S3 deletion fails
+     */
     public void deleteFile(Long tenantId, Long fileId) {
         FileMetadata metadata = findOrThrow(tenantId, fileId);
 
@@ -160,10 +196,25 @@ public class FileService {
         fileMetadataRepository.delete(metadata);
     }
 
+    /**
+     * Returns file metadata response for a given file.
+     *
+     * @param tenantId the tenant identifier
+     * @param fileId   the file identifier
+     * @return the file metadata response
+     * @throws ResponseStatusException 404 if file not found
+     */
     public FileUploadResponse getFileMetadata(Long tenantId, Long fileId) {
         return toResponse(findOrThrow(tenantId, fileId));
     }
 
+    /**
+     * Returns file metadata entity by ID (no tenant filtering).
+     *
+     * @param fileId the file identifier
+     * @return the file metadata entity
+     * @throws ResponseStatusException 404 if file not found
+     */
     public FileMetadata getFileMetadataEntity(Long fileId) {
         return fileMetadataRepository.findById(fileId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plik nie istnieje"));

@@ -9,6 +9,22 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST controller managing schedule blockers in the DentFlow system.
+ *
+ * <p>Blockers represent time periods when a dentist is unavailable
+ * (e.g., vacation, sick leave, lunch break). The system uses blockers
+ * to prevent appointment booking during blocked periods.</p>
+ *
+ * <p>Endpoints:
+ * <ul>
+ *   <li>GET /tenants/{tenantId}/schedule/blockers - list all blockers</li>
+ *   <li>POST /tenants/{tenantId}/schedule/blockers - add a blocker (OWNER, DENTIST)</li>
+ *   <li>DELETE /tenants/{tenantId}/schedule/blockers/{blockerId} - delete a blocker (OWNER, DENTIST)</li>
+ * </ul>
+ *
+ * @see pl.edu.ur.dentflow.core.scheduling.application.SchedulingService
+ */
 @RestController
 @RequestMapping("/tenants/{tenantId}/schedule")
 public class SchedulingController {

@@ -48,9 +48,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 User user = userRepository.findByEmail(email).orElse(null);
                 if (user == null) {
-                    log.warn("Nie znaleziono użytkownika z tokenu JWT - email: {}", email);
+                    log.warn("User not found from JWT token - email: {}", email);
                 } else if (!jwtService.isTokenValid(token, email)) {
-                    log.warn("Nieprawidłowy lub wygasły token JWT dla email: {}", email);
+                    log.warn("Invalid or expired JWT token for email: {}", email);
                 } else {
                     List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
                             .map(r -> new SimpleGrantedAuthority("ROLE_" + r.getRole().name()))
@@ -60,11 +60,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             new UsernamePasswordAuthenticationToken(email, null, authorities);
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
-                    log.info("Uwierzytelnienie JWT pomyślne - email: {}, role: {}", email, authorities);
+                    log.info("JWT authentication successful - email: {}, roles: {}", email, authorities);
                 }
             }
         } catch (Exception e) {
-            log.error("Błąd podczas przetwarzania tokenu JWT: {}", e.getMessage());
+            log.error("Error processing JWT token: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);

@@ -15,6 +15,24 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * JWT filter that verifies authorization tokens in HTTP requests.
+ *
+ * <p>Filtering occurs at the request level (OncePerRequestFilter).
+ * The token is retrieved from the {@code Authorization: Bearer <token>} header.</p>
+ *
+ * <p>Data extracted from the token:
+ * <ul>
+ *   <li>email (subject) - user identifier</li>
+ *   <li>userId (claim) - user ID in database</li>
+ *   <li>roles (claim) - list of user roles</li>
+ * </ul>
+ *
+ * <p>The created Authentication is saved in SecurityContext as
+ * UsernamePasswordAuthenticationToken with authorities in ROLE_{role} format.</p>
+ *
+ * @see pl.edu.ur.dentflow.core.security.JwtService
+ */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -58,7 +76,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         } catch (Exception ignored) {
-            // nieprawidłowy token - request przejdzie jako anonimowy
+            // invalid token - request will proceed as anonymous
         }
 
         filterChain.doFilter(request, response);

@@ -18,6 +18,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * Service responsible for user authentication and authorization.
+ * Handles registration, login, role assignment, profile management,
+ * and JWT token generation.
+ *
+ * <p>Business logic:
+ * <ul>
+ *   <li>Registration creates an account with PATIENT role and tenantId=0 (clinic assignment is separate)</li>
+ *   <li>Login verifies account status, password (BCrypt) and generates JWT token</li>
+ *   <li>Password is validated before persistence by PasswordEncoder</li>
+ * </ul>
+ *
+ * @see pl.edu.ur.dentflow.identity.security.JwtService
+ * @see pl.edu.ur.dentflow.identity.user.infrastructure.UserRepository
+ */
 @Service
 public class AuthService {
 
@@ -46,7 +61,7 @@ public class AuthService {
         if (userRepository.existsByEmail(request.email())) {
             log.warn("Registration attempt with existing email: {}", request.email());
             throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Użytkownik z tym adresem email już istnieje");
+                    "A user with this email already exists");
         }
 
         User user = User.builder()
@@ -88,19 +103,19 @@ public class AuthService {
                 .orElseThrow(() -> {
                     log.error("Login failed – user not found: {}", request.email());
                     return new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                            "Nieprawidłowy email lub hasło");
+                            "Invalid email or password");
                 });
 
         if (!"ACTIVE".equals(user.getStatus())) {
             log.warn("Login attempt on inactive account - userId: {}, status: {}",
                     user.getId(), user.getStatus());
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Konto jest nieaktywne");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account is inactive");
         }
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             log.error("Login failed – wrong password for email: {}", request.email());
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                    "Nieprawidłowy email lub hasło");
+                    "Invalid email or password");
         }
 
         String token = jwtService.generateToken(user);
@@ -116,7 +131,7 @@ public class AuthService {
     public AuthResponse assignTenantToCurrentUser(String email, Long tenantId) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Użytkownik nie istnieje"));
+                        "User does not exist"));
         user.setTenantId(tenantId);
         User saved = userRepository.save(user);
         String token = jwtService.generateToken(saved);
@@ -131,10 +146,10 @@ public class AuthService {
     public void changePassword(String email, ChangePasswordRequest request) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Użytkownik nie istnieje"));
+                        "User does not exist"));
 
         if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Obecne hasło jest nieprawidłowe");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Current password is incorrect");
         }
 
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
@@ -150,7 +165,7 @@ public class AuthService {
     public AuthResponse updateProfile(String currentEmail, UpdateProfileRequest request) {
         User user = userRepository.findByEmail(currentEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Użytkownik nie istnieje"));
+                        "User does not exist"));
 
         if (request.firstName()     != null) user.setFirstName(request.firstName());
         if (request.lastName()      != null) user.setLastName(request.lastName());
@@ -164,7 +179,7 @@ public class AuthService {
         if (request.email() != null && !request.email().equalsIgnoreCase(currentEmail)) {
             if (userRepository.existsByEmail(request.email())) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT,
-                        "Podany adres e-mail jest już zajęty");
+                        "The provided email address is already taken");
             }
             user.setEmail(request.email());
         }
@@ -184,7 +199,7 @@ public class AuthService {
     public void deleteAccount(String currentEmail) {
         User user = userRepository.findByEmail(currentEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Użytkownik nie istnieje"));
+                        "User does not exist"));
         userRepository.delete(user);
         log.info("Account deleted for userId: {}", user.getId());
     }
@@ -196,14 +211,14 @@ public class AuthService {
     public Long getUserIdByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Użytkownik nie istnieje"));
+                        "User does not exist"));
         return user.getId();
     }
 
     public AuthResponse getUserByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Użytkownik nie istnieje"));
+                        "User does not exist"));
         String token = jwtService.generateToken(user);
         return toAuthResponse(token, user);
     }
@@ -216,7 +231,7 @@ public class AuthService {
     public AuthResponse assignRoleToUser(Long userId, Role role) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Użytkownik nie istnieje"));
+                        "User does not exist"));
         
         // Check if user already has this role
         boolean hasRole = user.getRoles().stream()

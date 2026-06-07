@@ -17,9 +17,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Rate limiting filter dla endpointu /auth/login.
- * Ogranicza maksymalnie 10 prób logowania na minutę per adres IP.
- * Przy przekroczeniu limitu zwraca HTTP 429 Too Many Requests.
+ * Rate limiting filter for the /auth/login endpoint.
+ * Limits to maximum 10 login attempts per minute per IP address.
+ * Returns HTTP 429 Too Many Requests when limit is exceeded.
  */
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
@@ -45,7 +45,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
                 response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
                 response.setContentType("application/json");
                 response.getWriter().write(
-                    "{\"error\": \"Za dużo prób logowania. Spróbuj ponownie za minutę.\"}");
+                    "{\"error\": \"Too many login attempts. Please try again in a minute.\"}");
                 return;
             }
         }

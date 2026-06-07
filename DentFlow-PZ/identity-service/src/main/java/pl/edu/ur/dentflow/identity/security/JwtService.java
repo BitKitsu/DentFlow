@@ -16,6 +16,24 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Service for generating and validating JWT (JSON Web Token) tokens.
+ * Token contains email, userId, tenantId and user roles.
+ *
+ * <p>Configuration:
+ * <ul>
+ *   <li>Signing key from {@link JwtProperties#secret}</li>
+ *   <li>Expiration time from {@link JwtProperties#expiration}</li>
+ * </ul>
+ *
+ * <p>JWT token structure:
+ * <pre>
+ *   subject: user email
+ *   claims:  userId, tenantId, roles (list of roles)
+ * </pre>
+ *
+ * @see pl.edu.ur.dentflow.identity.security.JwtProperties
+ */
 @Service
 public class JwtService {
 
@@ -32,7 +50,7 @@ public class JwtService {
                 .map(r -> r.getRole().name())
                 .toList();
 
-        log.info("Generowanie tokenu JWT dla użytkownika - email: {}, role: {}", user.getEmail(), roles);
+        log.info("Generating JWT token for user - email: {}, roles: {}", user.getEmail(), roles);
 
         String token = Jwts.builder()
                 .subject(user.getEmail())
@@ -44,7 +62,7 @@ public class JwtService {
                 .signWith(getSigningKey())
                 .compact();
 
-        log.info("Token JWT wygenerowany pomyślnie dla email: {}", user.getEmail());
+        log.info("JWT token generated successfully for email: {}", user.getEmail());
         return token;
     }
 
@@ -65,14 +83,14 @@ public class JwtService {
             String tokenEmail = extractEmail(token);
             boolean valid = tokenEmail.equals(email) && !isTokenExpired(token);
             if (!valid) {
-                log.warn("Token JWT nieprawidłowy dla email: {}", email);
+                log.warn("Invalid JWT token for email: {}", email);
             }
             return valid;
         } catch (ExpiredJwtException e) {
-            log.error("Token JWT wygasł dla email: {}", email);
+            log.error("JWT token expired for email: {}", email);
             return false;
         } catch (Exception e) {
-            log.error("Błąd walidacji tokenu JWT dla email: {} - {}", email, e.getMessage());
+            log.error("JWT token validation error for email: {} - {}", email, e.getMessage());
             return false;
         }
     }

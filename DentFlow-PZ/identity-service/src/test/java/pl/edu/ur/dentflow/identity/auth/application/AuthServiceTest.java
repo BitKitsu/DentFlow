@@ -99,7 +99,7 @@ class AuthServiceTest {
         // when & then
         assertThatThrownBy(() -> authService.register(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("już istnieje");
+                .hasMessageContaining("already exists");
                 
         verify(userRepository, never()).save(any(User.class));
     }
@@ -131,7 +131,7 @@ class AuthServiceTest {
         // when & then
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Nieprawidłowy email lub hasło");
+                .hasMessageContaining("Invalid email or password");
     }
 
     @Test
@@ -144,7 +144,7 @@ class AuthServiceTest {
         // when & then
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Nieprawidłowy email lub hasło");
+                .hasMessageContaining("Invalid email or password");
     }
 
     @Test

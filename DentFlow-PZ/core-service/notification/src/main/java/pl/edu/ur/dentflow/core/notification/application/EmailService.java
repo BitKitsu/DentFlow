@@ -13,10 +13,10 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Serwis wysyłający emaile przez SendGrid (via Spring Mail + SMTP).
+ * Service for sending emails via SendGrid (using Spring Mail + SMTP).
  * SCRUM-65
  *
- * Konfiguracja w application.yml:
+ * Configuration in application.yml:
  * spring.mail.host: smtp.sendgrid.net
  * spring.mail.port: 587
  * spring.mail.username: apikey
@@ -38,14 +38,14 @@ public class EmailService {
     }
 
     /**
-     * Wysyła potwierdzenie rezerwacji do pacjenta.
+     * Sends appointment confirmation to the patient.
      *
-     * @param toEmail     adres email pacjenta
-     * @param patientName imię i nazwisko pacjenta
-     * @param clinicName  nazwa gabinetu
-     * @param dentistName imię i nazwisko lekarza
-     * @param startAt     termin wizyty
-     * @param location    nazwa lokalizacji
+     * @param toEmail     patient email address
+     * @param patientName patient full name
+     * @param clinicName  clinic name
+     * @param dentistName dentist full name
+     * @param startAt     appointment date and time
+     * @param location    location name
      */
     public void sendAppointmentConfirmation(String toEmail,
             String patientName,
@@ -56,18 +56,18 @@ public class EmailService {
         String subject = "Potwierdzenie wizyty – " + clinicName;
         String body = buildConfirmationBody(patientName, clinicName, dentistName, startAt, location);
         sendEmail(toEmail, subject, body);
-        log.info("Potwierdzenie wizyty wysłane na adres: {}", toEmail);
+        log.info("Appointment confirmation sent to: {}", toEmail);
     }
 
     /**
-     * Wysyła przypomnienie o wizycie (np. 24h przed terminem).
+     * Sends appointment reminder (e.g. 24h before the appointment).
      *
-     * @param toEmail     adres email pacjenta
-     * @param patientName imię i nazwisko pacjenta
-     * @param clinicName  nazwa gabinetu
-     * @param dentistName imię i nazwisko lekarza
-     * @param startAt     termin wizyty
-     * @param location    nazwa lokalizacji
+     * @param toEmail     patient email address
+     * @param patientName patient full name
+     * @param clinicName  clinic name
+     * @param dentistName dentist full name
+     * @param startAt     appointment date and time
+     * @param location    location name
      */
     public void sendAppointmentReminder(String toEmail,
             String patientName,
@@ -78,11 +78,11 @@ public class EmailService {
         String subject = "Przypomnienie o wizycie – " + startAt.format(FORMATTER);
         String body = buildReminderBody(patientName, clinicName, dentistName, startAt, location);
         sendEmail(toEmail, subject, body);
-        log.info("Przypomnienie o wizycie wysłane na adres: {}", toEmail);
+        log.info("Appointment reminder sent to: {}", toEmail);
     }
 
     /**
-     * Wysyła powiadomienie o anulowaniu wizyty.
+     * Sends appointment cancellation notification.
      */
     public void sendAppointmentCancellation(String toEmail,
             String patientName,
@@ -91,7 +91,7 @@ public class EmailService {
         String subject = "Anulowanie wizyty – " + clinicName;
         String body = buildCancellationBody(patientName, clinicName, startAt);
         sendEmail(toEmail, subject, body);
-        log.info("Powiadomienie o anulowaniu wizyty wysłane na adres: {}", toEmail);
+        log.info("Appointment cancellation notification sent to: {}", toEmail);
     }
 
     // private helpers
@@ -106,9 +106,8 @@ public class EmailService {
             helper.setText(htmlBody, true);
             mailSender.send(message);
         } catch (MessagingException e) {
-            log.error("Błąd wysyłania emaila na adres {}: {}", to, e.getMessage());
-            // Nie rzucamy wyjątku – email jest funkcją pomocniczą, nie blokuje głównej
-            // logiki
+            log.error("Error sending email to {}: {}", to, e.getMessage());
+            // We do not throw - email is a helper function, not blocking main logic
         }
     }
 

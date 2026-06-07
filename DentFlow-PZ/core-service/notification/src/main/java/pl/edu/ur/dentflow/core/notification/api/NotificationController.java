@@ -8,6 +8,20 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST controller managing in-app notifications in the DentFlow system.
+ *
+ * <p>Endpoints:
+ * <ul>
+ *   <li>GET /tenants/{tenantId}/users/{userId}/notifications - list notifications</li>
+ *   <li>GET /tenants/{tenantId}/users/{userId}/notifications/unread-count - unread count</li>
+ *   <li>POST /tenants/{tenantId}/users/{userId}/notifications - create notification</li>
+ *   <li>POST /tenants/{tenantId}/users/{userId}/notifications/{id}/read - mark as read</li>
+ *   <li>POST /tenants/{tenantId}/users/{userId}/notifications/read-all - mark all as read</li>
+ * </ul>
+ *
+ * @see pl.edu.ur.dentflow.core.notification.application.NotificationService
+ */
 @RestController
 @RequestMapping("/tenants/{tenantId}/users/{userId}/notifications")
 public class NotificationController {

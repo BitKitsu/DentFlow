@@ -1,4 +1,4 @@
 /**
- * Moduł Clinic - zarządzanie gabinetami, lokalizacjami, personelem i zasobami.
+ * Module Clinic - clinic management, locations, staff, and resources.
  */
 package pl.edu.ur.dentflow.core.clinic;

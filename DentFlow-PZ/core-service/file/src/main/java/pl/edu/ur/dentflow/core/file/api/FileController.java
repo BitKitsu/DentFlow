@@ -11,14 +11,14 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 /**
- * Endpointy zarządzania plikami z integracją Supabase Storage.
+ * File management endpoints with Supabase Storage integration.
  * SCRUM-64
  *
- * POST   /tenants/{tenantId}/files              – upload pliku
- * GET    /tenants/{tenantId}/files              – lista plików
- * GET    /tenants/{tenantId}/files/{fileId}     – metadane pliku
- * GET    /tenants/{tenantId}/files/{fileId}/download – pobierz plik
- * DELETE /tenants/{tenantId}/files/{fileId}     – usuń plik
+ * POST   /tenants/{tenantId}/files              – upload file
+ * GET    /tenants/{tenantId}/files              – file list
+ * GET    /tenants/{tenantId}/files/{fileId}     – file metadata
+ * GET    /tenants/{tenantId}/files/{fileId}/download – download file
+ * DELETE /tenants/{tenantId}/files/{fileId}     – delete file
  */
 @RestController
 @RequestMapping("/tenants/{tenantId}/files")

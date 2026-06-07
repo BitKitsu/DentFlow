@@ -1,4 +1,4 @@
 /**
- * Moduł Scheduling - grafiki pracy, dostępność slotów, blokady (urlopy, przerwy).
+ * Module Scheduling - work schedules, slot availability, blocks (vacations, breaks).
  */
 package pl.edu.ur.dentflow.core.scheduling;

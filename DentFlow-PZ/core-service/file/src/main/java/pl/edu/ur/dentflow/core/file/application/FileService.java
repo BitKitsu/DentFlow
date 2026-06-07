@@ -53,11 +53,11 @@ public class FileService {
      */
     public FileUploadResponse uploadFile(Long tenantId, Long uploadedByUserId, MultipartFile file) {
         if (file.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Plik jest pusty");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is empty");
         }
         if (file.getSize() > MAX_FILE_SIZE) {
             throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE,
-                    "Plik przekracza maksymalny rozmiar 10 MB");
+                    "File exceeds maximum size of 10 MB");
         }
 
         String extension = "";
@@ -83,10 +83,10 @@ public class FileService {
 
         } catch (IOException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Nie można odczytać danych pliku: " + e.getMessage());
+                    "Cannot read file data: " + e.getMessage());
         } catch (S3Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                    "Błąd przesyłania pliku do S3: " + e.getMessage());
+                    "Error uploading file to S3: " + e.getMessage());
         }
 
         // Public_url is set after save
@@ -125,10 +125,10 @@ public class FileService {
             return s3Client.getObjectAsBytes(getRequest).asByteArray();
 
         } catch (NoSuchKeyException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Plik nie istnieje w storage");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File does not exist in storage");
         } catch (S3Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                    "Błąd pobierania pliku z S3: " + e.getMessage());
+                    "Error downloading file from S3: " + e.getMessage());
         }
     }
 
@@ -154,7 +154,7 @@ public class FileService {
             s3Client.deleteObject(deleteRequest);
         } catch (S3Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-                    "Błąd usuwania pliku z S3: " + e.getMessage());
+                    "Error deleting file from S3: " + e.getMessage());
         }
 
         fileMetadataRepository.delete(metadata);
@@ -175,7 +175,7 @@ public class FileService {
         Long actualTenantId = (tenantId != null && tenantId > 0) ? tenantId : null;
         if (actualTenantId == null) {
             return fileMetadataRepository.findById(fileId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Plik nie istnieje"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "File does not exist"));
         }
         return fileMetadataRepository.findByIdAndTenantId(fileId, actualTenantId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,

@@ -14,7 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/tenants/{tenantId}/patients")
-@Tag(name = "Patients", description = "Zarządzanie pacjentami")
+@Tag(name = "Patients", description = "Patient management")
 @SecurityRequirement(name = "bearerAuth")
 public class PatientController {
 
@@ -25,8 +25,8 @@ public class PatientController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
-    @Operation(summary = "Lista pacjentów lub wyszukiwanie po imieniu/nazwisku/telefonie")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST', 'ASSISTANT')")
+    @Operation(summary = "List patients or search by name/phone")
     public ResponseEntity<List<PatientResponse>> getPatients(
             @PathVariable Long tenantId,
             @RequestParam(required = false) String search) {
@@ -34,7 +34,7 @@ public class PatientController {
     }
 
     @GetMapping("/{patientId}")
-    @Operation(summary = "Pobranie pacjenta")
+    @Operation(summary = "Get patient")
     public ResponseEntity<PatientResponse> getPatient(
             @PathVariable Long tenantId,
             @PathVariable Long patientId) {
@@ -42,8 +42,8 @@ public class PatientController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
-    @Operation(summary = "Dodanie pacjenta")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST')")
+    @Operation(summary = "Add patient")
     public ResponseEntity<PatientResponse> addPatient(
             @PathVariable Long tenantId,
             @Valid @RequestBody CreatePatientRequest request) {
@@ -52,8 +52,8 @@ public class PatientController {
     }
 
     @PutMapping("/{patientId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
-    @Operation(summary = "Aktualizacja pacjenta")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST')")
+    @Operation(summary = "Update patient")
     public ResponseEntity<PatientResponse> updatePatient(
             @PathVariable Long tenantId,
             @PathVariable Long patientId,
@@ -62,12 +62,23 @@ public class PatientController {
     }
 
     @DeleteMapping("/{patientId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER')")
-    @Operation(summary = "Usunięcie pacjenta")
+    @PreAuthorize("hasRole('OWNER')")
+    @Operation(summary = "Delete patient")
     public ResponseEntity<Void> deletePatient(
             @PathVariable Long tenantId,
             @PathVariable Long patientId) {
         patientService.deletePatient(tenantId, patientId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/ensure")
+    @Operation(summary = "Find or create patient record for a user")
+    public ResponseEntity<PatientResponse> ensurePatient(
+            @PathVariable Long tenantId,
+            @RequestParam Long userId,
+            @RequestParam(defaultValue = "") String firstName,
+            @RequestParam(defaultValue = "") String lastName,
+            @RequestParam(defaultValue = "") String email) {
+        return ResponseEntity.ok(patientService.ensurePatientForUser(tenantId, userId, firstName, lastName, email));
     }
 }

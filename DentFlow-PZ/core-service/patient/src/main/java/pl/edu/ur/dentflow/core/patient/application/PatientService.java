@@ -12,6 +12,18 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+/**
+ * Service managing patient data in the DentFlow system.
+ * Handles CRUD operations and patient search within a clinic (tenant).
+ *
+ * <p>Patients are associated with user accounts (optionally) and assigned
+ * to a specific clinic (tenant) via tenantId.</p>
+ *
+ * <p>Search is performed by first name, last name, email or phone number.</p>
+ *
+ * @see pl.edu.ur.dentflow.core.patient.domain.Patient
+ * @see pl.edu.ur.dentflow.core.patient.infrastructure.PatientRepository
+ */
 @Service
 public class PatientService {
 
@@ -92,5 +104,21 @@ public class PatientService {
         Patient patient = patientRepository.findByIdAndTenantId(patientId, tenantId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pacjent nie istnieje"));
         patientRepository.delete(patient);
+    }
+
+    @Transactional
+    public PatientResponse ensurePatientForUser(Long tenantId, Long userId, String firstName, String lastName, String email) {
+        return patientRepository.findByTenantIdAndUserId(tenantId, userId)
+                .map(PatientResponse::from)
+                .orElseGet(() -> {
+                    Patient patient = Patient.builder()
+                            .tenantId(tenantId)
+                            .userId(userId)
+                            .firstName(firstName)
+                            .lastName(lastName)
+                            .email(email)
+                            .build();
+                    return PatientResponse.from(patientRepository.save(patient));
+                });
     }
 }

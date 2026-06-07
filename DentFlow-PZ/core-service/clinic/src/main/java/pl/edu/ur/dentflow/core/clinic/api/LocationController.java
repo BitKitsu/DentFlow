@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/tenants/{tenantId}/locations")
-@Tag(name = "Locations", description = "Zarządzanie lokalizacjami gabinetu (stub)")
+@Tag(name = "Locations", description = "Clinic location management (stub)")
 @SecurityRequirement(name = "bearerAuth")
 public class LocationController {
 
@@ -56,7 +56,7 @@ public class LocationController {
     }
 
     @DeleteMapping("/{locationId}")
-    @Operation(summary = "[stub] Usunięcie lokalizacji")
+    @Operation(summary = "[stub] Delete location")
     public ResponseEntity<Void> deleteLocation(
             @PathVariable Long tenantId,
             @PathVariable Long locationId) {

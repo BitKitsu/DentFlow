@@ -21,8 +21,8 @@ public class CatalogController {
 
     /**
      * GET /tenants/{tenantId}/catalog
-     * Zwraca wszystkie usługi (aktywne i nieaktywne).
-     * Opcjonalny parametr ?activeOnly=true zwraca tylko aktywne.
+     * Returns all services (active and inactive).
+     * Optional parameter ?activeOnly=true returns only active ones.
      */
     @GetMapping
     public ResponseEntity<List<ServiceCatalogItemDTO>> getServices(
@@ -36,7 +36,7 @@ public class CatalogController {
 
     /**
      * GET /tenants/{tenantId}/catalog/{id}
-     * Zwraca pojedynczą usługę po id.
+     * Returns a single service by id.
      */
     @GetMapping("/{id}")
     public ResponseEntity<ServiceCatalogItemDTO> getService(
@@ -47,10 +47,10 @@ public class CatalogController {
 
     /**
      * POST /tenants/{tenantId}/catalog
-     * Tworzy nową pozycję w cenniku.
+     * Creates a new catalog item.
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST')")
     public ResponseEntity<ServiceCatalogItemDTO> createService(
             @PathVariable Long tenantId,
             @Valid @RequestBody CreateServiceCatalogItemRequest request) {
@@ -60,10 +60,10 @@ public class CatalogController {
 
     /**
      * PUT /tenants/{tenantId}/catalog/{id}
-     * Aktualizuje istniejącą pozycję w cenniku.
+     * Updates an existing catalog item.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST')")
     public ResponseEntity<ServiceCatalogItemDTO> updateService(
             @PathVariable Long tenantId,
             @PathVariable Long id,
@@ -73,10 +73,10 @@ public class CatalogController {
 
     /**
      * DELETE /tenants/{tenantId}/catalog/{id}
-     * Usuwa pozycję z cennika.
+     * Deletes a catalog item.
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST')")
     public ResponseEntity<Void> deleteService(
             @PathVariable Long tenantId,
             @PathVariable Long id) {

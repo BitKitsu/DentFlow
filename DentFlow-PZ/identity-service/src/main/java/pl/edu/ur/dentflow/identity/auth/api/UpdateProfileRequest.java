@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 
 /**
  * Partial update of the logged-in user's profile.
- * All fields are optional — only non-null values are applied.
+ * All fields are optional - only non-null values are applied.
  */
 public record UpdateProfileRequest(
         @Email String email,

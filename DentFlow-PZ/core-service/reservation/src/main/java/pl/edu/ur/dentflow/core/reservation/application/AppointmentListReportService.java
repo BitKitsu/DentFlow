@@ -8,6 +8,7 @@ import pl.edu.ur.dentflow.pdf.DentFlowPdfGenerator;
 import pl.edu.ur.dentflow.pdf.model.AppointmentListReportData;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
@@ -28,16 +29,17 @@ public class AppointmentListReportService {
         this.tenantRepository = tenantRepository;
     }
 
+    @Transactional(readOnly = true)
     public byte[] generateReport(Long tenantId, LocalDate from, LocalDate to,
                                  String status, Long dentistId) {
         if (to.isBefore(from)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Parametr 'to' musi być >= 'from'");
+                    "Parameter 'to' must be >= 'from'");
         }
 
         String clinicName = tenantRepository.findById(tenantId)
                 .map(Tenant::getName)
-                .orElse("Gabinet");
+                .orElse("Clinic");
 
         OffsetDateTime fromDt = from.atStartOfDay().atOffset(ZoneOffset.UTC);
         OffsetDateTime toDt   = to.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC);
@@ -59,7 +61,7 @@ public class AppointmentListReportService {
                 clinicName,
                 from,
                 to,
-                dentistId != null ? "Lekarz ID: " + dentistId : null,
+                dentistId != null ? "Dentist ID: " + dentistId : null,
                 null,
                 status,
                 appointmentRows
@@ -69,7 +71,7 @@ public class AppointmentListReportService {
             return pdfGenerator.generateAppointmentList(data);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Błąd generowania PDF: " + e.getMessage());
+                    "PDF generation error: " + e.getMessage());
         }
     }
 }

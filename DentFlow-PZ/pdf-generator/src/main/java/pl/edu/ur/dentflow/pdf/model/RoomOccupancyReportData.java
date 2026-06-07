@@ -3,23 +3,23 @@ package pl.edu.ur.dentflow.pdf.model;
 import java.util.List;
 
 /**
- * Parametry i dane dla Raportu 2: Obłożenie gabinetu.
+ * Parameters and data for Report 2: Room Occupancy.
  *
- * Zawartość PDF:
- * - Nagłówek: nazwa gabinetu, miesiąc/rok, opcjonalnie lokalizacja
- * - Wykres słupkowy (ASCII/tabela): liczba wizyt dziennie
- * - Tabela: Lekarz | Liczba wizyt | Liczba godzin pracy | % wykorzystania slotów
- * - Statystyki: średni czas wizyty, najpopularniejsze usługi, wskaźnik no-show
+ * PDF contents:
+ * - Header: clinic name, month/year, optional location
+ * - Bar chart (ASCII/table): daily appointment count
+ * - Table: Doctor | Appointment count | Working hours | Slot utilization %
+ * - Statistics: average appointment duration, most popular services, no-show rate
  */
 public record RoomOccupancyReportData(
         String clinicName,
         int month,
         int year,
-        String locationFilter,      // null = wszystkie lokalizacje
+        String locationFilter,      // null = all locations
         List<DailyStats> dailyStats,
         List<DoctorStats> doctorStats,
         double avgAppointmentMinutes,
-        List<String> topServices,   // top 3 najpopularniejsze usługi
+        List<String> topServices,   // top 3 most popular services
         double noShowRate           // procent no-show (0-100)
 ) {
     public record DailyStats(

@@ -3,12 +3,12 @@ package pl.edu.ur.dentflow.pdf.model;
 import java.util.List;
 
 /**
- * Parametry i dane dla Raportu 3: Historia wizyt pacjenta.
+ * Parameters and data for Report 3: Patient Visit History.
  *
- * Zawartość PDF:
- * - Dane pacjenta: imię, nazwisko, telefon, email
- * - Tabela wizyt: Data | Lekarz | Usługa | Status | Notatki
- * - Podsumowanie: łączna liczba wizyt, data ostatniej wizyty
+ * PDF contents:
+ * - Patient data: first name, last name, phone, email
+ * - Visit table: Date | Doctor | Service | Status | Notes
+ * - Summary: total visits, last visit date
  */
 public record PatientVisitHistoryReportData(
         String clinicName,
@@ -16,7 +16,7 @@ public record PatientVisitHistoryReportData(
         String patientLastName,
         String patientPhone,
         String patientEmail,
-        String dateRangeDescription,  // np. "Wszystkie" lub "01.01.2026 – 09.05.2026"
+        String dateRangeDescription,  // e.g. "All" or "01.01.2026 – 09.05.2026"
         List<VisitRow> visits
 ) {
     public record VisitRow(

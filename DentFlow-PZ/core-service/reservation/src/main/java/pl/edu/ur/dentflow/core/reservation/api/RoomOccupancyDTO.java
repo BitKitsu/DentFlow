@@ -1,13 +1,13 @@
 package pl.edu.ur.dentflow.core.reservation.api;
 
 /**
- * DTO z danymi obłożenia jednego gabinetu/pokoju w zadanym przedziale czasu.
+ * DTO with occupancy data for a single room in a given time range.
  *
- * @param roomId           identyfikator pokoju
- * @param totalSlotMinutes całkowita dostępna pojemność w minutach (przedział * 1)
- * @param bookedMinutes    łączna liczba minut zajętych przez wizyty (suma end-start)
- * @param occupancyPercent procent obłożenia (0-100)
- * @param appointmentCount liczba wizyt w przedziale
+ * @param roomId           room identifier
+ * @param totalSlotMinutes total available capacity in minutes (range * 1)
+ * @param bookedMinutes    total minutes booked by appointments (sum of end-start)
+ * @param occupancyPercent occupancy percentage (0-100)
+ * @param appointmentCount number of appointments in range
  */
 public record RoomOccupancyDTO(
         Long roomId,

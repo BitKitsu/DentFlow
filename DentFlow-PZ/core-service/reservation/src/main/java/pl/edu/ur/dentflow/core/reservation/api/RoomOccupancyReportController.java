@@ -52,7 +52,7 @@ public class RoomOccupancyReportController {
                     .body(pdf);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Błąd generowania PDF: " + e.getMessage());
+                    "PDF generation error: " + e.getMessage());
         }
     }
 
@@ -77,7 +77,7 @@ public class RoomOccupancyReportController {
                     .body(pdf);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Błąd generowania PDF: " + e.getMessage());
+                    "PDF generation error: " + e.getMessage());
         }
     }
 

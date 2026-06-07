@@ -178,7 +178,7 @@ public class RoomOccupancyReportService {
                 .entrySet().stream()
                 .sorted(Map.Entry.<Long, Long>comparingByValue().reversed())
                 .limit(3)
-                .map(e -> "Usługa ID: " + e.getKey())
+                .map(e -> "Service ID: " + e.getKey())
                 .toList();
     }
 

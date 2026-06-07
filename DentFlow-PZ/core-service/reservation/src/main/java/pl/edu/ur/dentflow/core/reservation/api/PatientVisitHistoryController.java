@@ -58,7 +58,7 @@ public class PatientVisitHistoryController {
             throw e;
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Błąd generowania PDF: " + e.getMessage());
+                    "PDF generation error: " + e.getMessage());
         }
     }
 }

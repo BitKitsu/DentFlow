@@ -13,16 +13,16 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Generator PDF dla Raportu 3: Historia wizyt pacjenta.
+ * PDF generator for Report 3: Patient Visit History.
  */
 public class PatientVisitHistoryPdfGenerator {
 
     /**
-     * Generuje raport jako tablicę bajtów.
+     * Generates the report as a byte array.
      *
-     * @param data dane raportu z backendu
-     * @return bajty pliku PDF
-     * @throws IOException gdy wystąpi błąd zapisu
+     * @param data report data from backend
+     * @return PDF file bytes
+     * @throws IOException if write error occurs
      */
     public byte[] generate(PatientVisitHistoryReportData data) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -33,27 +33,27 @@ public class PatientVisitHistoryPdfGenerator {
 
             document.setMargins(40, 40, 40, 40);
 
-            // Nagłówek
-            document.add(PdfStyles.reportTitle("Raport: Historia wizyt pacjenta"));
+            // Header
+            document.add(PdfStyles.reportTitle("Report: Patient Visit History"));
             document.add(PdfStyles.reportSubtitle(
                     data.clinicName() + "  |  Zakres dat: " + data.dateRangeDescription()));
 
-            // Dane pacjenta
-            document.add(PdfStyles.sectionTitle("Dane pacjenta"));
-            document.add(PdfStyles.infoLine("Imię i nazwisko",
+            // Patient data
+            document.add(PdfStyles.sectionTitle("Patient Data"));
+            document.add(PdfStyles.infoLine("Full name",
                     data.patientFirstName() + " " + data.patientLastName()));
             if (data.patientPhone() != null && !data.patientPhone().isBlank()) {
-                document.add(PdfStyles.infoLine("Telefon", data.patientPhone()));
+                document.add(PdfStyles.infoLine("Phone", data.patientPhone()));
             }
             if (data.patientEmail() != null && !data.patientEmail().isBlank()) {
                 document.add(PdfStyles.infoLine("E-mail", data.patientEmail()));
             }
 
-            // Tabela wizyt
-            document.add(PdfStyles.sectionTitle("Historia wizyt"));
+            // Visit history table
+            document.add(PdfStyles.sectionTitle("Visit History"));
 
             Table table = PdfStyles.createTable(
-                    "Data", "Lekarz", "Usługa", "Status", "Notatki");
+                    "Date", "Doctor", "Service", "Status", "Notes");
 
             List<PatientVisitHistoryReportData.VisitRow> visits = data.visits();
             for (int i = 0; i < visits.size(); i++) {
@@ -67,15 +67,15 @@ public class PatientVisitHistoryPdfGenerator {
             }
             document.add(table);
 
-            // Podsumowanie
+            // Summary
             document.add(new Paragraph("\n"));
-            document.add(PdfStyles.summaryLine("Podsumowanie"));
-            document.add(PdfStyles.infoLine("Łączna liczba wizyt", String.valueOf(visits.size())));
+            document.add(PdfStyles.summaryLine("Summary"));
+            document.add(PdfStyles.infoLine("Total visits", String.valueOf(visits.size())));
 
             visits.stream()
                     .map(PatientVisitHistoryReportData.VisitRow::date)
                     .max(String::compareTo)
-                    .ifPresent(lastDate -> document.add(PdfStyles.infoLine("Ostatnia wizyta", lastDate)));
+                    .ifPresent(lastDate -> document.add(PdfStyles.infoLine("Last visit", lastDate)));
         }
 
         return baos.toByteArray();

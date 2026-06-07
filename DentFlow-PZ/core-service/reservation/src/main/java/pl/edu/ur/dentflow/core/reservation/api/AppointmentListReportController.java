@@ -10,17 +10,17 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 /**
- * REST endpoint dla Raportu 1: Lista wizyt.
+ * REST endpoint for Report 1: Appointment List.
  * SCRUM-60
  *
  * GET /tenants/{tenantId}/reports/appointments
- * Parametry:
- *   ?from=     – data początkowa (YYYY-MM-DD), wymagana
- *   ?to=       – data końcowa   (YYYY-MM-DD), wymagana
- *   ?status=   – filtr statusu (SCHEDULED / COMPLETED / CANCELLED), opcjonalny
- *   ?dentistId=– filtr ID lekarza, opcjonalny
+ * Parameters:
+ *   ?from=     - start date (YYYY-MM-DD), required
+ *   ?to=       - end date (YYYY-MM-DD), required
+ *   ?status=   - status filter (SCHEDULED / COMPLETED / CANCELLED), optional
+ *   ?dentistId=– dentist ID filter, optional
  *
- * Zwraca plik PDF (application/pdf).
+ * Returns PDF file (application/pdf).
  */
 @RestController
 @RequestMapping("/tenants/{tenantId}/reports/appointments")

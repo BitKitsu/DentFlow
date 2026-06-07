@@ -3,18 +3,18 @@ package pl.edu.ur.dentflow.core.reservation.api;
 import java.time.OffsetDateTime;
 
 /**
- * DTO reprezentujące pojedynczą wizytę w historii pacjenta.
+ * DTO representing a single visit in patient history.
  *
- * @param id              identyfikator wizyty
- * @param tenantId        identyfikator gabinetu
- * @param locationId      identyfikator lokalizacji
- * @param roomId          identyfikator pokoju
- * @param dentistStaffId  identyfikator dentysty
- * @param serviceItemId   identyfikator usługi
- * @param startAt         data i czas rozpoczęcia
- * @param endAt           data i czas zakończenia
- * @param status          status wizyty (SCHEDULED, COMPLETED, CANCELLED, NO_SHOW)
- * @param notes           notatki
+ * @param id              visit identifier
+ * @param tenantId        clinic identifier
+ * @param locationId      location identifier
+ * @param roomId          room identifier
+ * @param dentistStaffId  dentist identifier
+ * @param serviceItemId   service identifier
+ * @param startAt         start date and time
+ * @param endAt           end date and time
+ * @param status          visit status (SCHEDULED, COMPLETED, CANCELLED, NO_SHOW)
+ * @param notes           notes
  */
 public record PatientVisitHistoryDTO(
         Long id,

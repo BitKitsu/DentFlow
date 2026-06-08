@@ -156,26 +156,20 @@ class TenantViewModel @Inject constructor(
     }
 
     private suspend fun assignOwnerRole() {
-        val userId = currentUserId
-        if (userId <= 0L) {
-            Log.w(TAG, "assignOwnerRole: Brak userId, pomijam")
-            return
-        }
         try {
-            val response = authService.assignRole(AssignRoleRequest(userId = userId, role = "OWNER"))
+            val response = authService.claimOwnership()
             if (response.isSuccessful && response.body() != null) {
                 val authResponse = response.body()!!
-                // Save new JWT with updated roles
                 prefs.edit()
                     .putString("jwt_token", authResponse.token)
                     .putLong("tenant_id", authResponse.tenantId)
                     .apply()
             } else {
                 val errorMsg = response.errorBody()?.string()
-                Log.e(TAG, "API BŁĄD -> assignRole: Kod=${response.code()}, Body=$errorMsg")
+                Log.e(TAG, "API BŁĄD -> claimOwnership: Kod=${response.code()}, Body=$errorMsg")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "WYJĄTEK przy assignRole: ${e.message}")
+            Log.e(TAG, "WYJĄTEK przy claimOwnership: ${e.message}")
         }
     }
 

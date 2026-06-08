@@ -149,6 +149,17 @@ Request:
 
 Response (200 OK): AuthResponse
 
+### Claim Ownership (Bootstrap)
+
+One-time endpoint to upgrade PATIENT to OWNER after first registration.
+
+```
+POST /auth/claim-ownership
+```
+
+Response (200 OK): AuthResponse with OWNER role  
+Response (409 Conflict): Already has OWNER role
+
 ### Check Email
 
 ```
@@ -156,6 +167,22 @@ GET /auth/check-email?email=user@example.com
 ```
 
 Response (200 OK): `1` (userId) or 404 Not Found
+
+### Get User by Email
+
+```
+GET /auth/user-by-email?email=user@example.com
+```
+
+Response (200 OK): User data or 404 Not Found
+
+### Delete Account
+
+```
+DELETE /auth/account
+```
+
+Response: 204 No Content
 
 ---
 
@@ -221,7 +248,7 @@ Response (200 OK): TenantResponse
 
 #### List Patients
 
-> Requires: OWNER, DENTIST, or ASSISTANT role.
+> Requires: OWNER, DENTIST, RECEPTIONIST, or ASSISTANT role.
 
 ```
 GET /tenants/{tenantId}/patients?search=kowalski
@@ -281,6 +308,238 @@ DELETE /tenants/{tenantId}/patients/{patientId}
 ```
 
 Response: 204 No Content
+
+#### Ensure Patient (Find or Create)
+
+```
+POST /tenants/{tenantId}/patients/ensure
+```
+
+Request:
+```json
+{
+  "userId": 5,
+  "firstName": "Jan",
+  "lastName": "Kowalski",
+  "phone": "+48 123 456 789",
+  "email": "jan@example.com"
+}
+```
+
+Response (200 OK): PatientResponse
+
+---
+
+### Locations
+
+#### List Locations
+
+```
+GET /tenants/{tenantId}/locations
+```
+
+Response (200 OK): `[{ id: 1, name: "DentCare Centrum", ... }]`
+
+#### Add Location
+
+```
+POST /tenants/{tenantId}/locations
+```
+
+Request:
+```json
+{
+  "name": "DentCare Nowa Huta",
+  "addressStreet": "os. Centrum B 1",
+  "addressCity": "Kraków",
+  "addressZip": "31-929",
+  "addressCountry": "Polska"
+}
+```
+
+Response (201 Created): LocationResponse
+
+#### Get Location
+
+```
+GET /tenants/{tenantId}/locations/{locationId}
+```
+
+Response (200 OK): LocationResponse
+
+#### Update Location
+
+```
+PUT /tenants/{tenantId}/locations/{locationId}
+```
+
+Request: LocationRequest
+
+Response (200 OK): LocationResponse
+
+#### Delete Location
+
+```
+DELETE /tenants/{tenantId}/locations/{locationId}
+```
+
+Response: 204 No Content
+
+---
+
+### Rooms
+
+#### List Rooms
+
+```
+GET /tenants/{tenantId}/rooms
+```
+
+Response (200 OK): `[{ id: 1, name: "Gabinet 1", locationId: 1, ... }]`
+
+#### Create Room
+
+```
+POST /tenants/{tenantId}/rooms
+```
+
+Request:
+```json
+{
+  "locationId": 1,
+  "name": "Gabinet 1 - Stomatologia"
+}
+```
+
+Response (201 Created): RoomResponse
+
+#### Update Room
+
+```
+PUT /tenants/{tenantId}/rooms/{roomId}
+```
+
+Request:
+```json
+{
+  "name": "Gabinet 1 - Updated"
+}
+```
+
+Response (200 OK): RoomResponse
+
+#### Delete Room
+
+```
+DELETE /tenants/{tenantId}/rooms/{roomId}
+```
+
+Response: 204 No Content
+
+#### Assign Staff to Room
+
+```
+POST /tenants/{tenantId}/rooms/{roomId}/staff/{staffId}
+```
+
+Response: 200 OK
+
+#### Remove Staff from Room
+
+```
+DELETE /tenants/{tenantId}/rooms/{roomId}/staff/{staffId}
+```
+
+Response: 200 OK
+
+---
+
+### Staff Members
+
+#### List Staff
+
+```
+GET /tenants/{tenantId}/staff
+```
+
+Response (200 OK): `[{ id: 1, displayName: "dr Jan Kowalski", profession: "DENTIST", ... }]`
+
+#### Get Staff Member
+
+```
+GET /tenants/{tenantId}/staff/{staffId}
+```
+
+Response (200 OK): StaffMemberResponse
+
+#### Add Staff Member
+
+> Requires: OWNER role.
+
+```
+POST /tenants/{tenantId}/staff
+```
+
+Request:
+```json
+{
+  "userId": 2,
+  "displayName": "dr Jan Kowalski",
+  "profession": "DENTIST",
+  "firstName": "Jan",
+  "lastName": "Kowalski",
+  "email": "jan.kowalski@dentcare.pl",
+  "phone": "+48 123 456 789"
+}
+```
+
+Response (201 Created): StaffMemberResponse
+
+#### Update Staff Member
+
+> Requires: OWNER role.
+
+```
+PUT /tenants/{tenantId}/staff/{staffId}
+```
+
+Request: StaffMemberRequest
+
+Response (200 OK): StaffMemberResponse
+
+#### Delete Staff Member
+
+> Requires: OWNER role.
+
+```
+DELETE /tenants/{tenantId}/staff/{staffId}
+```
+
+Response: 204 No Content
+
+#### Get Working Hours
+
+```
+GET /tenants/{tenantId}/staff/{staffId}/working-hours
+```
+
+Response (200 OK): `[{ dayOfWeek: "MONDAY", startTime: "08:00", endTime: "16:00", active: true }]`
+
+#### Update Working Hours
+
+```
+PUT /tenants/{tenantId}/staff/{staffId}/working-hours
+```
+
+Request:
+```json
+[
+  { "dayOfWeek": "MONDAY", "startTime": "08:00", "endTime": "16:00", "active": true },
+  { "dayOfWeek": "TUESDAY", "startTime": "08:00", "endTime": "16:00", "active": true }
+]
+```
+
+Response: 200 OK
 
 ---
 
@@ -359,6 +618,14 @@ POST /tenants/{tenantId}/appointments/{appointmentId}/cancel
 
 Response (200 OK): AppointmentResponse (status: "CANCELLED")
 
+#### Confirm Appointment
+
+```
+POST /tenants/{tenantId}/appointments/{appointmentId}/confirm
+```
+
+Response (200 OK): AppointmentResponse (status: "CONFIRMED")
+
 #### Complete Appointment
 
 ```
@@ -424,6 +691,14 @@ Request:
 
 Response (201 Created): BlockerResponse
 
+#### Delete Blocker
+
+```
+DELETE /tenants/{tenantId}/schedule/blockers/{blockerId}
+```
+
+Response: 204 No Content
+
 ---
 
 ### Service Catalog
@@ -453,6 +728,40 @@ Request:
 ```
 
 Response (201 Created): ServiceCatalogItemDTO
+
+#### Get Service
+
+```
+GET /tenants/{tenantId}/catalog/{id}
+```
+
+Response (200 OK): ServiceCatalogItemDTO
+
+#### Update Service
+
+```
+PUT /tenants/{tenantId}/catalog/{id}
+```
+
+Request:
+```json
+{
+  "name": "Updated Service Name",
+  "durationMinutes": 45,
+  "priceCents": 20000,
+  "active": true
+}
+```
+
+Response (200 OK): ServiceCatalogItemDTO
+
+#### Delete Service
+
+```
+DELETE /tenants/{tenantId}/catalog/{id}
+```
+
+Response: 204 No Content
 
 ---
 
@@ -532,28 +841,48 @@ Response: 204 No Content
 
 ---
 
+### Patient Visit History
+
+#### Visit History (JSON)
+
+```
+GET /tenants/{tenantId}/patients/{patientId}/visits?status=COMPLETED
+```
+
+Response (200 OK): `[{ id: 1, startAt: "...", status: "COMPLETED", ... }]`
+
+#### Visit History (PDF)
+
+```
+GET /tenants/{tenantId}/patients/{patientId}/visits/pdf?status=COMPLETED
+```
+
+Response: PDF file
+
+---
+
 ### PDF Reports
 
-#### Appointment List (PDF)
+#### Appointment List Report
 
 ```
-GET /tenants/{tenantId}/reports/appointment-list?from=...&to=...
-```
-
-Response: PDF file
-
-#### Patient Visit History (PDF)
-
-```
-GET /tenants/{tenantId}/reports/patient-history/{patientId}?from=...&to=...
+GET /tenants/{tenantId}/reports/appointments?from=2026-01-01&to=2026-12-31&status=COMPLETED&dentistId=1
 ```
 
 Response: PDF file
 
-#### Room Occupancy (PDF)
+#### Room Occupancy Report (All Rooms)
 
 ```
-GET /tenants/{tenantId}/reports/room-occupancy?year=2026&month=6
+GET /tenants/{tenantId}/reports/room-occupancy?from=2026-01-01&to=2026-12-31
+```
+
+Response: PDF file
+
+#### Room Occupancy Report (Single Room)
+
+```
+GET /tenants/{tenantId}/reports/room-occupancy/{roomId}?from=2026-01-01&to=2026-12-31
 ```
 
 Response: PDF file

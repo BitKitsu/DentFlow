@@ -97,7 +97,8 @@ public class PatientController {
             @RequestParam Long userId,
             @RequestParam(defaultValue = "") String firstName,
             @RequestParam(defaultValue = "") String lastName,
-            @RequestParam(defaultValue = "") String email) {
-        return ResponseEntity.ok(patientService.ensurePatientForUser(tenantId, userId, firstName, lastName, email));
+            @RequestParam(defaultValue = "") String email,
+            @RequestParam(defaultValue = "") String phone) {
+        return ResponseEntity.ok(patientService.ensurePatientForUser(tenantId, userId, firstName, lastName, email, phone));
     }
 }

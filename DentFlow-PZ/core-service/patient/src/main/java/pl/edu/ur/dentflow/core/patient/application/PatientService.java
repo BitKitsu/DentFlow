@@ -120,9 +120,15 @@ public class PatientService {
     }
 
     @Transactional
-    public PatientResponse ensurePatientForUser(Long tenantId, Long userId, String firstName, String lastName, String email) {
+    public PatientResponse ensurePatientForUser(Long tenantId, Long userId, String firstName, String lastName, String email, String phone) {
         return patientRepository.findByTenantIdAndUserId(tenantId, userId)
-                .map(PatientResponse::from)
+                .map(existing -> {
+                    if (firstName != null && !firstName.isEmpty()) existing.setFirstName(firstName);
+                    if (lastName != null && !lastName.isEmpty()) existing.setLastName(lastName);
+                    if (email != null && !email.isEmpty()) existing.setEmail(email);
+                    if (phone != null && !phone.isEmpty()) existing.setPhone(phone);
+                    return PatientResponse.from(patientRepository.save(existing));
+                })
                 .orElseGet(() -> {
                     Patient patient = Patient.builder()
                             .tenantId(tenantId)
@@ -130,6 +136,7 @@ public class PatientService {
                             .firstName(firstName)
                             .lastName(lastName)
                             .email(email)
+                            .phone(phone)
                             .build();
                     return PatientResponse.from(patientRepository.save(patient));
                 });

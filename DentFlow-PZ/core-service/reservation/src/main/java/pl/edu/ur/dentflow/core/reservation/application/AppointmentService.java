@@ -201,6 +201,9 @@ public class AppointmentService {
         }
         appointment.setStatus("CONFIRMED");
         Appointment saved = appointmentRepository.save(appointment);
+
+        eventPublisher.publishEvent(new AppointmentConfirmedEvent(tenantId, saved));
+
         return AppointmentResponse.from(saved);
     }
 

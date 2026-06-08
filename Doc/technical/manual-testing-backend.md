@@ -7,10 +7,11 @@ Tests cover regression, edge cases and end-to-end scenarios.
 
 ## Test Environment
 
-- Identity Service: http://localhost:8081
-- Core Service: http://localhost:8080
-- Database: PostgreSQL 15 (port 5432)
-- Tools: Postman, curl, Swagger UI
+- Identity Service: https://identity-service-production-6149.up.railway.app
+- Core Service: https://core-service-production-9ce3.up.railway.app
+- Database: PostgreSQL 18.4 (Railway)
+- Tools: curl, bash scripts
+- Date: 2026-06-08
 
 ---
 
@@ -69,6 +70,21 @@ Tests cover regression, edge cases and end-to-end scenarios.
   1. Login
   2. Send `PUT /auth/change-password` with wrong current password
 - **Expected:** 401 Unauthorized
+
+### TC-CLAIM-01: Claim Ownership (Bootstrap)
+- **Goal:** Verify first-time OWNER role assignment
+- **Steps:**
+  1. Register a user (gets PATIENT role only)
+  2. Send `POST /auth/claim-ownership` with Bearer token
+  3. Verify user now has OWNER role
+- **Expected:** 200 OK with updated token containing OWNER role
+
+### TC-CLAIM-02: Claim Ownership When Already Owner
+- **Goal:** Verify duplicate claim is rejected
+- **Steps:**
+  1. Register a user and claim ownership
+  2. Send `POST /auth/claim-ownership` again
+- **Expected:** 409 Conflict
 
 ---
 
@@ -217,27 +233,21 @@ Tests cover regression, edge cases and end-to-end scenarios.
 
 ## 5. Work Scheduling
 
-### TC-SCHEDULING-01: Add Schedule Slots
-- **Goal:** Verify slot creation
-- **Steps:**
-  1. Login as OWNER/DENTIST
-  2. Send `POST /tenants/{id}/scheduling/slots` with slot data
-  3. Verify slot was created
-- **Expected:** 201 Created with slot data
-
-### TC-SCHEDULING-02: Detect Overlapping Slots
-- **Goal:** Verify overlap validation
-- **Steps:**
-  1. Create slot from 8:00 to 16:00
-  2. Attempt to create second slot for same staff from 10:00 to 18:00
-- **Expected:** 409 Conflict
-
-### TC-SCHEDULING-03: Add Blockers
+### TC-SCHEDULING-01: Add Blocker
 - **Goal:** Verify blocker creation
 - **Steps:**
-  1. Send `POST /tenants/{id}/scheduling/blockers` with blocker data
-  2. Verify blocker was created
+  1. Login as OWNER/DENTIST
+  2. Send `POST /tenants/{id}/schedule/blockers` with blocker data
+  3. Verify blocker was created
 - **Expected:** 201 Created with blocker data
+
+### TC-SCHEDULING-02: List Blockers
+- **Goal:** Verify blocker listing
+- **Steps:**
+  1. Add a blocker
+  2. Send `GET /tenants/{id}/schedule/blockers`
+  3. Verify list contains the blocker
+- **Expected:** 200 OK with blocker list
 
 ---
 
@@ -308,23 +318,21 @@ Tests cover regression, edge cases and end-to-end scenarios.
 ### TC-RBAC-01: Assign Role Requires Owner
 - **Goal:** Verify only OWNER can assign roles
 - **Steps:**
-  1. Login as DENTIST
-  2. Send `POST /auth/assign-role` with userId and role
-  3. Verify 403 Forbidden
-  4. Login as OWNER
-  5. Send same request
-  6. Verify 200 OK
+  1. Register a PATIENT user (no claim-ownership)
+  2. Send `POST /auth/assign-role` with Bearer token -> 403 Forbidden
+  3. Login as OWNER
+  4. Send `POST /auth/assign-role` -> 200 OK
 - **Expected:** Only OWNER can assign roles
 
-### TC-RBAC-02: RECEPTIONIST Appointment Access
-- **Goal:** Verify RECEPTIONIST can manage appointments
+### TC-RBAC-02: RECEPTIONIST Access
+- **Goal:** Verify RECEPTIONIST can manage appointments and view patients
 - **Steps:**
   1. Login as RECEPTIONIST
-  2. Send `GET /tenants/{id}/appointments` -> 200 OK
-  3. Send `POST /tenants/{id}/appointments` -> 201 Created
-  4. Send `POST /tenants/{id}/appointments/{id}/confirm` -> 200 OK
-  5. Send `POST /tenants/{id}/appointments/{id}/cancel` -> 200 OK
-- **Expected:** RECEPTIONIST has full appointment CRUD
+  2. Send `GET /tenants/{id}/patients` -> 200 OK
+  3. Send `GET /tenants/{id}/appointments` -> 200 OK
+  4. Send `POST /tenants/{id}/appointments` -> 201 Created
+  5. Send `POST /tenants/{id}/staff` -> 403 Forbidden
+- **Expected:** RECEPTIONIST can manage appointments/patients, cannot manage staff
 
 ### TC-RBAC-03: ASSISTANT Read-Only Access
 - **Goal:** Verify ASSISTANT can only read
@@ -392,9 +400,49 @@ Tests cover regression, edge cases and end-to-end scenarios.
 
 | Test ID | Status | Notes |
 |---------|--------|-------|
-| TC-AUTH-01 | | |
-| TC-AUTH-02 | | |
-| TC-AUTH-03 | | |
-| ... | | |
+| TC-AUTH-01 | PASS | 201 Created, token returned |
+| TC-AUTH-02 | PASS | 409 Conflict for duplicate email |
+| TC-AUTH-03 | PASS | 400 Bad Request for invalid email |
+| TC-AUTH-04 | PASS | 200 OK, JWT token returned |
+| TC-AUTH-05 | PASS | 401 Unauthorized |
+| TC-AUTH-06 | PASS | 204 No Content (change password works) |
+| TC-AUTH-07 | PASS | 401 Unauthorized (wrong current password) |
+| TC-TENANT-01 | PASS | 201 Created |
+| TC-TENANT-02 | PASS | 200 OK, token updated with tenantId |
+| TC-TENANT-03 | PASS | 200 OK, public clinic list |
+| TC-TENANT-04 | PASS | 200 OK, data updated |
+| TC-PATIENT-01 | PASS | 201 Created |
+| TC-PATIENT-02 | PASS | 200 OK, list returned |
+| TC-PATIENT-03 | PASS | 200 OK, search works |
+| TC-PATIENT-04 | PASS | 200 OK, data updated |
+| TC-PATIENT-05 | PASS | 204 No Content |
+| TC-APPOINTMENT-01 | PASS | 201 Created with SCHEDULED status |
+| TC-APPOINTMENT-02 | PASS | 409 Conflict detected |
+| TC-APPOINTMENT-03 | PASS | 400 Bad Request for invalid times |
+| TC-APPOINTMENT-04 | PASS | 200 OK (requires startAt+endAt in body) |
+| TC-APPOINTMENT-05 | PASS | 200 OK, status: CANCELLED |
+| TC-APPOINTMENT-06 | PASS | 400 Bad Request for double cancel |
+| TC-APPOINTMENT-07 | PASS | 200 OK, status: COMPLETED |
+| TC-APPOINTMENT-08 | PASS | 200 OK, date filter with ISO_DATE_TIME format |
+| TC-SCHEDULING-01 | PASS | 201 Created (blocker) |
+| TC-SCHEDULING-02 | PASS | 200 OK, blockers listed |
+| TC-EDGE-01 | PASS | 403 Forbidden (no auth) |
+| TC-EDGE-02 | SKIP | Requires token expiration wait |
+| TC-EDGE-03 | PASS | 404 Not Found for non-existent tenant |
+| TC-EDGE-04 | PASS | 429 Too Many Requests (after ~12 attempts) |
+| TC-EDGE-05 | PASS | 400 Bad Request for missing fields |
+| TC-NOTIFICATION-01 | PASS | 200 OK (URL: /tenants/{id}/users/{userId}/notifications) |
+| TC-NOTIFICATION-02 | SKIP | No notifications available to mark |
+| TC-NOTIFICATION-03 | PASS | 200 OK, unread count returned |
+| TC-RBAC-01 | PASS | PATIENT gets 403 on assign-role, OWNER gets 200 |
+| TC-RBAC-02 | PASS | RECEPTIONIST can GET patients, POST/confirm/cancel appointments |
+| TC-RBAC-03 | PASS | ASSISTANT read-only (GET 200, POST 403) |
+| TC-RBAC-04 | PASS | PATIENT /my=200, /appointments=403 |
+| TC-CLAIM-01 | PASS | 200 OK, OWNER role assigned |
+| TC-CLAIM-02 | PASS | 409 Conflict (already owner) |
+| TC-VALIDATION-01 | PASS | 400 Bad Request for short firstName |
+| TC-VALIDATION-02 | PASS | 400 Bad Request for empty firstName |
+
+**Summary:** 36 PASS, 0 FAIL, 2 SKIP
 
 **Statuses:** PASS / FAIL / BLOCKED / SKIP

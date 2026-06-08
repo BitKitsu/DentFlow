@@ -52,6 +52,18 @@ public class AppointmentNotificationListener {
         sendCompletedNotifications(event.getTenantId(), event.getAppointment());
     }
 
+    @Async
+    @EventListener
+    public void handleAppointmentConfirmed(AppointmentConfirmedEvent event) {
+        sendConfirmedNotifications(event.getTenantId(), event.getAppointment());
+    }
+
+    @Async
+    @EventListener
+    public void handleAppointmentNoShow(AppointmentNoShowEvent event) {
+        sendNoShowNotifications(event.getTenantId(), event.getAppointment());
+    }
+
     private void sendCreatedNotifications(Long tenantId, Appointment appointment) {
         try {
             Patient patient = patientRepository.findByIdAndTenantId(
@@ -73,7 +85,15 @@ public class AppointmentNotificationListener {
                 notificationService.createNotification(tenantId, new CreateNotificationRequest(
                         dentist.getUserId(),
                         "APPOINTMENT",
-                        "New appointment: " + patientName + " – " + appointment.getStartAt()
+                        "Nowa wizyta: " + patientName + " – " + appointment.getStartAt()
+                ));
+            }
+
+            if (patient != null && patient.getUserId() != null) {
+                notificationService.createNotification(tenantId, new CreateNotificationRequest(
+                        patient.getUserId(),
+                        "APPOINTMENT",
+                        "Twoja wizyta została umówiona: " + dentistName + " – " + appointment.getStartAt()
                 ));
             }
         } catch (Exception e) {
@@ -90,6 +110,7 @@ public class AppointmentNotificationListener {
 
             String patientName = patient != null
                     ? patient.getFirstName() + " " + patient.getLastName() : "Patient";
+            String dentistName = dentist != null ? dentist.getFirstName() + " " + dentist.getLastName() : "Lekarz";
 
             if (patient != null && patient.getEmail() != null && !patient.getEmail().isBlank()) {
                 emailService.sendAppointmentCancellation(
@@ -99,8 +120,16 @@ public class AppointmentNotificationListener {
             if (dentist != null && dentist.getUserId() != null) {
                 notificationService.createNotification(tenantId, new CreateNotificationRequest(
                         dentist.getUserId(),
-                        "APPOINTMENT",
-                        "Appointment cancelled: " + patientName + " – " + appointment.getStartAt()
+                        "APPOINTMENT_CANCELLED",
+                        "Wizyta odwołana: " + patientName + " – " + appointment.getStartAt()
+                ));
+            }
+
+            if (patient != null && patient.getUserId() != null) {
+                notificationService.createNotification(tenantId, new CreateNotificationRequest(
+                        patient.getUserId(),
+                        "APPOINTMENT_CANCELLED",
+                        "Twoja wizyta została odwołana: " + dentistName + " – " + appointment.getStartAt()
                 ));
             }
         } catch (Exception e) {
@@ -117,16 +146,79 @@ public class AppointmentNotificationListener {
 
             String patientName = patient != null
                     ? patient.getFirstName() + " " + patient.getLastName() : "Patient";
+            String dentistName = dentist != null ? dentist.getFirstName() + " " + dentist.getLastName() : "Lekarz";
 
             if (dentist != null && dentist.getUserId() != null) {
                 notificationService.createNotification(tenantId, new CreateNotificationRequest(
                         dentist.getUserId(),
-                        "APPOINTMENT",
-                        "Appointment completed: " + patientName
+                        "APPOINTMENT_COMPLETED",
+                        "Wizyta zakończona: " + patientName
+                ));
+            }
+
+            if (patient != null && patient.getUserId() != null) {
+                notificationService.createNotification(tenantId, new CreateNotificationRequest(
+                        patient.getUserId(),
+                        "APPOINTMENT_COMPLETED",
+                        "Twoja wizyta została zakończona: " + dentistName
                 ));
             }
         } catch (Exception e) {
             log.error("Error sending notifications after completing appointment {}: {}", appointment.getId(), e.getMessage());
+        }
+    }
+
+    private void sendConfirmedNotifications(Long tenantId, Appointment appointment) {
+        try {
+            Patient patient = patientRepository.findByIdAndTenantId(
+                    appointment.getPatientId(), tenantId).orElse(null);
+            StaffMember dentist = staffMemberRepository.findByIdAndTenantId(
+                    appointment.getDentistStaffId(), tenantId).orElse(null);
+
+            String patientName = patient != null
+                    ? patient.getFirstName() + " " + patient.getLastName() : "Patient";
+            String dentistName = dentist != null ? dentist.getFirstName() + " " + dentist.getLastName() : "Lekarz";
+
+            if (patient != null && patient.getUserId() != null) {
+                notificationService.createNotification(tenantId, new CreateNotificationRequest(
+                        patient.getUserId(),
+                        "APPOINTMENT_CONFIRMED",
+                        "Wizyta potwierdzona: " + dentistName + " – " + appointment.getStartAt()
+                ));
+            }
+        } catch (Exception e) {
+            log.error("Error sending notifications after confirming appointment {}: {}", appointment.getId(), e.getMessage());
+        }
+    }
+
+    private void sendNoShowNotifications(Long tenantId, Appointment appointment) {
+        try {
+            Patient patient = patientRepository.findByIdAndTenantId(
+                    appointment.getPatientId(), tenantId).orElse(null);
+            StaffMember dentist = staffMemberRepository.findByIdAndTenantId(
+                    appointment.getDentistStaffId(), tenantId).orElse(null);
+
+            String patientName = patient != null
+                    ? patient.getFirstName() + " " + patient.getLastName() : "Patient";
+            String dentistName = dentist != null ? dentist.getFirstName() + " " + dentist.getLastName() : "Lekarz";
+
+            if (dentist != null && dentist.getUserId() != null) {
+                notificationService.createNotification(tenantId, new CreateNotificationRequest(
+                        dentist.getUserId(),
+                        "APPOINTMENT_NO_SHOW",
+                        "Pacjent nie stawił się na wizytę: " + patientName + " – " + appointment.getStartAt()
+                ));
+            }
+
+            if (patient != null && patient.getUserId() != null) {
+                notificationService.createNotification(tenantId, new CreateNotificationRequest(
+                        patient.getUserId(),
+                        "APPOINTMENT_NO_SHOW",
+                        "Nie stawiłeś się na wizytę: " + dentistName + " – " + appointment.getStartAt()
+                ));
+            }
+        } catch (Exception e) {
+            log.error("Error sending notifications after NO_SHOW appointment {}: {}", appointment.getId(), e.getMessage());
         }
     }
 }

@@ -214,20 +214,22 @@ fun MainDashboard(
     val navItems = buildList {
         add(NavItem("Oferty", Icons.Default.LocalOffer, 0))
         if (isStaff && hasClinic) add(NavItem("Klinika", Icons.Default.Business, 1))
-        if (isOwner || isDoctor || isReceptionist || isAssistant) add(NavItem("Wizyty", Icons.Default.CalendarMonth, 2))
+        add(NavItem("Wizyty", Icons.Default.CalendarMonth, 2))
         add(NavItem("Powiadomienia", Icons.Default.Notifications, 3))
         add(NavItem("Konto", Icons.Default.AccountCircle, 4))
     }
 
-    LaunchedEffect(Unit) {
-        staffViewModel.loadStaff()
-        staffViewModel.loadAllStaff()
-        tenantViewModel.loadAllTenantData()
-        tenantViewModel.loadAllTenants()
-        catalogViewModel.loadAllCatalog()
-        notificationViewModel.fetchNotifications()
-        visitViewModel.refreshVisits()
-        catalogViewModel.loadServices()
+    LaunchedEffect(selectedItem) {
+        if (selectedItem == 0) {
+            staffViewModel.loadStaff()
+            staffViewModel.loadAllStaff()
+            tenantViewModel.loadAllTenantData()
+            tenantViewModel.loadAllTenants()
+            catalogViewModel.loadAllCatalog()
+            notificationViewModel.fetchNotifications()
+            visitViewModel.refreshVisits()
+            catalogViewModel.loadServices()
+        }
     }
 
 

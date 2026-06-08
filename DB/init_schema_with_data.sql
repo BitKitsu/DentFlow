@@ -11,6 +11,13 @@
 CREATE TABLE IF NOT EXISTS "user" (
     id              BIGSERIAL PRIMARY KEY,
     email           VARCHAR(255) NOT NULL UNIQUE,
+    first_name      VARCHAR(100),
+    last_name       VARCHAR(100),
+    phone           VARCHAR(20),
+    address_street  VARCHAR(100),
+    address_city    VARCHAR(100),
+    address_zip     VARCHAR(20),
+    address_country VARCHAR(50),
     password_hash   VARCHAR(255) NOT NULL,
     tenant_id       BIGINT NOT NULL,
     status          VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
@@ -137,6 +144,7 @@ CREATE INDEX IF NOT EXISTS idx_appointment_tenant   ON appointment(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_appointment_dentist  ON appointment(dentist_staff_id);
 CREATE INDEX IF NOT EXISTS idx_appointment_patient  ON appointment(patient_id);
 CREATE INDEX IF NOT EXISTS idx_appointment_time     ON appointment(start_at, end_at);
+CREATE INDEX IF NOT EXISTS idx_appointment_conflict ON appointment(tenant_id, dentist_staff_id, status, start_at, end_at);
 
 CREATE TABLE IF NOT EXISTS notification (
     id         BIGSERIAL    PRIMARY KEY,
@@ -198,13 +206,15 @@ INSERT INTO "user" (id, email, password_hash, tenant_id, status) VALUES
 (7,  'admin@smileclinic.pl',           '$2a$10$N9qo8uLOickgx2ZMRZoMye.IjqQBrkHKPaO0/v7CjFYt2IWNSEy6S', 2, 'ACTIVE'),
 (8,  'ewa.zielinska@smileclinic.pl',   '$2a$10$N9qo8uLOickgx2ZMRZoMye.IjqQBrkHKPaO0/v7CjFYt2IWNSEy6S', 2, 'ACTIVE'),
 (9,  'piotr.kaczmarek@smileclinic.pl', '$2a$10$N9qo8uLOickgx2ZMRZoMye.IjqQBrkHKPaO0/v7CjFYt2IWNSEy6S', 2, 'ACTIVE'),
-(10, 'pacjent3@gmail.com',             '$2a$10$N9qo8uLOickgx2ZMRZoMye.IjqQBrkHKPaO0/v7CjFYt2IWNSEy6S', 2, 'ACTIVE');
+(10, 'pacjent3@gmail.com',             '$2a$10$N9qo8uLOickgx2ZMRZoMye.IjqQBrkHKPaO0/v7CjFYt2IWNSEy6S', 2, 'ACTIVE'),
+(11, 'kasia.asystent@dentcare.pl',     '$2a$10$N9qo8uLOickgx2ZMRZoMye.IjqQBrkHKPaO0/v7CjFYt2IWNSEy6S', 1, 'ACTIVE');
 
 -- === USER_ROLE ===
 INSERT INTO user_role (user_id, role) VALUES
-(1, 'ADMIN'), (2, 'DENTIST'), (3, 'DENTIST'), (4, 'RECEPTIONIST'),
+(1, 'OWNER'), (2, 'DENTIST'), (3, 'DENTIST'), (4, 'RECEPTIONIST'),
 (5, 'PATIENT'), (6, 'PATIENT'),
-(7, 'ADMIN'), (8, 'DENTIST'), (9, 'RECEPTIONIST'), (10, 'PATIENT');
+(7, 'OWNER'), (8, 'DENTIST'), (9, 'RECEPTIONIST'), (10, 'PATIENT'),
+(11, 'ASSISTANT');
 
 -- === LOCATION ===
 INSERT INTO location (id, tenant_id, name, address_street, address_city, address_zip, address_country) VALUES
@@ -230,7 +240,8 @@ INSERT INTO staff_member (id, tenant_id, user_id, display_name, profession) VALU
 (2, 1, 3, 'dr Anna Nowak',    'DENTIST'),
 (3, 1, 4, 'Marek Wiśniewski', 'RECEPTIONIST'),
 (4, 2, 8, 'dr Ewa Zielińska', 'DENTIST'),
-(5, 2, 9, 'Piotr Kaczmarek',  'RECEPTIONIST');
+(5, 2, 9, 'Piotr Kaczmarek',  'RECEPTIONIST'),
+(6, 1, 11, 'Katarzyna Wiśniewska', 'ASSISTANT');
 
 -- === PATIENT ===
 INSERT INTO patient (id, tenant_id, user_id, first_name, last_name, phone, email, notes) VALUES

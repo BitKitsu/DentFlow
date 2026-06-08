@@ -42,6 +42,7 @@ import pl.edu.ur.dentflow.data.ViewModel.PatientViewModel
 import pl.edu.ur.dentflow.data.ViewModel.ScheduleViewModel
 import pl.edu.ur.dentflow.data.ViewModel.TenantViewModel
 import pl.edu.ur.dentflow.data.ViewModel.VisitViewModel
+import pl.edu.ur.dentflow.utils.ValidationUtils
 
 private val CLINIC_NAME_VAL = Regex("^[\\w\\s\\-\\.ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,80}$")
 
@@ -62,6 +63,7 @@ fun BusinessScreen(
     val tenantId = sessionState.tenantId
     val userRole = sessionState.role
     val isOwner = userRole == "OWNER"
+    val isReceptionist = userRole == "RECEPTIONIST"
 
     var showStaffManagement by remember { mutableStateOf(false) }
     var showPatientScreen by remember { mutableStateOf(false) }
@@ -133,7 +135,7 @@ fun BusinessScreen(
         }
         showRoomScreen -> {
             BackHandler { showRoomScreen = false }
-            RoomManagementScreen(onBackClick = { showRoomScreen = false }, isOwner = isOwner)
+            RoomManagementScreen(onBackClick = { showRoomScreen = false }, isOwner = isOwner, isReceptionist = isReceptionist)
         }
         showVisitsScreen -> {
             BackHandler { showVisitsScreen = false }
@@ -330,7 +332,7 @@ fun EditClinicScreen(
     val isLocNameValid = locName.isBlank() || locName.length >= 2
     val isStreetValid = street.length >= 3
     val isCityValid = city.length >= 2
-    val isZipValid = Regex("^[0-9]{5}$").matches(zip)
+    val isZipValid = ValidationUtils.isZipValid(zip)
 
     val nameError = (showErrors && name.isBlank()) || (name.isNotBlank() && !isNameValid)
     val locNameError = locName.isNotBlank() && !isLocNameValid

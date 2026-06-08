@@ -142,7 +142,7 @@ class StaffViewModel @Inject constructor(
         }
     }
 
-    fun addStaff(fName: String, lName: String, profession: String, email: String, pass: String, phone: String, bio: String, userExists: Boolean, existingUserId: Long?, existingAvatarUrl: String?, role: String = "DENTIST") {
+    fun addStaff(fName: String, lName: String, email: String, pass: String, phone: String, bio: String, userExists: Boolean, existingUserId: Long?, existingAvatarUrl: String?, role: String = "DENTIST") {
         if (!hasValidSession()) return
 
         viewModelScope.launch {
@@ -178,11 +178,22 @@ class StaffViewModel @Inject constructor(
                         Log.w(TAG, "Failed to assign $role role: ${roleResponse.code()}")
                     }
 
+                    try {
+                        val tenantResponse = authService.assignTenantToUser(
+                            AssignTenantToUserRequest(userId = userId, tenantId = currentTenantId)
+                        )
+                        if (!tenantResponse.isSuccessful) {
+                            Log.w(TAG, "Failed to assign tenant to user: ${tenantResponse.code()}")
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Failed to assign tenant to new user: ${e.message}")
+                    }
+
                     val staffRequest = CreateStaffMemberRequest(
                         userId = userId,
                         firstName = fName,
                         lastName = lName,
-                        profession = profession,
+                        profession = role,
                         bio = bio,
                         avatarUrl = userAvatarUrl,
                         phone = phone,

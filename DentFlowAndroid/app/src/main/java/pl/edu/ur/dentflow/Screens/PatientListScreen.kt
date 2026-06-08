@@ -258,7 +258,7 @@ fun PatientDialog(
     var gender by remember { mutableStateOf(patient?.gender ?: "Nie podano") }
     var addressStreet by remember { mutableStateOf(patient?.addressStreet ?: "") }
     var addressCity by remember { mutableStateOf(patient?.addressCity ?: "") }
-    var addressZip by remember { mutableStateOf(patient?.addressZip ?: "") }
+    var addressZip by remember { mutableStateOf(patient?.addressZip?.replace("-", "") ?: "") }
 
     val isEmailValid = email.isEmpty() || ValidationUtils.isEmailValid(email)
     val isPhoneValid = phone.isEmpty() || ValidationUtils.isPhoneValid(phone)
@@ -486,6 +486,15 @@ fun PatientDialog(
                         label = { Text("Kod pocztowy") },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
+                        visualTransformation = { text ->
+                            val t = text.text
+                            val out = if (t.length >= 2) "${t.take(2)}-${t.drop(2)}" else t
+                            val offsetMapping = object : androidx.compose.ui.text.input.OffsetMapping {
+                                override fun originalToTransformed(offset: Int): Int = if (offset <= 1) offset else if (offset <= 5) offset + 1 else 6
+                                override fun transformedToOriginal(offset: Int): Int = if (offset <= 2) offset else if (offset <= 6) offset - 1 else 5
+                            }
+                            androidx.compose.ui.text.input.TransformedText(androidx.compose.ui.text.AnnotatedString(out), offsetMapping)
+                        },
                         isError = addressZip.isNotBlank() && !isZipValid,
                         supportingText = { if (addressZip.isNotBlank() && !isZipValid) Text("Kod: 5 cyfr") }
                     )
@@ -508,7 +517,8 @@ fun PatientDialog(
                     onConfirm(
                         firstName, lastName, email, phone, dateOfBirth.ifBlank { null },
                         pesel.ifBlank { null }, if (gender == "Nie podano") null else gender,
-                        addressStreet.ifBlank { null }, addressCity.ifBlank { null }, addressZip.ifBlank { null },
+                        addressStreet.ifBlank { null }, addressCity.ifBlank { null },
+                        if (addressZip.length == 5) "${addressZip.take(2)}-${addressZip.drop(2)}" else addressZip.ifBlank { null },
                         userExists, existingUserId, userAvatarUrl
                     ) 
                 },

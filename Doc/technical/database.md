@@ -7,7 +7,7 @@ This documentation covers backup, restore and database testing.
 
 ## Database Structure
 
-### Schema (14 tables)
+### Schema (16 tables)
 
 | Table | Description | Primary Key |
 |-------|-------------|-------------|
@@ -17,6 +17,8 @@ This documentation covers backup, restore and database testing.
 | `location` | Locations | id (BIGSERIAL) |
 | `room` | Treatment rooms | id (BIGSERIAL) |
 | `staff_member` | Staff members | id (BIGSERIAL) |
+| `staff_working_hours` | Per-day working hours | id (BIGSERIAL) |
+| `staff_room` | Staff-room assignments | id (BIGSERIAL) |
 | `patient` | Patients | id (BIGSERIAL) |
 | `service_catalog_item` | Service catalog | id (BIGSERIAL) |
 | `work_schedule_slot` | Work schedules | id (BIGSERIAL) |
@@ -33,6 +35,8 @@ tenant --+-- location -- room
          |
          +-- staff_member
          |     +-- work_schedule_slot
+         |     +-- staff_working_hours
+         |     +-- staff_room -- room
          |
          +-- patient
          |
@@ -66,6 +70,8 @@ tenant --+-- location -- room
 - `V8__add_staff_phone_email.sql` - Staff phone and email
 - `V9__add_staff_working_hours_per_day.sql` - Per-day working hours
 - `V10-V14` - Further schema evolution
+- `V14__add_staff_working_hours_per_day.sql` - Per-day working hours table
+- `V15__add_staff_room_assignment_and_room_crud.sql` - Staff-room assignments
 - `V16__add_appointment_conflict_index.sql` - Composite index on (tenant_id, dentist_staff_id, status, start_at, end_at)
 
 ## Backup

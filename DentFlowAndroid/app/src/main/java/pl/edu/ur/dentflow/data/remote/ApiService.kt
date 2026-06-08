@@ -102,7 +102,8 @@ interface ApiService {
         @Query("userId") userId: Long,
         @Query("firstName") firstName: String = "",
         @Query("lastName") lastName: String = "",
-        @Query("email") email: String = ""
+        @Query("email") email: String = "",
+        @Query("phone") phone: String = ""
     ): Response<PatientResponse>
 
     @PUT("tenants/{tenantId}/patients/{patientId}")

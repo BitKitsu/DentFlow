@@ -5,6 +5,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -54,7 +55,11 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // Public: clinic registration, Swagger, file downloads
-                        .requestMatchers("/tenants/register", "/tenants", "/tenants/catalog/all", "/tenants/staff/all", "/swagger-ui/**", "/api-docs/**", "/public/files/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/tenants/register").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/tenants").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/tenants/catalog/all").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/tenants/staff/all").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/api-docs/**", "/public/files/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

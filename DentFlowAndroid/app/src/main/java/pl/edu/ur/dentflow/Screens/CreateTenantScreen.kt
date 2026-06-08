@@ -17,6 +17,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import pl.edu.ur.dentflow.data.ViewModel.TenantViewModel
+import pl.edu.ur.dentflow.utils.ValidationUtils
 
 private val CLINIC_NAME_REGEX = Regex("^[\\w\\s\\-\\.ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,80}$")
 
@@ -49,7 +50,7 @@ fun CreateTenantScreen(
     val isLocationNameValid = locationName.isBlank() || locationName.length >= 2
     val isStreetValid = street.length >= 3
     val isCityValid = city.length >= 2
-    val isZipValid = Regex("^[0-9]{5}$").matches(zip)
+    val isZipValid = ValidationUtils.isZipValid(zip)
     val isCountryValid = country.length >= 2
 
     val nameError = (showErrors && name.isBlank()) || (name.isNotBlank() && !isNameValid)
@@ -168,20 +169,10 @@ fun CreateTenantScreen(
                         val t = text.text
                         val out = if (t.length >= 2) "${t.take(2)}-${t.drop(2)}" else t
                         val offsetMapping = object : androidx.compose.ui.text.input.OffsetMapping {
-                            override fun originalToTransformed(offset: Int): Int {
-                                if (offset <= 1) return offset
-                                if (offset <= 5) return offset + 1
-                                return 6
-                            }
-                            override fun transformedToOriginal(offset: Int): Int {
-                                if (offset <= 2) return offset
-                                if (offset <= 6) return offset - 1
-                                return 5
-                            }
+                            override fun originalToTransformed(offset: Int): Int = if (offset <= 1) offset else if (offset <= 5) offset + 1 else 6
+                            override fun transformedToOriginal(offset: Int): Int = if (offset <= 2) offset else if (offset <= 6) offset - 1 else 5
                         }
-                        androidx.compose.ui.text.input.TransformedText(
-                            androidx.compose.ui.text.AnnotatedString(out), offsetMapping
-                        )
+                        androidx.compose.ui.text.input.TransformedText(androidx.compose.ui.text.AnnotatedString(out), offsetMapping)
                     },
                     label = {
                         Text(
@@ -222,13 +213,12 @@ fun CreateTenantScreen(
             Button(
                 onClick = {
                     if (canSubmit) {
-                        val formattedZip = "${zip.take(2)}-${zip.drop(2)}"
                         tenantViewModel.registerClinic(
                             name = name,
                             locationName = locationName.ifBlank { "Placówka Główna" },
                             street = street,
                             city = city,
-                            zip = formattedZip,
+                            zip = "${zip.take(2)}-${zip.drop(2)}",
                             country = country
                         )
                     } else {

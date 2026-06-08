@@ -54,6 +54,16 @@ class AuthViewModel @Inject constructor(
     private val _sessionState = MutableStateFlow(loadSessionState())
     val sessionState: StateFlow<SessionState> = _sessionState
 
+    private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == "jwt_token") {
+            refreshSession()
+        }
+    }
+
+    init {
+        prefs.registerOnSharedPreferenceChangeListener(prefsListener)
+    }
+
     fun refreshSession() {
         val jwt = prefs.getString("jwt_token", null)
         if (!jwt.isNullOrBlank()) {
@@ -82,6 +92,11 @@ class AuthViewModel @Inject constructor(
                     if (!token.isNullOrBlank()) {
                         val role = decodeRoleFromJwt(token)
                         saveSession(body, role)
+
+                        if (body.tenantId <= 0L && role in listOf("OWNER", "DENTIST", "RECEPTIONIST", "ASSISTANT")) {
+                            syncTenantFromStaffRecords(body.userId, role)
+                        }
+
                         onSuccess(body.tenantId)
                     } else {
                         _errorMessage.value = "Błąd: Serwer nie przesłał tokenu."
@@ -241,6 +256,21 @@ class AuthViewModel @Inject constructor(
                         } catch (e: Exception) {
                             Log.w("AUTH_DEBUG", "Staff sync failed: ${e.message}")
                         }
+
+                        if (role == "PATIENT") {
+                            try {
+                                apiService.ensurePatient(
+                                    tenantId = tenantId,
+                                    userId = body.userId,
+                                    firstName = firstName ?: "",
+                                    lastName = lastName ?: "",
+                                    email = email ?: "",
+                                    phone = phone ?: ""
+                                )
+                            } catch (e: Exception) {
+                                Log.w("AUTH_DEBUG", "Patient sync failed: ${e.message}")
+                            }
+                        }
                     }
                     
                     onSuccess()
@@ -263,9 +293,16 @@ class AuthViewModel @Inject constructor(
     }
 
     private fun saveSession(body: AuthResponse, role: String) {
+        val existingTenantId = prefs.getLong("tenant_id", 0L)
         prefs.edit().apply {
             putString("jwt_token",        body.token)
-            putLong("tenant_id",          body.tenantId)
+            if (body.tenantId > 0L) {
+                putLong("tenant_id",      body.tenantId)
+            } else if (existingTenantId > 0L) {
+                // Preserve existing tenantId (e.g. patient who already selected a clinic)
+            } else {
+                putLong("tenant_id",      0L)
+            }
             putLong("user_id",            body.userId)
             putString("user_role",        role)
             putString("user_email",       body.email)
@@ -299,6 +336,23 @@ class AuthViewModel @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "JWT decode error: ${e.message}")
             "PATIENT"
+        }
+    }
+
+    private suspend fun syncTenantFromStaffRecords(userId: Long, role: String) {
+        try {
+            val response = apiService.getAllStaffMembers()
+            if (response.isSuccessful) {
+                val staff = response.body() ?: emptyList()
+                val match = staff.find { it.userId == userId }
+                if (match != null && match.tenantId > 0L) {
+                    prefs.edit().putLong("tenant_id", match.tenantId).apply()
+                    Log.i(TAG, "Synced tenantId=${match.tenantId} for userId=$userId from staff records")
+                    refreshSession()
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to sync tenant from staff records: ${e.message}")
         }
     }
 }

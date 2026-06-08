@@ -156,6 +156,6 @@ class AuthServiceTest {
         // when & then
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("Konto jest nieaktywne");
+                .hasMessageContaining("Account is inactive");
     }
 }

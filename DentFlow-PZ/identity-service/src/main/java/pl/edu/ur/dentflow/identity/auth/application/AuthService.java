@@ -224,6 +224,36 @@ public class AuthService {
     }
 
     // -------------------------------------------------------------------------
+    // Owner bootstrap
+    // -------------------------------------------------------------------------
+
+    @Transactional
+    public AuthResponse claimOwnership(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "User does not exist"));
+
+        boolean alreadyOwner = user.getRoles().stream()
+                .anyMatch(ur -> ur.getRole() == Role.OWNER);
+
+        if (alreadyOwner) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "User is already an owner");
+        }
+
+        UserRole ownerRole = UserRole.builder()
+                .user(user)
+                .role(Role.OWNER)
+                .build();
+        user.getRoles().add(ownerRole);
+        User saved = userRepository.save(user);
+        log.info("Owner claim successful for userId: {}", saved.getId());
+
+        String token = jwtService.generateToken(saved);
+        return toAuthResponse(token, saved);
+    }
+
+    // -------------------------------------------------------------------------
     // Role assignment
     // -------------------------------------------------------------------------
 

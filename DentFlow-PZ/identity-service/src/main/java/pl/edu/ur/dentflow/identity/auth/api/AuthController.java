@@ -16,6 +16,7 @@ import pl.edu.ur.dentflow.identity.auth.api.ChangePasswordRequest;
 import pl.edu.ur.dentflow.identity.auth.api.UpdateProfileRequest;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/auth")
@@ -79,6 +80,9 @@ public class AuthController {
     public ResponseEntity<Void> changePassword(
             @Valid @RequestBody ChangePasswordRequest request,
             Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
         authService.changePassword(authentication.getName(), request);
         return ResponseEntity.noContent().build();
     }
@@ -116,6 +120,17 @@ public class AuthController {
     public ResponseEntity<AuthResponse> getUserByEmail(@RequestParam String email) {
         log.info("Fetching user data: {}", email);
         AuthResponse response = authService.getUserByEmail(email);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/claim-ownership")
+    @Operation(summary = "Bootstrap OWNER role for the current user (one-time)")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<AuthResponse> claimOwnership(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+        AuthResponse response = authService.claimOwnership(authentication.getName());
         return ResponseEntity.ok(response);
     }
 

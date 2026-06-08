@@ -33,11 +33,18 @@ import pl.edu.ur.dentflow.data.remote.WorkingHoursEntry
 import pl.edu.ur.dentflow.utils.ValidationUtils
 import kotlinx.coroutines.launch
 
+private fun roleDisplayName(role: String): String = when (role.uppercase()) {
+    "DENTIST" -> "Dentysta"
+    "RECEPTIONIST" -> "Recepcjonista"
+    "ASSISTANT" -> "Asystent"
+    else -> role
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddStaffDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, String, String, String, String, String, String, Boolean, Long?, String?, String) -> Unit,
+    onConfirm: (String, String, String, String, String, String, Boolean, Long?, String?, String) -> Unit,
     onCheckEmail: suspend (String) -> AuthResponse?
 ) {
     var email by remember { mutableStateOf("") }
@@ -50,7 +57,6 @@ fun AddStaffDialog(
     var fName by remember { mutableStateOf("") }
     var lName by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
-    var prof by remember { mutableStateOf("") }
     var bio by remember { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
     var showError by remember { mutableStateOf(false) }
@@ -194,15 +200,6 @@ fun AddStaffDialog(
                         }
                     }
                     OutlinedTextField(
-                        value = prof,
-                        onValueChange = { prof = it },
-                        label = { Text("Profesja") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        isError = showError && prof.isBlank(),
-                        supportingText = { if (showError && prof.isBlank()) Text("Profesja jest wymagana") }
-                    )
-                    OutlinedTextField(
                         value = bio,
                         onValueChange = { bio = it },
                         label = { Text("Bio / O mnie") },
@@ -236,8 +233,8 @@ fun AddStaffDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    if (emailChecked && fName.isNotBlank() && lName.isNotBlank() && prof.isNotBlank() && isPassValid && isFirstNameValid && isLastNameValid && isPhoneValid) {
-                        onConfirm(fName, lName, prof, email, pass, phone, bio, userExists, existingUserId, userAvatarUrl, selectedRole)
+                    if (emailChecked && fName.isNotBlank() && lName.isNotBlank() && isPassValid && isFirstNameValid && isLastNameValid && isPhoneValid) {
+                        onConfirm(fName, lName, email, pass, phone, bio, userExists, existingUserId, userAvatarUrl, selectedRole)
                     } else { showError = true }
                 },
                 shape = RoundedCornerShape(12.dp),
@@ -274,7 +271,7 @@ fun EditStaffDialog(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(value = fName, onValueChange = { fName = it }, label = { Text("Imię") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), isError = (showError && fName.isBlank()) || (fName.isNotBlank() && !isFirstNameValid), supportingText = { if (fName.isNotBlank() && !isFirstNameValid) Text("2-50 znaków (litery)") })
                 OutlinedTextField(value = lName, onValueChange = { lName = it }, label = { Text("Nazwisko") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), isError = (showError && lName.isBlank()) || (lName.isNotBlank() && !isLastNameValid), supportingText = { if (lName.isNotBlank() && !isLastNameValid) Text("2-50 znaków (litery)") })
-                OutlinedTextField(value = prof, onValueChange = { prof = it }, label = { Text("Profesja") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), isError = showError && prof.isBlank(), supportingText = { if (showError && prof.isBlank()) Text("Profesja jest wymagana") })
+                OutlinedTextField(value = roleDisplayName(prof), onValueChange = {}, label = { Text("Rola") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), readOnly = true)
                 OutlinedTextField(value = bio, onValueChange = { bio = it }, label = { Text("Krótkie Bio / O mnie") }, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 4, shape = RoundedCornerShape(12.dp))
             }
         },
@@ -361,8 +358,8 @@ fun StaffManagementScreen(
             if (showAddDialog) {
                 AddStaffDialog(
                     onDismiss = { showAddDialog = false },
-                    onConfirm = { fn, ln, pr, em, ps, ph, bo, exists, userId, avatarUrl, role ->
-                        viewModel.addStaff(fn, ln, pr, em, ps, ph, bo, exists, userId, avatarUrl, role)
+                    onConfirm = { fn, ln, em, ps, ph, bo, exists, userId, avatarUrl, role ->
+                        viewModel.addStaff(fn, ln, em, ps, ph, bo, exists, userId, avatarUrl, role)
                         showAddDialog = false
                     },
                     onCheckEmail = { email ->
@@ -462,7 +459,7 @@ fun StaffItem(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = member.profession,
+                    text = roleDisplayName(member.profession),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -547,7 +544,7 @@ fun StaffDetailDialog(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = member.profession,
+                    text = roleDisplayName(member.profession),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )

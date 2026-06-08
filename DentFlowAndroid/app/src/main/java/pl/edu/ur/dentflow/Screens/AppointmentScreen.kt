@@ -80,6 +80,16 @@ fun CreateAppointmentScreen(
 
     val services = catalogViewModel.servicesState.value
 
+    LaunchedEffect(selectedTenantId) {
+        selectedTenantId?.let { tid ->
+            if (tid > 0) {
+                viewModel.syncTenantId(tid)
+                catalogViewModel.loadServices()
+                staffViewModel.loadAllStaff()
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         staffViewModel.loadAllStaff()
         patientViewModel.loadPatients()
@@ -104,14 +114,14 @@ fun CreateAppointmentScreen(
                 selectedDentist = found
                 selectedTenantId = found.tenantId
                 currentStep = 2
-                viewModel.loadBookingData(found.id)
+                viewModel.loadBookingData(found.id, found.tenantId)
             }
         }
     }
 
     LaunchedEffect(selectedDentist) {
         selectedDentist?.let {
-            viewModel.loadBookingData(it.id)
+            viewModel.loadBookingData(it.id, it.tenantId)
         }
     }
 
@@ -206,6 +216,7 @@ fun CreateAppointmentScreen(
                         services = services,
                         selectedService = selectedService,
                         servicePreselected = initialServiceId > 0,
+                        initialServiceId = initialServiceId,
                         onNotesChange = { notes = it },
                         onServiceSelected = { service ->
                             selectedService = service
@@ -230,6 +241,7 @@ fun CreateAppointmentScreen(
                                     start = slot.startIso,
                                     end = slot.endIso,
                                     note = notes,
+                                    tenantId = selectedTenantId ?: -1L,
                                     onSuccess = {
                                         viewModel.resetBookingState()
                                         onSuccess()
@@ -320,11 +332,10 @@ fun Step1ChooseDentist(
     selectedDentist: StaffMemberResponse?,
     onDentistSelected: (StaffMemberResponse) -> Unit
 ) {
-    val dentists = staff.filter {
-        val prof = it.profession.lowercase()
-        !prof.contains("asystent") && !prof.contains("assistant") &&
-            (tenantId == null || it.tenantId == tenantId)
-    }
+                val dentists = staff.filter {
+                    val role = it.profession.uppercase()
+                    role == "DENTIST" && (tenantId == null || it.tenantId == tenantId)
+                }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -617,6 +628,7 @@ fun Step3PickTime(
     services: List<ServiceCatalogItemDTO>,
     selectedService: ServiceCatalogItemDTO?,
     servicePreselected: Boolean,
+    initialServiceId: Long = -1L,
     onNotesChange: (String) -> Unit,
     onServiceSelected: (ServiceCatalogItemDTO) -> Unit,
     onTimeSelected: (TimeSlot) -> Unit,
@@ -713,7 +725,8 @@ fun Step3PickTime(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        if (servicePreselected && selectedService != null && selectedService!!.id > 0) {
+        if (servicePreselected) {
+            val service = selectedService ?: services.find { it.id == initialServiceId }
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
@@ -725,7 +738,8 @@ fun Step3PickTime(
                     Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "${selectedService!!.name} (${selectedService!!.durationMinutes} min, ${"%.2f".format(selectedService!!.priceCents / 100.0)} zl)",
+                        text = if (service != null) "${service.name} (${service.durationMinutes} min, ${"%.2f".format(service.priceCents / 100.0)} zl)"
+                               else "Usługa #$initialServiceId",
                         fontWeight = FontWeight.SemiBold
                     )
                 }

@@ -25,11 +25,12 @@ import pl.edu.ur.dentflow.data.remote.StaffMemberResponse
 fun RoomManagementScreen(
     onBackClick: () -> Unit,
     isOwner: Boolean = true,
+    isReceptionist: Boolean = false,
     tenantViewModel: TenantViewModel = hiltViewModel(),
     staffViewModel: pl.edu.ur.dentflow.data.ViewModel.StaffViewModel = hiltViewModel()
 ) {
     val rooms by tenantViewModel.rooms.collectAsState()
-    val allStaff by staffViewModel.allStaff.collectAsState()
+    val staffMembers by staffViewModel.staffMembers.collectAsState()
     val tenantData by tenantViewModel.tenantState
     var showCreateDialog by remember { mutableStateOf(false) }
     var editingRoom by remember { mutableStateOf<RoomResponse?>(null) }
@@ -38,7 +39,7 @@ fun RoomManagementScreen(
 
     LaunchedEffect(Unit) {
         tenantViewModel.loadRooms(tenantViewModel.currentTenantId)
-        staffViewModel.loadAllStaff()
+        staffViewModel.loadStaff()
     }
 
     Scaffold(
@@ -50,7 +51,7 @@ fun RoomManagementScreen(
             )
         },
         floatingActionButton = {
-            if (isOwner) {
+            if (isOwner || isReceptionist) {
                 FloatingActionButton(
                     onClick = { showCreateDialog = true },
                     containerColor = MaterialTheme.colorScheme.primary
@@ -79,8 +80,9 @@ fun RoomManagementScreen(
                 items(rooms) { room ->
                     RoomCard(
                         room = room,
-                        allStaff = allStaff,
+                        staffMembers = staffMembers,
                         isOwner = isOwner,
+                        isReceptionist = isReceptionist,
                         onEdit = { editingRoom = room },
                         onDelete = { tenantViewModel.deleteRoom(room.id) },
                         onToggleStaff = { staffId, isAssigned ->
@@ -121,14 +123,15 @@ fun RoomManagementScreen(
 @Composable
 fun RoomCard(
     room: RoomResponse,
-    allStaff: List<StaffMemberResponse>,
+    staffMembers: List<StaffMemberResponse>,
     isOwner: Boolean = true,
+    isReceptionist: Boolean = false,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     onToggleStaff: (Long, Boolean) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val assignedStaff = allStaff.filter { it.id in room.assignedStaffIds }
+    val assignedStaff = staffMembers.filter { it.id in room.assignedStaffIds }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -166,10 +169,12 @@ fun RoomCard(
                         contentDescription = "Toggle staff"
                     )
                 }
-                if (isOwner) {
+                if (isOwner || isReceptionist) {
                     IconButton(onClick = onEdit) {
                         Icon(Icons.Default.Edit, "Edit room")
                     }
+                }
+                if (isOwner) {
                     IconButton(onClick = onDelete) {
                         Icon(Icons.Default.Delete, "Delete room", tint = MaterialTheme.colorScheme.error)
                     }
@@ -187,7 +192,7 @@ fun RoomCard(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
 
-                val dentists = allStaff.filter {
+                val dentists = staffMembers.filter {
                     val prof = it.profession.lowercase()
                     !prof.contains("asystent") && !prof.contains("assistant")
                 }

@@ -331,8 +331,10 @@ class TenantViewModel @Inject constructor(
                     _tenantState.value = null
                     onSuccess()
                 } else {
-                    val msg = response.errorBody()?.string() ?: "Nieznany błąd"
-                    Log.e(TAG, "API BŁĄD -> deleteTenant: ${response.code()} $msg")
+                    val raw = response.errorBody()?.string() ?: ""
+                    Log.e(TAG, "API BŁĄD -> deleteTenant: ${response.code()} $raw")
+                    val msg = parseErrorMessage(raw)
+                        ?: "Nie udało się usunąć kliniki (${response.code()})"
                     onError(msg)
                 }
             } catch (e: Exception) {
@@ -341,6 +343,18 @@ class TenantViewModel @Inject constructor(
             } finally {
                 _isLoading.value = false
             }
+        }
+    }
+
+    private fun parseErrorMessage(raw: String): String? {
+        if (raw.isBlank()) return null
+        if (raw.startsWith("<!")) return null
+        return try {
+            val jsonObj = org.json.JSONObject(raw)
+            jsonObj.optString("message").takeIf { it.isNotBlank() }
+                ?: jsonObj.optString("error").takeIf { it.isNotBlank() }
+        } catch (_: Exception) {
+            raw.takeIf { it.length < 200 }
         }
     }
 }

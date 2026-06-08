@@ -10,6 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.List;
 
 /**
@@ -32,11 +35,14 @@ public class TenantService {
 
     private final TenantRepository tenantRepository;
     private final LocationRepository locationRepository;
+    private final DataSource dataSource;
 
     public TenantService(TenantRepository tenantRepository,
-                         LocationRepository locationRepository) {
+                         LocationRepository locationRepository,
+                         DataSource dataSource) {
         this.tenantRepository = tenantRepository;
         this.locationRepository = locationRepository;
+        this.dataSource = dataSource;
     }
 
     /**
@@ -107,7 +113,38 @@ public class TenantService {
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Gabinet nie istnieje"));
+
+        // Each cleanup uses its own physical connection with autoCommit=true
+        // because PostgreSQL aborts the entire transaction on any failed statement
+        // (e.g. missing table). REQUIRES_NEW doesn't help because the outer
+        // transaction's connection is reused. Raw JDBC bypasses this.
+        // Order matters: delete deepest FK references first, then location/staff, then tenant.
+        String[] cleanupSql = {
+                "DELETE FROM appointment WHERE tenant_id = ?",
+                "DELETE FROM work_schedule_slot WHERE tenant_id = ?",
+                "DELETE FROM blocker WHERE tenant_id = ?",
+                "DELETE FROM staff_working_hours WHERE staff_id IN (SELECT id FROM staff_member WHERE tenant_id = ?)",
+                "DELETE FROM staff_room WHERE staff_id IN (SELECT id FROM staff_member WHERE tenant_id = ?)",
+                "DELETE FROM room WHERE tenant_id = ?",
+                "DELETE FROM staff_member WHERE tenant_id = ?",
+                "DELETE FROM location WHERE tenant_id = ?"
+        };
+        for (String sql : cleanupSql) {
+            safeDelete(sql, tenantId);
+        }
+
         tenantRepository.delete(tenant);
+    }
+
+    private void safeDelete(String sql, Long tenantId) {
+        try (Connection conn = dataSource.getConnection()) {
+            conn.setAutoCommit(true);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setLong(1, tenantId);
+                ps.executeUpdate();
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     // Managing locations

@@ -7,6 +7,15 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Public file download endpoint (no authentication required).
+ *
+ * <p>Files are accessible via their public URL which includes the fileId.
+ * This endpoint serves file content with inline disposition for browser
+ * rendering (e.g., images, PDFs).</p>
+ *
+ * @see pl.edu.ur.dentflow.core.file.application.FileService
+ */
 @RestController
 @RequestMapping("/public/files")
 public class PublicFileController {

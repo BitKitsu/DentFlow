@@ -11,6 +11,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import okhttp3.ResponseBody
 import javax.inject.Inject
 
 data class VisitWithPatient(
@@ -39,18 +40,32 @@ class VisitViewModel @Inject constructor(
         get() = prefs.getLong("tenant_id", -1L)
 
     private val userRole: String
-        get() = prefs.getString("user_role", "USER") ?: "USER"
+        get() = prefs.getString("user_role", "PATIENT") ?: "PATIENT"
 
-    private val isPatient: Boolean
-        get() = userRole != "OWNER" && userRole != "DOCTOR"
+    val isPatient: Boolean
+        get() = userRole == "PATIENT"
+
+    val isReadOnly: Boolean
+        get() = userRole == "ASSISTANT"
+
+    val currentUserId: Long
+        get() = prefs.getLong("user_id", -1L)
 
     init {
         refreshVisits()
+        prefs.registerOnSharedPreferenceChangeListener { _, key ->
+            if (key == "tenant_id") {
+                val newTenantId = prefs.getLong("tenant_id", -1L)
+                if (newTenantId > 0L) {
+                    refreshVisits()
+                }
+            }
+        }
     }
 
     fun refreshVisits() {
         val tenantId = currentTenantId
-        if (tenantId == -1L) return
+        if (tenantId <= 0L) return
 
         if (isPatient) {
             fetchMyVisits(tenantId)
@@ -59,7 +74,7 @@ class VisitViewModel @Inject constructor(
         }
     }
 
-    /** Dla pacjenta — tylko jego własne wizyty przez endpoint /my */
+    /** Dla pacjenta - tylko jego własne wizyty przez endpoint /my */
     private fun fetchMyVisits(tenantId: Long) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -68,8 +83,17 @@ class VisitViewModel @Inject constructor(
                 val response = apiService.getMyAppointments(tenantId)
                 when {
                     response.isSuccessful -> {
+                        val myPatient = PatientResponse(
+                            id = 0L,
+                            tenantId = tenantId,
+                            userId = currentUserId,
+                            firstName = prefs.getString("user_first_name", "") ?: "",
+                            lastName = prefs.getString("user_last_name", "") ?: "",
+                            email = prefs.getString("user_email", "") ?: "",
+                            phone = prefs.getString("user_phone", "") ?: ""
+                        )
                         _visits.value = (response.body() ?: emptyList()).map { appointment ->
-                            VisitWithPatient(visit = appointment, patient = null)
+                            VisitWithPatient(visit = appointment, patient = myPatient)
                         }
                     }
                     response.code() == 403 -> {
@@ -77,7 +101,7 @@ class VisitViewModel @Inject constructor(
                         Log.e(TAG, "403 Forbidden on /appointments/my")
                     }
                     else -> {
-                        _errorMessage.value = "Błąd serwera: ${response.code()}"
+                        _errorMessage.value = extractErrorMessage(response.errorBody(), response.code())
                         Log.e(TAG, "Error ${response.code()} on /appointments/my")
                     }
                 }
@@ -102,11 +126,16 @@ class VisitViewModel @Inject constructor(
                         val appointmentList = response.body() ?: emptyList()
                         val combinedList = appointmentList.map { appointment ->
                             async {
-                                val patientRes = apiService.getPatientById(tenantId, appointment.patientId)
-                                VisitWithPatient(
-                                    visit = appointment,
-                                    patient = if (patientRes.isSuccessful) patientRes.body() else null
-                                )
+                                try {
+                                    val patientRes = appointment.patientId?.let { apiService.getPatientById(tenantId, it) }
+                                    VisitWithPatient(
+                                        visit = appointment,
+                                        patient = if (patientRes != null && patientRes.isSuccessful) patientRes.body() else null
+                                    )
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Error fetching patient for appointment ${appointment.id}: ${e.message}")
+                                    VisitWithPatient(visit = appointment, patient = null)
+                                }
                             }
                         }.awaitAll()
                         _visits.value = combinedList
@@ -116,7 +145,7 @@ class VisitViewModel @Inject constructor(
                         Log.e(TAG, "403 Forbidden on /appointments")
                     }
                     else -> {
-                        _errorMessage.value = "Błąd serwera: ${response.code()}"
+                        _errorMessage.value = extractErrorMessage(response.errorBody(), response.code())
                         Log.e(TAG, "Error ${response.code()} on /appointments")
                     }
                 }
@@ -125,6 +154,51 @@ class VisitViewModel @Inject constructor(
                 Log.e(TAG, "Exception: ${e.message}")
             } finally {
                 _isLoading.value = false
+            }
+        }
+    }
+
+    fun confirmAppointment(appointmentId: Long) {
+        val tenantId = currentTenantId
+        if (tenantId == -1L) return
+
+        viewModelScope.launch {
+            try {
+                if (apiService.confirmAppointment(tenantId, appointmentId).isSuccessful) {
+                    refreshVisits()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception confirmAppointment: ${e.message}")
+            }
+        }
+    }
+
+    fun cancelAppointment(appointmentId: Long) {
+        val tenantId = currentTenantId
+        if (tenantId == -1L) return
+
+        viewModelScope.launch {
+            try {
+                if (apiService.cancelAppointment(tenantId, appointmentId).isSuccessful) {
+                    refreshVisits()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception cancelAppointment: ${e.message}")
+            }
+        }
+    }
+
+    fun completeAppointment(appointmentId: Long) {
+        val tenantId = currentTenantId
+        if (tenantId == -1L) return
+
+        viewModelScope.launch {
+            try {
+                if (apiService.completeAppointment(tenantId, appointmentId).isSuccessful) {
+                    refreshVisits()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception completeAppointment: ${e.message}")
             }
         }
     }
@@ -171,8 +245,9 @@ class VisitViewModel @Inject constructor(
                         android.widget.Toast.makeText(context, "Brak danych do wygenerowania raportu", android.widget.Toast.LENGTH_SHORT).show()
                     }
                 } else {
-                    Log.e(TAG, "Błąd pobierania PDF: ${response.code()}")
-                    android.widget.Toast.makeText(context, "Błąd serwera: ${response.code()}", android.widget.Toast.LENGTH_SHORT).show()
+                    val msg = extractErrorMessage(response.errorBody(), response.code())
+                    Log.e(TAG, "Błąd pobierania PDF: $msg")
+                    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Błąd sieci: ${e.message}")
@@ -201,8 +276,9 @@ class VisitViewModel @Inject constructor(
                         android.widget.Toast.makeText(context, "Brak danych do wygenerowania raportu", android.widget.Toast.LENGTH_SHORT).show()
                     }
                 } else {
-                    Log.e(TAG, "Błąd pobierania PDF obłożenia: ${response.code()}")
-                    android.widget.Toast.makeText(context, "Błąd serwera: ${response.code()}", android.widget.Toast.LENGTH_SHORT).show()
+                    val msg = extractErrorMessage(response.errorBody(), response.code())
+                    Log.e(TAG, "Błąd pobierania PDF obłożenia: $msg")
+                    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Błąd sieci obłożenie: ${e.message}")
@@ -226,13 +302,22 @@ class VisitViewModel @Inject constructor(
                         android.widget.Toast.makeText(context, "Brak danych do wygenerowania raportu", android.widget.Toast.LENGTH_SHORT).show()
                     }
                 } else {
-                    Log.e(TAG, "Błąd pobierania PDF historii: ${response.code()}")
-                    android.widget.Toast.makeText(context, "Błąd serwera: ${response.code()}", android.widget.Toast.LENGTH_SHORT).show()
+                    val msg = extractErrorMessage(response.errorBody(), response.code())
+                    Log.e(TAG, "Błąd pobierania PDF historii: $msg")
+                    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Błąd sieci historia: ${e.message}")
                 android.widget.Toast.makeText(context, "Brak połączenia z serwerem", android.widget.Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun extractErrorMessage(body: ResponseBody?, fallbackCode: Int): String {
+        return try {
+            body?.string()?.takeIf { it.isNotBlank() } ?: "Błąd serwera: $fallbackCode"
+        } catch (_: Exception) {
+            "Błąd serwera: $fallbackCode"
         }
     }
 

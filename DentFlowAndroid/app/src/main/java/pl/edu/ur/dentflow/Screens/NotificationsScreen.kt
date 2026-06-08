@@ -225,30 +225,36 @@ fun NotificationCard(
     onClick: () -> Unit
 ) {
     val icon = when (notification.type) {
-        "NEW_APPOINTMENT"  -> Icons.Default.AddCircle
-        "CANCELLED"        -> Icons.Default.Cancel
-        "REMINDER"         -> Icons.Default.NotificationsActive
-        "EMAIL"            -> Icons.Default.Email
-        "IN_APP"           -> Icons.Default.Notifications
-        else               -> Icons.Default.Info
+        "APPOINTMENT"             -> Icons.Default.AddCircle
+        "APPOINTMENT_CANCELLED"   -> Icons.Default.Cancel
+        "APPOINTMENT_COMPLETED"   -> Icons.Default.CheckCircle
+        "APPOINTMENT_CONFIRMED"   -> Icons.Default.CheckCircle
+        "APPOINTMENT_NO_SHOW"     -> Icons.Default.Warning
+        "APPOINTMENT_REMINDER_24H",
+        "APPOINTMENT_REMINDER_12H" -> Icons.Default.NotificationsActive
+        else                      -> Icons.Default.Info
     }
 
     val iconColor = when (notification.type) {
-        "NEW_APPOINTMENT"  -> Color(0xFF4CAF50)
-        "CANCELLED"        -> MaterialTheme.colorScheme.error
-        "REMINDER"         -> Color(0xFFFF9800)
-        "EMAIL"            -> Color(0xFF2196F3)
-        "IN_APP"           -> MaterialTheme.colorScheme.primary
-        else               -> MaterialTheme.colorScheme.primary
+        "APPOINTMENT"             -> Color(0xFF4CAF50)
+        "APPOINTMENT_CANCELLED"   -> MaterialTheme.colorScheme.error
+        "APPOINTMENT_COMPLETED"   -> Color(0xFF9E9E9E)
+        "APPOINTMENT_CONFIRMED"   -> Color(0xFF4CAF50)
+        "APPOINTMENT_NO_SHOW"     -> Color(0xFF9C27B0)
+        "APPOINTMENT_REMINDER_24H",
+        "APPOINTMENT_REMINDER_12H" -> Color(0xFFFF9800)
+        else                      -> MaterialTheme.colorScheme.primary
     }
 
     val typeLabel = when (notification.type) {
-        "NEW_APPOINTMENT"  -> "Nowa wizyta"
-        "CANCELLED"        -> "Wizyta odwołana"
-        "REMINDER"         -> "Przypomnienie"
-        "EMAIL"            -> "E-mail"
-        "IN_APP"           -> "Powiadomienie"
-        else               -> "System"
+        "APPOINTMENT"             -> "Wizyta"
+        "APPOINTMENT_CANCELLED"   -> "Wizyta odwołana"
+        "APPOINTMENT_COMPLETED"   -> "Wizyta zakończona"
+        "APPOINTMENT_CONFIRMED"   -> "Wizyta potwierdzona"
+        "APPOINTMENT_NO_SHOW"     -> "Nieobecność"
+        "APPOINTMENT_REMINDER_24H" -> "Przypomnienie (24h)"
+        "APPOINTMENT_REMINDER_12H" -> "Przypomnienie (12h)"
+        else                      -> "System"
     }
 
     val formattedTime = remember(notification.createdAt) {

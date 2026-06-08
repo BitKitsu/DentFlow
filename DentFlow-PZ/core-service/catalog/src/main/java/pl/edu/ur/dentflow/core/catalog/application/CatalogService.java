@@ -5,6 +5,9 @@ import pl.edu.ur.dentflow.core.catalog.api.ServiceCatalogItemDTO;
 import pl.edu.ur.dentflow.core.catalog.api.UpdateServiceCatalogItemRequest;
 import pl.edu.ur.dentflow.core.catalog.domain.ServiceCatalogItem;
 import pl.edu.ur.dentflow.core.catalog.infrastructure.ServiceCatalogItemRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,10 +18,14 @@ import java.util.List;
 @Service
 public class CatalogService {
 
-    private final ServiceCatalogItemRepository repository;
+    private static final Logger log = LoggerFactory.getLogger(CatalogService.class);
 
-    public CatalogService(ServiceCatalogItemRepository repository) {
+    private final ServiceCatalogItemRepository repository;
+    private final JdbcTemplate jdbcTemplate;
+
+    public CatalogService(ServiceCatalogItemRepository repository, JdbcTemplate jdbcTemplate) {
         this.repository = repository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Transactional(readOnly = true)
@@ -50,7 +57,7 @@ public class CatalogService {
         return repository.findByIdAndTenantId(id, tenantId)
                 .map(this::toDTO)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Usługa o id=" + id + " nie istnieje w tym gabinecie"));
+                        HttpStatus.NOT_FOUND, "Service with id=" + id + " does not exist in this clinic"));
     }
 
     @Transactional
@@ -69,7 +76,7 @@ public class CatalogService {
     public ServiceCatalogItemDTO updateService(Long tenantId, Long id, UpdateServiceCatalogItemRequest request) {
         ServiceCatalogItem item = repository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Usługa o id=" + id + " nie istnieje w tym gabinecie"));
+                        HttpStatus.NOT_FOUND, "Service with id=" + id + " does not exist in this clinic"));
 
         item.setName(request.name());
         item.setDurationMinutes(request.durationMinutes());
@@ -83,7 +90,16 @@ public class CatalogService {
     public void deleteService(Long tenantId, Long id) {
         ServiceCatalogItem item = repository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Usługa o id=" + id + " nie istnieje w tym gabinecie"));
+                        HttpStatus.NOT_FOUND, "Service with id=" + id + " does not exist in this clinic"));
+
+        int cancelled = jdbcTemplate.update(
+                "UPDATE appointment SET status = 'CANCELLED' " +
+                "WHERE tenant_id = ? AND service_item_id = ? AND status NOT IN ('CANCELLED', 'COMPLETED')",
+                tenantId, id);
+        if (cancelled > 0) {
+            log.info("Cancelled {} appointments using deleted service {} for tenant {}", cancelled, id, tenantId);
+        }
+
         repository.delete(item);
     }
 

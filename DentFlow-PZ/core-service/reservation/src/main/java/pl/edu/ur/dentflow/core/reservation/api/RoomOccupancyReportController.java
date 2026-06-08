@@ -18,6 +18,21 @@ import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
+/**
+ * REST controller generating room occupancy PDF reports.
+ *
+ * <p>Provides two endpoints:
+ * <ul>
+ *   <li>GET /tenants/{tenantId}/reports/room-occupancy - occupancy for all rooms</li>
+ *   <li>GET /tenants/{tenantId}/reports/room-occupancy/{roomId} - occupancy for a single room</li>
+ * </ul>
+ *
+ * <p>Both endpoints accept date range parameters (from/to in YYYY-MM-DD format)
+ * and return a PDF file with appointment/room data.</p>
+ *
+ * @see pl.edu.ur.dentflow.core.reservation.application.RoomOccupancyReportService
+ * @see pl.edu.ur.dentflow.pdf.DentFlowPdfGenerator
+ */
 @RestController
 @RequestMapping("/tenants/{tenantId}/reports/room-occupancy")
 public class RoomOccupancyReportController {
@@ -52,7 +67,7 @@ public class RoomOccupancyReportController {
                     .body(pdf);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Błąd generowania PDF: " + e.getMessage());
+                    "PDF generation error: " + e.getMessage());
         }
     }
 
@@ -77,7 +92,7 @@ public class RoomOccupancyReportController {
                     .body(pdf);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Błąd generowania PDF: " + e.getMessage());
+                    "PDF generation error: " + e.getMessage());
         }
     }
 

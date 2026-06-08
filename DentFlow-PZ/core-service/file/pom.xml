@@ -32,7 +32,7 @@
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
-        <!-- AWS SDK v2 — S3 client -->
+        <!-- AWS SDK v2 - S3 client -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>s3</artifactId>

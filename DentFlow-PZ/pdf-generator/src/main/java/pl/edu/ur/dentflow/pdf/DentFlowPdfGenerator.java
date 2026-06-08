@@ -10,25 +10,25 @@ import pl.edu.ur.dentflow.pdf.model.RoomOccupancyReportData;
 import java.io.IOException;
 
 /**
- * Główne API biblioteki DentFlow PDF Generator.
+ * Main API of the DentFlow PDF Generator library.
  *
- * Użycie w Spring Boot (po dodaniu JAR-a do backendu):
+ * Usage in Spring Boot (after adding JAR to backend):
  * <pre>{@code
  *   DentFlowPdfGenerator pdf = new DentFlowPdfGenerator();
  *
- *   // Raport 1: lista wizyt
+ *   // Report 1: appointment list
  *   byte[] bytes = pdf.generateAppointmentList(data);
  *
- *   // Raport 2: obłożenie gabinetu
+ *   // Report 2: room occupancy
  *   byte[] bytes = pdf.generateRoomOccupancy(data);
  *
- *   // Raport 3: historia wizyt pacjenta
+ *   // Report 3: patient visit history
  *   byte[] bytes = pdf.generatePatientHistory(data);
  *
- *   // Zwrot przez kontroler:
+ *   // Return via controller:
  *   return ResponseEntity.ok()
  *       .contentType(MediaType.APPLICATION_PDF)
- *       .header("Content-Disposition", "attachment; filename=\"raport.pdf\"")
+ *       .header("Content-Disposition", "attachment; filename=\"report.pdf\"")
  *       .body(bytes);
  * }</pre>
  */
@@ -45,33 +45,33 @@ public class DentFlowPdfGenerator {
     }
 
     /**
-     * Generuje PDF z listą wizyt (Raport 1).
+     * Generates PDF with appointment list (Report 1).
      *
-     * @param data parametry i dane raportu
-     * @return bajty PDF
-     * @throws IOException błąd generowania
+     * @param data report parameters and data
+     * @return PDF bytes
+     * @throws IOException generation error
      */
     public byte[] generateAppointmentList(AppointmentListReportData data) throws IOException {
         return appointmentListGenerator.generate(data);
     }
 
     /**
-     * Generuje PDF z raportem obłożenia gabinetu (Raport 2).
+     * Generates PDF with room occupancy report (Report 2).
      *
-     * @param data parametry i dane raportu
-     * @return bajty PDF
-     * @throws IOException błąd generowania
+     * @param data report parameters and data
+     * @return PDF bytes
+     * @throws IOException generation error
      */
     public byte[] generateRoomOccupancy(RoomOccupancyReportData data) throws IOException {
         return roomOccupancyGenerator.generate(data);
     }
 
     /**
-     * Generuje PDF z historią wizyt pacjenta (Raport 3).
+     * Generates PDF with patient visit history (Report 3).
      *
-     * @param data parametry i dane raportu
-     * @return bajty PDF
-     * @throws IOException błąd generowania
+     * @param data report parameters and data
+     * @return PDF bytes
+     * @throws IOException generation error
      */
     public byte[] generatePatientHistory(PatientVisitHistoryReportData data) throws IOException {
         return patientHistoryGenerator.generate(data);

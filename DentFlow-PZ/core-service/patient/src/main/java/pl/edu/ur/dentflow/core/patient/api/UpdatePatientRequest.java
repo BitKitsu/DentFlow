@@ -1,22 +1,24 @@
 package pl.edu.ur.dentflow.core.patient.api;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 public record UpdatePatientRequest(
         Long userId,
 
-        @NotBlank @Size(max = 50)
+        @NotBlank @Size(min = 2, max = 50)
         String firstName,
 
-        @NotBlank @Size(max = 50)
+        @NotBlank @Size(min = 2, max = 50)
         String lastName,
 
-        @Size(max = 20)
+        @Size(max = 20) @Pattern(regexp = "^\\+?[0-9][\\s\\-]?([0-9][\\s\\-]?){8,14}$", message = "Nieprawidłowy numer telefonu")
         String phone,
 
-        @Size(max = 255)
+        @Email @Size(max = 255)
         String email,
 
         String notes,

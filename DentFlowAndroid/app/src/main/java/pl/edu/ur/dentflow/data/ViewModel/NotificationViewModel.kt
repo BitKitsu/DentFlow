@@ -32,12 +32,23 @@ class NotificationViewModel @Inject constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
+    init {
+        sharedPrefs.registerOnSharedPreferenceChangeListener { _, key ->
+            if (key == "tenant_id") {
+                val newTenantId = sharedPrefs.getLong("tenant_id", -1L)
+                if (newTenantId > 0L) {
+                    fetchNotifications()
+                }
+            }
+        }
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     private fun getSessionData(): Pair<Long, Long> {
         val tenantId = sharedPrefs.getLong("tenant_id", -1L)
         val userId   = sharedPrefs.getLong("user_id",   -1L)
-        return Pair(tenantId, userId)
+        return if (tenantId <= 0L) Pair(-1L, userId) else Pair(tenantId, userId)
     }
 
     // ─── Pobierz wszystkie powiadomienia + licznik nieprzeczytanych ───────────
@@ -85,7 +96,7 @@ class NotificationViewModel @Inject constructor(
             try {
                 val response = apiService.markAsRead(tenantId, userId, notificationId)
                 if (response.isSuccessful) {
-                    // Aktualizacja lokalna — natychmiastowa reakcja UI
+                    // Aktualizacja lokalna - natychmiastowa reakcja UI
                     _notifications.value = _notifications.value.map {
                         if (it.id == notificationId) it.copy(read = true) else it
                     }

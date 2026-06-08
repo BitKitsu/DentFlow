@@ -7,6 +7,27 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.OffsetDateTime;
 
+/**
+ * Entity representing an appointment (reservation) in the DentFlow system.
+ *
+ * <p>An appointment is associated with:
+ * <ul>
+ *   <li>Clinic (tenantId)</li>
+ *   <li>Location (locationId) and treatment room (roomId)</li>
+ *   <li>Dentist (dentistStaffId) and patient (patientId)</li>
+ *   <li>Optionally a service from the catalog (serviceItemId)</li>
+ * </ul>
+ *
+ * <p>Appointment states:
+ * <ul>
+ *   <li>SCHEDULED - scheduled (default state after creation)</li>
+ *   <li>COMPLETED - completed</li>
+ *   <li>CANCELLED - canceled</li>
+ *   <li>NO_SHOW - patient did not show up</li>
+ * </ul>
+ *
+ * @see pl.edu.ur.dentflow.core.reservation.application.AppointmentService
+ */
 @Entity
 @Table(name = "appointment")
 @Getter
@@ -32,7 +53,7 @@ public class Appointment {
     @Column(name = "dentist_staff_id", nullable = false)
     private Long dentistStaffId;
 
-    @Column(name = "patient_id", nullable = false)
+    @Column(name = "patient_id")
     private Long patientId;
 
     @Column(name = "service_item_id")

@@ -1,20 +1,15 @@
 package pl.edu.ur.dentflow.core.scheduling.application;
 
 import pl.edu.ur.dentflow.core.scheduling.api.CreateBlockerRequest;
-import pl.edu.ur.dentflow.core.scheduling.api.CreateWorkScheduleSlotRequest;
 import pl.edu.ur.dentflow.core.scheduling.api.BlockerResponse;
-import pl.edu.ur.dentflow.core.scheduling.api.WorkScheduleSlotResponse;
 import pl.edu.ur.dentflow.core.scheduling.domain.Blocker;
-import pl.edu.ur.dentflow.core.scheduling.domain.WorkScheduleSlot;
 import pl.edu.ur.dentflow.core.scheduling.infrastructure.BlockerRepository;
-import pl.edu.ur.dentflow.core.scheduling.infrastructure.WorkScheduleSlotRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -28,9 +23,6 @@ import static org.mockito.Mockito.*;
 class SchedulingServiceTest {
 
     @Mock
-    private WorkScheduleSlotRepository slotRepository;
-
-    @Mock
     private BlockerRepository blockerRepository;
 
     @InjectMocks
@@ -39,79 +31,14 @@ class SchedulingServiceTest {
     private final OffsetDateTime now = OffsetDateTime.now();
     private final OffsetDateTime later = now.plusHours(2);
 
-    private WorkScheduleSlot slot;
     private Blocker blocker;
 
     @BeforeEach
     void setUp() {
-        slot = WorkScheduleSlot.builder()
-                .id(1L).tenantId(10L).staffId(20L)
-                .locationId(30L).startAt(now).endAt(later)
-                .build();
-
         blocker = Blocker.builder()
                 .id(2L).tenantId(10L).staffId(20L)
                 .startAt(now).endAt(later).reason("Urlop")
                 .build();
-    }
-
-    @Test
-    void shouldReturnAllSlotsWhenNoDateRange() {
-        when(slotRepository.findByTenantId(10L)).thenReturn(List.of(slot));
-
-        List<WorkScheduleSlotResponse> result = schedulingService.getSlots(10L, null, null);
-
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).staffId()).isEqualTo(20L);
-    }
-
-    @Test
-    void shouldReturnSlotsByDateRange() {
-        when(slotRepository.findByTenantIdAndDateRange(10L, now, later)).thenReturn(List.of(slot));
-
-        List<WorkScheduleSlotResponse> result = schedulingService.getSlots(10L, now, later);
-
-        assertThat(result).hasSize(1);
-    }
-
-    @Test
-    void shouldAddSlot() {
-        CreateWorkScheduleSlotRequest req = new CreateWorkScheduleSlotRequest(20L, 30L, null, now, later);
-        when(slotRepository.save(any())).thenAnswer(inv -> {
-            WorkScheduleSlot s = inv.getArgument(0);
-            s.setId(99L);
-            return s;
-        });
-
-        WorkScheduleSlotResponse response = schedulingService.addSlot(10L, req);
-
-        assertThat(response.id()).isEqualTo(99L);
-        verify(slotRepository).save(any(WorkScheduleSlot.class));
-    }
-
-    @Test
-    void shouldThrowWhenAddSlotEndBeforeStart() {
-        CreateWorkScheduleSlotRequest req = new CreateWorkScheduleSlotRequest(20L, 30L, null, later, now);
-
-        assertThatThrownBy(() -> schedulingService.addSlot(10L, req))
-                .isInstanceOf(ResponseStatusException.class);
-    }
-
-    @Test
-    void shouldDeleteSlot() {
-        when(slotRepository.findById(1L)).thenReturn(Optional.of(slot));
-
-        schedulingService.deleteSlot(10L, 1L);
-
-        verify(slotRepository).delete(slot);
-    }
-
-    @Test
-    void shouldThrowWhenDeleteSlotNotFound() {
-        when(slotRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> schedulingService.deleteSlot(10L, 99L))
-                .isInstanceOf(ResponseStatusException.class);
     }
 
     @Test

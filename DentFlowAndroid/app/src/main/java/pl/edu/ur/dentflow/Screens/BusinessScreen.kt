@@ -42,6 +42,7 @@ import pl.edu.ur.dentflow.data.ViewModel.PatientViewModel
 import pl.edu.ur.dentflow.data.ViewModel.ScheduleViewModel
 import pl.edu.ur.dentflow.data.ViewModel.TenantViewModel
 import pl.edu.ur.dentflow.data.ViewModel.VisitViewModel
+import pl.edu.ur.dentflow.utils.ValidationUtils
 
 private val CLINIC_NAME_VAL = Regex("^[\\w\\s\\-\\.ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,80}$")
 
@@ -60,13 +61,19 @@ fun BusinessScreen(
     val context = LocalContext.current
     val sessionState by authViewModel.sessionState.collectAsState()
     val tenantId = sessionState.tenantId
+    val userRole = sessionState.role
+    val isOwner = userRole == "OWNER"
+    val isReceptionist = userRole == "RECEPTIONIST"
 
     var showStaffManagement by remember { mutableStateOf(false) }
     var showPatientScreen by remember { mutableStateOf(false) }
     var showScheduleScreen by remember { mutableStateOf(false) }
+    var showClinicAppointmentsScreen by remember { mutableStateOf(false) }
     var showVisitsScreen by remember { mutableStateOf(false) }
     var showCatalogScreen by remember { mutableStateOf(false) }
     var showEditScreen by remember { mutableStateOf(false) }
+    var showRoomScreen by remember { mutableStateOf(false) }
+    var showReportsScreen by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         tenantViewModel.loadAllTenantData()
@@ -124,7 +131,11 @@ fun BusinessScreen(
         }
         showCatalogScreen -> {
             BackHandler { showCatalogScreen = false }
-            CatalogListScreen(onBackClick = { showCatalogScreen = false })
+            CatalogListScreen(onBackClick = { showCatalogScreen = false }, isOwner = isOwner)
+        }
+        showRoomScreen -> {
+            BackHandler { showRoomScreen = false }
+            RoomManagementScreen(onBackClick = { showRoomScreen = false }, isOwner = isOwner, isReceptionist = isReceptionist)
         }
         showVisitsScreen -> {
             BackHandler { showVisitsScreen = false }
@@ -143,7 +154,22 @@ fun BusinessScreen(
             BackHandler { showScheduleScreen = false }
             ScheduleScreen(
                 onBackClick = { showScheduleScreen = false },
-                viewModel = scheduleViewModel
+                viewModel = scheduleViewModel,
+                isOwner = isOwner
+            )
+        }
+        showClinicAppointmentsScreen -> {
+            BackHandler { showClinicAppointmentsScreen = false }
+            ClinicAppointmentsScreen(
+                onBackClick = { showClinicAppointmentsScreen = false },
+                visitViewModel = visitViewModel
+            )
+        }
+        showReportsScreen -> {
+            BackHandler { showReportsScreen = false }
+            ReportsScreen(
+                onBackClick = { showReportsScreen = false },
+                visitViewModel = visitViewModel
             )
         }
         showEditScreen -> {
@@ -210,7 +236,7 @@ fun BusinessScreen(
                 }
                 if (isUploading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
                 Spacer(modifier = Modifier.height(12.dp))
-                Text(tenantData?.name ?: "—", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(tenantData?.name ?: "-", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Stats
@@ -230,11 +256,18 @@ fun BusinessScreen(
                     fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    BizMenuRow("Pracownicy", Icons.Default.Badge) { showStaffManagement = true }
+                    if (isOwner) {
+                        BizMenuRow("Pracownicy", Icons.Default.Badge) { showStaffManagement = true }
+                    }
                     BizMenuRow("Pacjenci", Icons.Default.People) { showPatientScreen = true }
+                    BizMenuRow("Gabinety", Icons.Default.MeetingRoom) { showRoomScreen = true }
+                    BizMenuRow("Wizyty w klinice", Icons.Default.DateRange) { showClinicAppointmentsScreen = true }
                     BizMenuRow("Cennik usług", Icons.Default.Payments) { showCatalogScreen = true }
                     BizMenuRow("Grafik pracy", Icons.Default.CalendarMonth) { showScheduleScreen = true }
-                    BizMenuRow("Edytuj dane kliniki", Icons.Default.Edit) { showEditScreen = true }
+                    if (isOwner) {
+                        BizMenuRow("Raporty PDF", Icons.Default.PictureAsPdf) { showReportsScreen = true }
+                        BizMenuRow("Edytuj dane kliniki", Icons.Default.Edit) { showEditScreen = true }
+                    }
                 }
             }
         }
@@ -296,15 +329,17 @@ fun EditClinicScreen(
     val isLoading by tenantViewModel.isLoading
 
     val isNameValid = CLINIC_NAME_VAL.matches(name)
+    val isLocNameValid = locName.isBlank() || locName.length >= 2
     val isStreetValid = street.length >= 3
     val isCityValid = city.length >= 2
-    val isZipValid = Regex("^[0-9]{5}$").matches(zip)
+    val isZipValid = ValidationUtils.isZipValid(zip)
 
     val nameError = (showErrors && name.isBlank()) || (name.isNotBlank() && !isNameValid)
+    val locNameError = locName.isNotBlank() && !isLocNameValid
     val streetError = (showErrors && street.isBlank()) || (street.isNotBlank() && !isStreetValid)
     val cityError = (showErrors && city.isBlank()) || (city.isNotBlank() && !isCityValid)
     val zipError = (showErrors && zip.isBlank()) || (zip.isNotBlank() && !isZipValid)
-    val canSave = isNameValid && isStreetValid && isCityValid && isZipValid
+    val canSave = isNameValid && isLocNameValid && isStreetValid && isCityValid && isZipValid
 
     val tfColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -376,6 +411,8 @@ fun EditClinicScreen(
                 value = locName, onValueChange = { locName = it; saveSuccess = null; saveError = null },
                 label = { Text("Nazwa placówki") },
                 leadingIcon = { Icon(Icons.Default.Place, null) },
+                isError = locNameError,
+                supportingText = { if (locNameError) Text("Min. 2 znaki", color = MaterialTheme.colorScheme.error) },
                 modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = tfColors, singleLine = true
             )
 

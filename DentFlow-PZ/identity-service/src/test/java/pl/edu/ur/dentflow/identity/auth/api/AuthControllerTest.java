@@ -32,8 +32,8 @@ class AuthControllerTest {
     private JwtService jwtService;
 
     /**
-     * UserRepository jest wymagane przez JwtAuthenticationFilter, który jest częścią
-     * kontekstu @WebMvcTest. Bez tego mocka Spring nie może zainicjalizować filtra.
+     * UserRepository is required by JwtAuthenticationFilter, which is part of
+     * the @WebMvcTest context. Without this mock, Spring cannot initialize the filter.
      */
     @MockBean
     private UserRepository userRepository;

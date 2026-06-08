@@ -1,4 +1,4 @@
 /**
- * Moduł Catalog - usługi stomatologiczne, cennik, czas trwania.
+ * Module Catalog - dental services, pricing, duration.
  */
 package pl.edu.ur.dentflow.core.catalog;

@@ -13,6 +13,7 @@ data class AuthResponse(
     val userId: Long,
     val email: String,
     val tenantId: Long,
+    val role: String? = null,
     val firstName: String? = null,
     val lastName: String? = null,
     val phone: String? = null,
@@ -36,7 +37,7 @@ data class RegisterRequest(
     val addressCountry: String? = null
 )
 
-// Profile update — all fields optional
+// Profile update - all fields optional
 data class UpdateProfileRequest(
     val email: String? = null,
     val firstName: String? = null,
@@ -53,4 +54,10 @@ data class UpdateProfileRequest(
 data class AssignRoleRequest(
     val userId: Long,
     val role: String
+)
+
+// Assign tenant to specific user (OWNER only)
+data class AssignTenantToUserRequest(
+    val userId: Long,
+    val tenantId: Long
 )

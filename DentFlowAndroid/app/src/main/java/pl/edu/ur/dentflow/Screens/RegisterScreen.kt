@@ -20,11 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import pl.edu.ur.dentflow.data.remote.RegisterRequest
 import pl.edu.ur.dentflow.data.remote.*
+import pl.edu.ur.dentflow.utils.ValidationUtils
 import androidx.compose.foundation.background
-
-private val REG_EMAIL_REGEX = Regex("^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$")
-private val REG_PHONE_REGEX = Regex("^\\+?[0-9][\\s\\-]?([0-9][\\s\\-]?){8,14}$")
-private val REG_NAME_REGEX  = Regex("^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\\s\\-]{2,50}$")
 
 @Composable
 fun RegisterScreen(
@@ -48,11 +45,11 @@ fun RegisterScreen(
 
     var showError by remember { mutableStateOf(false) }
 
-    val isFirstNameValid = REG_NAME_REGEX.matches(firstname)
-    val isLastNameValid  = REG_NAME_REGEX.matches(lastname)
-    val isEmailValid     = REG_EMAIL_REGEX.matches(email)
-    val isPhoneValid     = REG_PHONE_REGEX.matches(phone)
-    val isZipValid       = Regex("^[0-9]{5}$").matches(addressZip)
+    val isFirstNameValid = ValidationUtils.isNameValid(firstname)
+    val isLastNameValid  = ValidationUtils.isNameValid(lastname)
+    val isEmailValid     = ValidationUtils.isEmailValid(email)
+    val isPhoneValid     = ValidationUtils.isPhoneValid(phone)
+    val isZipValid       = ValidationUtils.isZipValid(addressZip)
     val isStreetValid    = addressStreet.length >= 3
     val isCityValid      = addressCity.length >= 2
     val isCountryValid   = addressCountry.length >= 2
@@ -217,8 +214,8 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.width(8.dp))
             OutlinedTextField(
                 value = addressZip,
-                onValueChange = { input -> 
-                    addressZip = input.filter { it.isDigit() }.take(5)
+                    onValueChange = { input -> 
+                        addressZip = input.filter { it.isDigit() }.take(5)
                     showError = false 
                 },
                 visualTransformation = { text ->

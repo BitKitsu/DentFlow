@@ -142,7 +142,7 @@ class StaffViewModel @Inject constructor(
         }
     }
 
-    fun addStaff(fName: String, lName: String, profession: String, email: String, pass: String, phone: String, bio: String, userExists: Boolean, existingUserId: Long?, existingAvatarUrl: String?, workingHoursStart: String? = null, workingHoursEnd: String? = null) {
+    fun addStaff(fName: String, lName: String, email: String, pass: String, phone: String, bio: String, userExists: Boolean, existingUserId: Long?, existingAvatarUrl: String?, role: String = "DENTIST") {
         if (!hasValidSession()) return
 
         viewModelScope.launch {
@@ -151,7 +151,6 @@ class StaffViewModel @Inject constructor(
                 var userId: Long? = existingUserId
                 var userAvatarUrl: String? = existingAvatarUrl
 
-                // 1. Jeśli użytkownik nie istnieje - utwórz nowe konto
                 if (!userExists) {
                     val registerRequest = RegisterRequest(
                         email = email,
@@ -166,52 +165,59 @@ class StaffViewModel @Inject constructor(
                         userId = authResponse.body()!!.userId
                         userAvatarUrl = authResponse.body()!!.avatarUrl
                     } else {
-                        Log.e(TAG, "Błąd tworzenia konta: ${authResponse.code()}")
+                        Log.e(TAG, "Registration error: ${authResponse.code()}")
                         _isLoading.value = false
                         return@launch
                     }
                 }
 
-                // 2. Przypisz rolę DENTIST użytkownikowi
                 if (userId != null && userId != 0L) {
-                    val roleRequest = AssignRoleRequest(userId = userId, role = "DENTIST")
+                    val roleRequest = AssignRoleRequest(userId = userId, role = role)
                     val roleResponse = authService.assignRole(roleRequest)
                     if (!roleResponse.isSuccessful) {
-                        Log.w(TAG, "Nie udało się przypisać roli DENTIST: ${roleResponse.code()}")
+                        Log.w(TAG, "Failed to assign $role role: ${roleResponse.code()}")
                     }
 
-                    // 3. Przypisz użytkownika do kliniki jako pracownika
+                    try {
+                        val tenantResponse = authService.assignTenantToUser(
+                            AssignTenantToUserRequest(userId = userId, tenantId = currentTenantId)
+                        )
+                        if (!tenantResponse.isSuccessful) {
+                            Log.w(TAG, "Failed to assign tenant to user: ${tenantResponse.code()}")
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Failed to assign tenant to new user: ${e.message}")
+                    }
+
                     val staffRequest = CreateStaffMemberRequest(
                         userId = userId,
                         firstName = fName,
                         lastName = lName,
-                        profession = profession,
+                        profession = role,
                         bio = bio,
                         avatarUrl = userAvatarUrl,
                         phone = phone,
-                        email = email,
-                        workingHoursStart = workingHoursStart,
-                        workingHoursEnd = workingHoursEnd
+                        email = email
                     )
 
                     val coreResponse = apiService.createStaffMember(currentTenantId, staffRequest)
                     if (coreResponse.isSuccessful) {
                         loadStaff()
                     } else {
-                        Log.e(TAG, "Błąd przypisania do kliniki: ${coreResponse.code()}")
+                        Log.e(TAG, "Staff creation error: ${coreResponse.code()}")
                     }
                 } else {
-                    Log.e(TAG, "Nie udało się uzyskać userId")
+                    Log.e(TAG, "Failed to obtain userId")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Wyjątek addStaff: ${e.message}")
+                Log.e(TAG, "Exception addStaff: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    fun updateStaff(staffId: Long, fName: String, lName: String, profession: String, userId: Long, bio: String, workingHoursStart: String? = null, workingHoursEnd: String? = null) {
+    fun updateStaff(staffId: Long, fName: String, lName: String, profession: String, userId: Long, bio: String) {
         if (!hasValidSession()) return
 
         viewModelScope.launch {
@@ -221,9 +227,7 @@ class StaffViewModel @Inject constructor(
                     firstName = fName,
                     lastName = lName,
                     profession = profession,
-                    bio = bio,
-                    workingHoursStart = workingHoursStart,
-                    workingHoursEnd = workingHoursEnd
+                    bio = bio
                 )
                 val response = apiService.updateStaffMember(currentTenantId, staffId, updateRequest)
                 if (response.isSuccessful) {

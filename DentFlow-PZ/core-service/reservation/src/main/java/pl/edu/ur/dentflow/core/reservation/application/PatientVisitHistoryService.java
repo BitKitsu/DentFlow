@@ -67,10 +67,10 @@ public class PatientVisitHistoryService {
                     String dentistName = dto.dentistStaffId() != null
                             ? staffMemberRepository.findById(dto.dentistStaffId())
                                     .map(s -> s.getFirstName() + " " + s.getLastName())
-                                    .orElse("Lekarz ID: " + dto.dentistStaffId())
-                            : "Brak dentysty";
+                                    .orElse("Dentist ID: " + dto.dentistStaffId())
+                            : "No dentist";
                     String serviceName = dto.serviceItemId() != null
-                            ? "Usługa ID: " + dto.serviceItemId()
+                            ? "Service ID: " + dto.serviceItemId()
                             : "";
                     return new PatientVisitHistoryReportData.VisitRow(
                             dto.startAt().toString(),
@@ -87,7 +87,7 @@ public class PatientVisitHistoryService {
                 patient.getLastName(),
                 patient.getPhone() != null ? patient.getPhone() : "",
                 patient.getEmail() != null ? patient.getEmail() : "",
-                (statusFilter != null && !statusFilter.isBlank()) ? "Status: " + statusFilter : "Wszystkie",
+                (statusFilter != null && !statusFilter.isBlank()) ? "Status: " + statusFilter : "All",
                 rows
         );
 
@@ -95,7 +95,7 @@ public class PatientVisitHistoryService {
             return pdfGenerator.generatePatientHistory(data);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Błąd generowania PDF: " + e.getMessage());
+                    "PDF generation error: " + e.getMessage());
         }
     }
 

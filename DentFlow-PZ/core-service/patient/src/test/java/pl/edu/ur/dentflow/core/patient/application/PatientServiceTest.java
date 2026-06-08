@@ -13,6 +13,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 
+import org.springframework.jdbc.core.JdbcTemplate;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +22,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,6 +30,9 @@ class PatientServiceTest {
 
     @Mock
     private PatientRepository patientRepository;
+
+    @Mock
+    private JdbcTemplate jdbcTemplate;
 
     @InjectMocks
     private PatientService patientService;
@@ -42,6 +48,11 @@ class PatientServiceTest {
                 .lastName("Doe")
                 .phone("123456789")
                 .build();
+        lenient().when(jdbcTemplate.queryForObject(
+                eq("SELECT EXISTS(SELECT 1 FROM tenant WHERE id = ?)"),
+                eq(Boolean.class),
+                eq(100L)))
+                .thenReturn(true);
     }
 
     @Test

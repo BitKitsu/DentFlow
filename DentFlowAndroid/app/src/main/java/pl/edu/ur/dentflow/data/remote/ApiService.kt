@@ -42,6 +42,41 @@ interface ApiService {
         @Path("tenantId") tenantId: Long
     ): Response<List<RoomResponse>>
 
+    @POST("tenants/{tenantId}/rooms")
+    suspend fun createRoom(
+        @Path("tenantId") tenantId: Long,
+        @Query("name") name: String,
+        @Query("locationId") locationId: Long
+    ): Response<RoomResponse>
+
+    @PUT("tenants/{tenantId}/rooms/{roomId}")
+    suspend fun updateRoom(
+        @Path("tenantId") tenantId: Long,
+        @Path("roomId") roomId: Long,
+        @Query("name") name: String,
+        @Query("locationId") locationId: Long
+    ): Response<RoomResponse>
+
+    @DELETE("tenants/{tenantId}/rooms/{roomId}")
+    suspend fun deleteRoom(
+        @Path("tenantId") tenantId: Long,
+        @Path("roomId") roomId: Long
+    ): Response<Unit>
+
+    @POST("tenants/{tenantId}/rooms/{roomId}/staff/{staffId}")
+    suspend fun assignStaffToRoom(
+        @Path("tenantId") tenantId: Long,
+        @Path("roomId") roomId: Long,
+        @Path("staffId") staffId: Long
+    ): Response<Unit>
+
+    @DELETE("tenants/{tenantId}/rooms/{roomId}/staff/{staffId}")
+    suspend fun removeStaffFromRoom(
+        @Path("tenantId") tenantId: Long,
+        @Path("roomId") roomId: Long,
+        @Path("staffId") staffId: Long
+    ): Response<Unit>
+
     // --- PATIENTS (PACJENCI) ---
     @GET("tenants/{tenantId}/patients")
     suspend fun getPatients(
@@ -59,6 +94,16 @@ interface ApiService {
     suspend fun createPatient(
         @Path("tenantId") tenantId: Long,
         @Body request: CreatePatientRequest
+    ): Response<PatientResponse>
+
+    @POST("tenants/{tenantId}/patients/ensure")
+    suspend fun ensurePatient(
+        @Path("tenantId") tenantId: Long,
+        @Query("userId") userId: Long,
+        @Query("firstName") firstName: String = "",
+        @Query("lastName") lastName: String = "",
+        @Query("email") email: String = "",
+        @Query("phone") phone: String = ""
     ): Response<PatientResponse>
 
     @PUT("tenants/{tenantId}/patients/{patientId}")
@@ -154,6 +199,12 @@ interface ApiService {
         @Body request: UpdateAppointmentRequest
     ): Response<AppointmentResponse>
 
+    @POST("tenants/{tenantId}/appointments/{appointmentId}/confirm")
+    suspend fun confirmAppointment(
+        @Path("tenantId") tenantId: Long,
+        @Path("appointmentId") appointmentId: Long
+    ): Response<AppointmentResponse>
+
     @POST("tenants/{tenantId}/appointments/{appointmentId}/complete")
     suspend fun completeAppointment(
         @Path("tenantId") tenantId: Long,
@@ -204,33 +255,6 @@ interface ApiService {
     suspend fun deleteService(
         @Path("tenantId") tenantId: Long,
         @Path("id") id: Long
-    ): Response<Unit>
-
-    // --- SCHEDULE SLOTS (GRAFIK - TERMINY) ---
-    @GET("tenants/{tenantId}/schedule/slots")
-    suspend fun getSlots(
-        @Path("tenantId") tenantId: Long,
-        @Query("from") from: String? = null,
-        @Query("to") to: String? = null
-    ): Response<List<ScheduleSlotDTO>>
-
-    @POST("tenants/{tenantId}/schedule/slots")
-    suspend fun createSlot(
-        @Path("tenantId") tenantId: Long,
-        @Body request: CreateSlotRequest
-    ): Response<ScheduleSlotDTO>
-
-    @PUT("tenants/{tenantId}/schedule/slots/{slotId}")
-    suspend fun updateSlot(
-        @Path("tenantId") tenantId: Long,
-        @Path("slotId") slotId: Long,
-        @Body request: UpdateSlotRequest
-    ): Response<ScheduleSlotDTO>
-
-    @DELETE("tenants/{tenantId}/schedule/slots/{slotId}")
-    suspend fun deleteSlot(
-        @Path("tenantId") tenantId: Long,
-        @Path("slotId") slotId: Long
     ): Response<Unit>
 
     // --- SCHEDULE BLOCKERS (PRZERWY / URLOPY) ---

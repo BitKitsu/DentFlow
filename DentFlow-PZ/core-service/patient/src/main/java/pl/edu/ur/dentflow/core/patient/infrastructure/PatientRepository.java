@@ -15,6 +15,8 @@ public interface PatientRepository extends JpaRepository<Patient, Long> {
     List<Patient> findByTenantId(Long tenantId);
     
     Optional<Patient> findByIdAndTenantId(Long id, Long tenantId);
+
+    Optional<Patient> findByTenantIdAndUserId(Long tenantId, Long userId);
     
     @Query("SELECT p FROM Patient p WHERE p.tenantId = :tenantId AND " +
            "(LOWER(p.firstName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +

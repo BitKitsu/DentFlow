@@ -5,12 +5,14 @@ import pl.edu.ur.dentflow.core.reservation.api.CreateAppointmentRequest;
 import pl.edu.ur.dentflow.core.reservation.api.UpdateAppointmentRequest;
 import pl.edu.ur.dentflow.core.reservation.domain.Appointment;
 import pl.edu.ur.dentflow.core.reservation.infrastructure.AppointmentRepository;
+import pl.edu.ur.dentflow.core.scheduling.infrastructure.BlockerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
@@ -26,6 +28,12 @@ class AppointmentServiceTest {
 
     @Mock
     private AppointmentRepository appointmentRepository;
+
+    @Mock
+    private BlockerRepository blockerRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private AppointmentService appointmentService;
@@ -68,7 +76,8 @@ class AppointmentServiceTest {
     void shouldCreateAppointmentSuccessfully() {
         CreateAppointmentRequest req = new CreateAppointmentRequest(
                 5L, null, 20L, 30L, null, now, later, null, null);
-        when(appointmentRepository.findConflicting(10L, 20L, now, later)).thenReturn(List.of());
+        when(appointmentRepository.findConflictingForUpdate(10L, 20L, now, later)).thenReturn(List.of());
+        when(blockerRepository.findConflicting(10L, 20L, null, now, later)).thenReturn(List.of());
         when(appointmentRepository.save(any())).thenAnswer(inv -> {
             Appointment a = inv.getArgument(0);
             a.setId(99L);
@@ -86,7 +95,7 @@ class AppointmentServiceTest {
     void shouldThrowConflictWhenDentistBusy() {
         CreateAppointmentRequest req = new CreateAppointmentRequest(
                 5L, null, 20L, 30L, null, now, later, null, null);
-        when(appointmentRepository.findConflicting(10L, 20L, now, later))
+        when(appointmentRepository.findConflictingForUpdate(10L, 20L, now, later))
                 .thenReturn(List.of(appointment));
 
         assertThatThrownBy(() -> appointmentService.createAppointment(10L, req))
@@ -147,7 +156,7 @@ class AppointmentServiceTest {
         UpdateAppointmentRequest req = new UpdateAppointmentRequest(newStart, newEnd, null, null, "Nowa notatka");
 
         when(appointmentRepository.findByIdAndTenantId(1L, 10L)).thenReturn(Optional.of(appointment));
-        when(appointmentRepository.findConflicting(10L, 20L, newStart, newEnd)).thenReturn(List.of());
+        when(appointmentRepository.findConflictingForUpdate(10L, 20L, newStart, newEnd)).thenReturn(List.of());
         when(appointmentRepository.save(any())).thenReturn(appointment);
 
         AppointmentResponse response = appointmentService.updateAppointment(10L, 1L, req);

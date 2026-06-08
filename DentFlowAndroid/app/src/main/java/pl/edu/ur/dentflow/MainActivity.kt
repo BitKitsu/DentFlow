@@ -117,6 +117,24 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    composable("appointment_setup_by_tenant/{tenantId}") { backStackEntry ->
+                        val tenantId = backStackEntry.arguments?.getString("tenantId")?.toLongOrNull() ?: -1L
+                        CreateAppointmentScreen(
+                            initialTenantId = tenantId,
+                            onSuccess = { navController.popBackStack() }
+                        )
+                    }
+
+                    composable("appointment_setup_by_tenant/{tenantId}/{serviceId}") { backStackEntry ->
+                        val tenantId = backStackEntry.arguments?.getString("tenantId")?.toLongOrNull() ?: -1L
+                        val serviceId = backStackEntry.arguments?.getString("serviceId")?.toLongOrNull() ?: -1L
+                        CreateAppointmentScreen(
+                            initialTenantId = tenantId,
+                            initialServiceId = serviceId,
+                            onSuccess = { navController.popBackStack() }
+                        )
+                    }
+
                     composable("schedule") {
                         ScheduleScreen()
                     }
@@ -185,28 +203,33 @@ fun MainDashboard(
     val currentTenant = tenantData
     val userRole = sessionState.role
     val isOwner  = userRole == "OWNER"
-    val isDoctor = userRole == "DOCTOR"
+    val isDoctor = userRole == "DENTIST"
+    val isReceptionist = userRole == "RECEPTIONIST"
+    val isAssistant = userRole == "ASSISTANT"
+    val isStaff = isOwner || isDoctor || isReceptionist || isAssistant
 
     val hasClinic = currentTenant != null && currentTenant.id != 0L
 
     data class NavItem(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector, val tabIndex: Int)
     val navItems = buildList {
         add(NavItem("Oferty", Icons.Default.LocalOffer, 0))
-        if (isOwner && hasClinic) add(NavItem("Klinika", Icons.Default.Business, 1))
-        if (isOwner || isDoctor) add(NavItem("Wizyty", Icons.Default.CalendarMonth, 2))
+        if (isStaff && hasClinic) add(NavItem("Klinika", Icons.Default.Business, 1))
+        add(NavItem("Wizyty", Icons.Default.CalendarMonth, 2))
         add(NavItem("Powiadomienia", Icons.Default.Notifications, 3))
         add(NavItem("Konto", Icons.Default.AccountCircle, 4))
     }
 
-    LaunchedEffect(Unit) {
-        staffViewModel.loadStaff()
-        staffViewModel.loadAllStaff()
-        tenantViewModel.loadAllTenantData()
-        tenantViewModel.loadAllTenants()
-        catalogViewModel.loadAllCatalog()
-        notificationViewModel.fetchNotifications()
-        visitViewModel.refreshVisits()
-        catalogViewModel.loadServices()
+    LaunchedEffect(selectedItem) {
+        if (selectedItem == 0) {
+            staffViewModel.loadStaff()
+            staffViewModel.loadAllStaff()
+            tenantViewModel.loadAllTenantData()
+            tenantViewModel.loadAllTenants()
+            catalogViewModel.loadAllCatalog()
+            notificationViewModel.fetchNotifications()
+            visitViewModel.refreshVisits()
+            catalogViewModel.loadServices()
+        }
     }
 
 
@@ -249,6 +272,9 @@ fun MainDashboard(
                     allStaff = allStaff,
                     onStaffClick = { staff ->
                         navController.navigate("appointment_setup/${staff.id}")
+                    },
+                    onBookClick = { tenantId, serviceId ->
+                        navController.navigate("appointment_setup_by_tenant/$tenantId/$serviceId")
                     }
                 )
                 1 -> BusinessScreen(

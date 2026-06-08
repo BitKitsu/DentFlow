@@ -11,9 +11,26 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST controller managing clinic locations in the DentFlow system.
+ *
+ * <p>Locations represent physical addresses/branches of a clinic.
+ * Each location can contain multiple rooms for dental treatments.</p>
+ *
+ * <p>Endpoints:
+ * <ul>
+ *   <li>GET /tenants/{tenantId}/locations - list locations</li>
+ *   <li>POST /tenants/{tenantId}/locations - add location</li>
+ *   <li>GET /tenants/{tenantId}/locations/{locationId} - get location</li>
+ *   <li>PUT /tenants/{tenantId}/locations/{locationId} - update location</li>
+ *   <li>DELETE /tenants/{tenantId}/locations/{locationId} - delete location</li>
+ * </ul>
+ *
+ * @see pl.edu.ur.dentflow.core.clinic.application.TenantService
+ */
 @RestController
 @RequestMapping("/tenants/{tenantId}/locations")
-@Tag(name = "Locations", description = "Zarządzanie lokalizacjami gabinetu (stub)")
+@Tag(name = "Locations", description = "Clinic location management (stub)")
 @SecurityRequirement(name = "bearerAuth")
 public class LocationController {
 
@@ -56,7 +73,7 @@ public class LocationController {
     }
 
     @DeleteMapping("/{locationId}")
-    @Operation(summary = "[stub] Usunięcie lokalizacji")
+    @Operation(summary = "[stub] Delete location")
     public ResponseEntity<Void> deleteLocation(
             @PathVariable Long tenantId,
             @PathVariable Long locationId) {

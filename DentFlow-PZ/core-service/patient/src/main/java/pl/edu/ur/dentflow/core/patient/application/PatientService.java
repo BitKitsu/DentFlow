@@ -6,22 +6,46 @@ import pl.edu.ur.dentflow.core.patient.api.UpdatePatientRequest;
 import pl.edu.ur.dentflow.core.patient.domain.Patient;
 import pl.edu.ur.dentflow.core.patient.infrastructure.PatientRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+/**
+ * Service managing patient data in the DentFlow system.
+ * Handles CRUD operations and patient search within a clinic (tenant).
+ *
+ * <p>Patients are associated with user accounts (optionally) and assigned
+ * to a specific clinic (tenant) via tenantId.</p>
+ *
+ * <p>Search is performed by first name, last name, email or phone number.</p>
+ *
+ * @see pl.edu.ur.dentflow.core.patient.domain.Patient
+ * @see pl.edu.ur.dentflow.core.patient.infrastructure.PatientRepository
+ */
 @Service
 public class PatientService {
 
     private final PatientRepository patientRepository;
+    private final JdbcTemplate jdbcTemplate;
 
-    public PatientService(PatientRepository patientRepository) {
+    public PatientService(PatientRepository patientRepository, JdbcTemplate jdbcTemplate) {
         this.patientRepository = patientRepository;
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    private void requireTenantExists(Long tenantId) {
+        Boolean exists = jdbcTemplate.queryForObject(
+                "SELECT EXISTS(SELECT 1 FROM tenant WHERE id = ?)", Boolean.class, tenantId);
+        if (!Boolean.TRUE.equals(exists)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Klinika nie istnieje");
+        }
     }
 
     public List<PatientResponse> getPatients(Long tenantId, String searchTerm) {
+        requireTenantExists(tenantId);
         List<Patient> patients;
         if (searchTerm != null && !searchTerm.isBlank()) {
             patients = patientRepository.searchPatients(tenantId, searchTerm);
@@ -39,6 +63,7 @@ public class PatientService {
 
     @Transactional
     public PatientResponse addPatient(Long tenantId, CreatePatientRequest request) {
+        requireTenantExists(tenantId);
         Patient patient = Patient.builder()
                 .tenantId(tenantId)
                 .userId(request.userId())
@@ -92,5 +117,28 @@ public class PatientService {
         Patient patient = patientRepository.findByIdAndTenantId(patientId, tenantId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pacjent nie istnieje"));
         patientRepository.delete(patient);
+    }
+
+    @Transactional
+    public PatientResponse ensurePatientForUser(Long tenantId, Long userId, String firstName, String lastName, String email, String phone) {
+        return patientRepository.findByTenantIdAndUserId(tenantId, userId)
+                .map(existing -> {
+                    if (firstName != null && !firstName.isEmpty()) existing.setFirstName(firstName);
+                    if (lastName != null && !lastName.isEmpty()) existing.setLastName(lastName);
+                    if (email != null && !email.isEmpty()) existing.setEmail(email);
+                    if (phone != null && !phone.isEmpty()) existing.setPhone(phone);
+                    return PatientResponse.from(patientRepository.save(existing));
+                })
+                .orElseGet(() -> {
+                    Patient patient = Patient.builder()
+                            .tenantId(tenantId)
+                            .userId(userId)
+                            .firstName(firstName)
+                            .lastName(lastName)
+                            .email(email)
+                            .phone(phone)
+                            .build();
+                    return PatientResponse.from(patientRepository.save(patient));
+                });
     }
 }

@@ -34,7 +34,7 @@ class TenantViewModel @Inject constructor(
 
     private val TAG = "DENTFLOW_DEBUG"
 
-    private val currentTenantId: Long
+    val currentTenantId: Long
         get() {
             val id = prefs.getLong("tenant_id", -1L)
             return if (id <= 0L) -1L else id
@@ -156,26 +156,20 @@ class TenantViewModel @Inject constructor(
     }
 
     private suspend fun assignOwnerRole() {
-        val userId = currentUserId
-        if (userId <= 0L) {
-            Log.w(TAG, "assignOwnerRole: Brak userId, pomijam")
-            return
-        }
         try {
-            val response = authService.assignRole(AssignRoleRequest(userId = userId, role = "OWNER"))
+            val response = authService.claimOwnership()
             if (response.isSuccessful && response.body() != null) {
                 val authResponse = response.body()!!
-                // Save new JWT with updated roles
                 prefs.edit()
                     .putString("jwt_token", authResponse.token)
                     .putLong("tenant_id", authResponse.tenantId)
                     .apply()
             } else {
                 val errorMsg = response.errorBody()?.string()
-                Log.e(TAG, "API BŁĄD -> assignRole: Kod=${response.code()}, Body=$errorMsg")
+                Log.e(TAG, "API BŁĄD -> claimOwnership: Kod=${response.code()}, Body=$errorMsg")
             }
         } catch (e: Exception) {
-            Log.e(TAG, "WYJĄTEK przy assignRole: ${e.message}")
+            Log.e(TAG, "WYJĄTEK przy claimOwnership: ${e.message}")
         }
     }
 
@@ -196,6 +190,95 @@ class TenantViewModel @Inject constructor(
             }
         } catch (e: Exception) {
             Log.e(TAG, "WYJĄTEK przy pobieraniu pokoi: ${e.message}", e)
+        }
+    }
+
+    fun createRoom(name: String, locationId: Long) {
+        val tenantId = currentTenantId
+        if (tenantId == -1L) return
+
+        viewModelScope.launch {
+            try {
+                val response = apiService.createRoom(tenantId, name, locationId)
+                if (response.isSuccessful) {
+                    fetchRooms(tenantId)
+                } else {
+                    val errorMsg = response.errorBody()?.string()
+                    Log.e(TAG, "API error createRoom: ${response.code()} $errorMsg")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception createRoom: ${e.message}", e)
+            }
+        }
+    }
+
+    fun updateRoom(roomId: Long, name: String, locationId: Long) {
+        val tenantId = currentTenantId
+        if (tenantId == -1L) return
+
+        viewModelScope.launch {
+            try {
+                val response = apiService.updateRoom(tenantId, roomId, name, locationId)
+                if (response.isSuccessful) {
+                    fetchRooms(tenantId)
+                } else {
+                    val errorMsg = response.errorBody()?.string()
+                    Log.e(TAG, "API error updateRoom: ${response.code()} $errorMsg")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception updateRoom: ${e.message}", e)
+            }
+        }
+    }
+
+    fun deleteRoom(roomId: Long) {
+        val tenantId = currentTenantId
+        if (tenantId == -1L) return
+
+        viewModelScope.launch {
+            try {
+                val response = apiService.deleteRoom(tenantId, roomId)
+                if (response.isSuccessful) {
+                    fetchRooms(tenantId)
+                } else {
+                    val errorMsg = response.errorBody()?.string()
+                    Log.e(TAG, "API error deleteRoom: ${response.code()} $errorMsg")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception deleteRoom: ${e.message}", e)
+            }
+        }
+    }
+
+    fun assignStaffToRoom(roomId: Long, staffId: Long) {
+        val tenantId = currentTenantId
+        if (tenantId == -1L) return
+
+        viewModelScope.launch {
+            try {
+                val response = apiService.assignStaffToRoom(tenantId, roomId, staffId)
+                if (response.isSuccessful) {
+                    fetchRooms(tenantId)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception assignStaffToRoom: ${e.message}", e)
+            }
+        }
+    }
+
+    fun removeStaffFromRoom(roomId: Long, staffId: Long) {
+        val tenantId = currentTenantId
+        if (tenantId == -1L) return
+
+        viewModelScope.launch {
+            try {
+                val response = apiService.removeStaffFromRoom(tenantId, roomId, staffId)
+                if (response.isSuccessful) {
+                    fetchRooms(tenantId)
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Exception removeStaffFromRoom: ${e.message}", e)
+            }
         }
     }
 
@@ -242,8 +325,10 @@ class TenantViewModel @Inject constructor(
                     _tenantState.value = null
                     onSuccess()
                 } else {
-                    val msg = response.errorBody()?.string() ?: "Nieznany błąd"
-                    Log.e(TAG, "API BŁĄD -> deleteTenant: ${response.code()} $msg")
+                    val raw = response.errorBody()?.string() ?: ""
+                    Log.e(TAG, "API BŁĄD -> deleteTenant: ${response.code()} $raw")
+                    val msg = parseErrorMessage(raw)
+                        ?: "Nie udało się usunąć kliniki (${response.code()})"
                     onError(msg)
                 }
             } catch (e: Exception) {
@@ -252,6 +337,18 @@ class TenantViewModel @Inject constructor(
             } finally {
                 _isLoading.value = false
             }
+        }
+    }
+
+    private fun parseErrorMessage(raw: String): String? {
+        if (raw.isBlank()) return null
+        if (raw.startsWith("<!")) return null
+        return try {
+            val jsonObj = org.json.JSONObject(raw)
+            jsonObj.optString("message").takeIf { it.isNotBlank() }
+                ?: jsonObj.optString("error").takeIf { it.isNotBlank() }
+        } catch (_: Exception) {
+            raw.takeIf { it.length < 200 }
         }
     }
 }

@@ -5,6 +5,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -13,6 +14,29 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+/**
+ * Security configuration for Core Service.
+ *
+ * <p>Security layers:
+ * <ul>
+ *   <li>CSRF disabled (stateless API)</li>
+ *   <li>Sessions disabled (STATELESS - JWT token)</li>
+ *   <li>JWT filtering ({@link JwtAuthenticationFilter}) - token verification</li>
+ *   <li>Method security ({@code @EnableMethodSecurity})</li>
+ * </ul>
+ *
+ * <p>Public endpoints (no authorization required):
+ * <ul>
+ *   <li>/tenants/register - new clinic registration</li>
+ *   <li>/tenants - clinic list (marketplace)</li>
+ *   <li>/tenants/catalog/all - public service catalog</li>
+ *   <li>/tenants/staff/all - public staff list</li>
+ *   <li>/public/files/** - public file download</li>
+ *   <li>/swagger-ui/**, /api-docs/** - API documentation</li>
+ * </ul>
+ *
+ * <p>OpenAPI configuration includes Bearer JWT authorization scheme.</p>
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -30,8 +54,12 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Publiczne: rejestracja gabinetu, Swagger, pobieranie plików
-                        .requestMatchers("/tenants/register", "/tenants", "/tenants/catalog/all", "/tenants/staff/all", "/swagger-ui/**", "/api-docs/**", "/public/files/**").permitAll()
+                        // Public: clinic registration, Swagger, file downloads
+                        .requestMatchers(HttpMethod.POST, "/tenants/register").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/tenants").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/tenants/catalog/all").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/tenants/staff/all").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/api-docs/**", "/public/files/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

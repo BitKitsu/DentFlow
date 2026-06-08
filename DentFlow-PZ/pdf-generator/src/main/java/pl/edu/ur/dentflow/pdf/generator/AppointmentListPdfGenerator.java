@@ -14,9 +14,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
- * Generator PDF dla Raportu 1: Lista wizyt.
+ * PDF generator for Report 1: Appointment List.
  *
- * Użycie:
+ * Usage:
  * 
  * <pre>
  * byte[] pdf = new AppointmentListPdfGenerator().generate(data);
@@ -27,11 +27,11 @@ public class AppointmentListPdfGenerator {
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     /**
-     * Generuje raport jako tablicę bajtów gotową do wysłania przez HTTP.
+     * Generates the report as a byte array ready for HTTP response.
      *
-     * @param data dane raportu z backendu
-     * @return bajty pliku PDF
-     * @throws IOException gdy wystąpi błąd zapisu
+     * @param data report data from backend
+     * @return PDF file bytes
+     * @throws IOException if write error occurs
      */
     public byte[] generate(AppointmentListReportData data) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -42,52 +42,57 @@ public class AppointmentListPdfGenerator {
 
             document.setMargins(40, 40, 40, 40);
 
-            // Nagłówek
-            document.add(PdfStyles.reportTitle("Raport: Lista wizyt"));
+            // Header
+            document.add(PdfStyles.reportTitle("Report: Appointment List"));
             document.add(PdfStyles.reportSubtitle(
                     data.clinicName() + "  |  " +
                             data.dateFrom().format(DATE_FMT) + " – " + data.dateTo().format(DATE_FMT)));
 
-            // Parametry filtrowania
+            // Filtering parameters
             if (data.doctorFilter() != null) {
-                document.add(PdfStyles.infoLine("Lekarz", data.doctorFilter()));
+                document.add(PdfStyles.infoLine("Doctor", data.doctorFilter()));
             }
             if (data.locationFilter() != null) {
-                document.add(PdfStyles.infoLine("Lokalizacja", data.locationFilter()));
+                document.add(PdfStyles.infoLine("Location", data.locationFilter()));
             }
             if (data.statusFilter() != null) {
                 document.add(PdfStyles.infoLine("Status", data.statusFilter()));
             }
 
-            // Tabela wizyt
-            document.add(PdfStyles.sectionTitle("Wykaz wizyt"));
-
-            Table table = PdfStyles.createTable(
-                    "Data / Godzina", "Pacjent", "Lekarz", "Usługa", "Status");
+            // Appointments table
+            document.add(PdfStyles.sectionTitle("Appointment List"));
 
             List<AppointmentListReportData.AppointmentRow> rows = data.appointments();
-            for (int i = 0; i < rows.size(); i++) {
-                AppointmentListReportData.AppointmentRow row = rows.get(i);
-                PdfStyles.addRow(table, i,
-                        row.dateTime(),
-                        row.patientFullName(),
-                        row.doctorFullName(),
-                        row.serviceName(),
-                        row.status());
+            if (rows.isEmpty()) {
+                document.add(new Paragraph("Brak wizyt w wybranym zakresie dat.")
+                        .setFont(PdfStyles.fontRegular()).setFontSize(11));
+            } else {
+                Table table = PdfStyles.createTable(
+                        "Date / Time", "Patient", "Doctor", "Service", "Status");
+
+                for (int i = 0; i < rows.size(); i++) {
+                    AppointmentListReportData.AppointmentRow row = rows.get(i);
+                    PdfStyles.addRow(table, i,
+                            row.dateTime(),
+                            row.patientFullName(),
+                            row.doctorFullName(),
+                            row.serviceName(),
+                            row.status());
+                }
+                document.add(table);
+
+                // Summary
+                long cancelled = rows.stream()
+                        .filter(r -> "CANCELLED".equalsIgnoreCase(r.status())).count();
+                long noShow = rows.stream()
+                        .filter(r -> "NO_SHOW".equalsIgnoreCase(r.status())).count();
+
+                document.add(new Paragraph("\n"));
+                document.add(PdfStyles.summaryLine("Summary"));
+                document.add(PdfStyles.infoLine("Total appointments", String.valueOf(rows.size())));
+                document.add(PdfStyles.infoLine("Cancelled", String.valueOf(cancelled)));
+                document.add(PdfStyles.infoLine("No-show", String.valueOf(noShow)));
             }
-            document.add(table);
-
-            // Podsumowanie
-            long cancelled = rows.stream()
-                    .filter(r -> "CANCELLED".equalsIgnoreCase(r.status())).count();
-            long noShow = rows.stream()
-                    .filter(r -> "NO_SHOW".equalsIgnoreCase(r.status())).count();
-
-            document.add(new Paragraph("\n"));
-            document.add(PdfStyles.summaryLine("Podsumowanie"));
-            document.add(PdfStyles.infoLine("Łączna liczba wizyt", String.valueOf(rows.size())));
-            document.add(PdfStyles.infoLine("Anulowane", String.valueOf(cancelled)));
-            document.add(PdfStyles.infoLine("No-show", String.valueOf(noShow)));
         }
 
         return baos.toByteArray();

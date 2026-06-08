@@ -34,10 +34,7 @@ import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
 import pl.edu.ur.dentflow.data.ViewModel.FileViewModel
 import pl.edu.ur.dentflow.data.remote.AuthViewModel
-
-private val EMAIL_REGEX = Regex("^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$")
-private val PHONE_REGEX = Regex("^\\+?[0-9][\\s\\-]?([0-9][\\s\\-]?){8,14}$")
-private val NAME_REGEX  = Regex("^[a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\\s\\-]{2,50}$")
+import pl.edu.ur.dentflow.utils.ValidationUtils
 
 @Composable
 fun AccountDataScreen(
@@ -127,14 +124,14 @@ fun AccountDataScreen(
     val isLoading by viewModel.isLoading.collectAsState()
 
     // Validation
-    val firstNameError = firstName.isNotBlank() && !NAME_REGEX.matches(firstName)
-    val lastNameError  = lastName.isNotBlank()  && !NAME_REGEX.matches(lastName)
-    val emailError     = email.isNotBlank()     && !EMAIL_REGEX.matches(email)
-    val phoneError     = phone.isNotBlank()     && !PHONE_REGEX.matches(phone)
-    val zipError       = addressZip.isNotBlank() && !Regex("^[0-9]{5}$").matches(addressZip)
-    val streetError    = addressStreet.isNotBlank() && addressStreet.length < 3
-    val cityError      = addressCity.isNotBlank() && addressCity.length < 2
-    val countryError   = addressCountry.isNotBlank() && addressCountry.length < 2
+    val firstNameError = firstName.isNotBlank() && !ValidationUtils.isNameValid(firstName)
+    val lastNameError  = lastName.isNotBlank()  && !ValidationUtils.isNameValid(lastName)
+    val emailError     = email.isNotBlank()     && !ValidationUtils.isEmailValid(email)
+    val phoneError     = phone.isNotBlank()     && !ValidationUtils.isPhoneValid(phone)
+    val zipError       = addressZip.isNotBlank() && !ValidationUtils.isZipValid(addressZip)
+    val streetError    = addressStreet.isNotBlank() && !ValidationUtils.isStreetValid(addressStreet)
+    val cityError      = addressCity.isNotBlank() && !ValidationUtils.isCityValid(addressCity)
+    val countryError   = addressCountry.isNotBlank() && !ValidationUtils.isCountryValid(addressCountry)
 
     val anyProfileField = firstName.isNotBlank() || lastName.isNotBlank() || email.isNotBlank()
             || phone.isNotBlank() || addressStreet.isNotBlank() || addressCity.isNotBlank()

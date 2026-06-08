@@ -38,8 +38,8 @@ class DentFlowPdfGeneratorTest {
         byte[] pdf = generator.generateAppointmentList(data);
 
         assertNotNull(pdf);
-        assertTrue(pdf.length > 1000, "PDF powinien mieć więcej niż 1kB");
-        // Sprawdzamy nagłówek pliku PDF (%PDF-)
+        assertTrue(pdf.length > 1000, "PDF should be larger than 1kB");
+        // Check PDF file header (%PDF-)
         assertEquals('%', (char) pdf[0]);
         assertEquals('P', (char) pdf[1]);
         assertEquals('D', (char) pdf[2]);

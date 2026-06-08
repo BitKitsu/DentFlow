@@ -9,6 +9,19 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Entity representing a DentFlow system user.
+ *
+ * <p>A user is associated with an account (email + password) and may have
+ * assigned roles (OWNER, DENTIST, RECEPTIONIST, ASSISTANT, PATIENT)
+ * within one or more clinics (tenants).</p>
+ *
+ * <p>Profile fields (first name, last name, phone, address, avatar) are optional
+ * and can be filled in after registration.</p>
+ *
+ * @see pl.edu.ur.dentflow.identity.user.domain.UserRole
+ * @see pl.edu.ur.dentflow.identity.user.domain.Role
+ */
 @Entity
 @Table(name = "\"user\"")
 @Getter

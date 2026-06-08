@@ -17,11 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class ScheduleViewModel @Inject constructor(
     private val apiService: ApiService,
-    private val prefs: SharedPreferences // Wstrzykujemy prefs dla dynamicznych ID
+    private val prefs: SharedPreferences
 ) : ViewModel() {
-
-    private val _slots = MutableStateFlow<List<ScheduleSlotDTO>>(emptyList())
-    val slots: StateFlow<List<ScheduleSlotDTO>> = _slots.asStateFlow()
 
     private val _blockers = MutableStateFlow<List<ScheduleBlockerDTO>>(emptyList())
     val blockers: StateFlow<List<ScheduleBlockerDTO>> = _blockers.asStateFlow()
@@ -31,114 +28,37 @@ class ScheduleViewModel @Inject constructor(
 
     private val TAG = "SCHEDULE_VM_DEBUG"
 
-    // --- POBIERANIE DANYCH SESJI ---
     private val currentTenantId: Long get() = prefs.getLong("tenant_id", -1L)
     private val currentUserId: Long get() = prefs.getLong("user_id", -1L)
-    private val currentUserRole: String get() = prefs.getString("user_role", "STAFF") ?: "STAFF"
 
     private fun hasValidSession(): Boolean {
         if (currentTenantId == -1L || currentUserId == -1L) {
-            Log.e(TAG, "BŁĄD: Brak aktywnej sesji (tenantId: $currentTenantId, userId: $currentUserId)")
+            Log.e(TAG, "Error: No active session (tenantId: $currentTenantId, userId: $currentUserId)")
             return false
         }
         return true
     }
 
-    // --- ŁADOWANIE DANYCH ---
+    // --- Data Loading ---
     fun loadSchedule() {
         if (!hasValidSession()) return
 
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val now = OffsetDateTime.now()
-                val fromStr = now.minusMonths(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z"
-                val toStr = now.plusMonths(3).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "Z"
-
-                // Pobieranie slotów (terminów)
-                val slotsRes = apiService.getSlots(currentTenantId, fromStr, toStr)
-                if (slotsRes.isSuccessful) {
-                    val allSlots = slotsRes.body() ?: emptyList()
-                    _slots.value = allSlots
-                } else {
-                    Log.e(TAG, "Błąd slotów: ${slotsRes.code()}")
-                }
-
-                // Pobieranie blokerów (przerw/urlopów)
                 val blockersRes = apiService.getBlockers(currentTenantId)
                 if (blockersRes.isSuccessful) {
-                    val allBlockers = blockersRes.body() ?: emptyList()
-                    _blockers.value = allBlockers
+                    _blockers.value = blockersRes.body() ?: emptyList()
                 }
-
             } catch (e: Exception) {
-                Log.e(TAG, "Wyjątek podczas ładowania grafiku: ${e.message}", e)
+                Log.e(TAG, "Exception while loading schedule: ${e.message}", e)
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    // --- OPERACJE NA SLOTACH ---
-    fun addSlot(slot: ScheduleSlotDTO) {
-        if (!hasValidSession()) return
-
-        viewModelScope.launch {
-            val request = CreateSlotRequest(
-                staffId = slot.staffId,
-                locationId = slot.locationId,
-                roomId = slot.roomId,
-                startAt = slot.startAt,
-                endAt = slot.endAt
-            )
-            try {
-                val res = apiService.createSlot(currentTenantId, request)
-                if (res.isSuccessful) {
-                    loadSchedule()
-                } else {
-                    Log.e(TAG, "Błąd dodawania slotu: ${res.code()}")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Wyjątek addSlot: ${e.message}")
-            }
-        }
-    }
-
-    fun updateSlot(slotId: Long, slot: ScheduleSlotDTO) {
-        if (!hasValidSession()) return
-
-        viewModelScope.launch {
-            val request = UpdateSlotRequest(
-                locationId = slot.locationId,
-                roomId = slot.roomId,
-                startAt = slot.startAt,
-                endAt = slot.endAt
-            )
-            try {
-                if (apiService.updateSlot(currentTenantId, slotId, request).isSuccessful) {
-                    loadSchedule()
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Wyjątek updateSlot: ${e.message}")
-            }
-        }
-    }
-
-    fun deleteSlot(slotId: Long) {
-        if (!hasValidSession()) return
-
-        viewModelScope.launch {
-            try {
-                if (apiService.deleteSlot(currentTenantId, slotId).isSuccessful) {
-                    loadSchedule()
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Wyjątek deleteSlot: ${e.message}")
-            }
-        }
-    }
-
-    // --- OPERACJE NA BLOKERACH (URLOPY/PRZERWY) ---
+    // --- Blocker Operations (Breaks/Leave) ---
     fun addBlocker(blocker: ScheduleBlockerDTO) {
         if (!hasValidSession()) return
 
@@ -146,7 +66,7 @@ class ScheduleViewModel @Inject constructor(
             val effectiveStaffId = if (blocker.staffId > 0) blocker.staffId else null
             val request = CreateBlockerRequest(
                 staffId = effectiveStaffId,
-                roomId = if (blocker.roomId > 0) blocker.roomId else null,
+                roomId = if (blocker.roomId != null && blocker.roomId > 0) blocker.roomId else null,
                 startAt = blocker.startAt,
                 endAt = blocker.endAt,
                 reason = blocker.reason
@@ -156,7 +76,7 @@ class ScheduleViewModel @Inject constructor(
                     loadSchedule()
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Wyjątek addBlocker: ${e.message}")
+                Log.e(TAG, "Exception addBlocker: ${e.message}")
             }
         }
     }
@@ -170,7 +90,7 @@ class ScheduleViewModel @Inject constructor(
                     loadSchedule()
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Wyjątek deleteBlocker: ${e.message}")
+                Log.e(TAG, "Exception deleteBlocker: ${e.message}")
             }
         }
     }

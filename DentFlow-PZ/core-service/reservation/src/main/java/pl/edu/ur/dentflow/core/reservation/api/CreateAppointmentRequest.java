@@ -7,7 +7,7 @@ public record CreateAppointmentRequest(
         @NotNull Long locationId,
         Long roomId,
         @NotNull Long dentistStaffId,
-        @NotNull Long patientId,
+        Long patientId,
         Long serviceItemId,
         @NotNull OffsetDateTime startAt,
         @NotNull OffsetDateTime endAt,

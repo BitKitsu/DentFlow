@@ -147,6 +147,7 @@ CREATE INDEX IF NOT EXISTS idx_appointment_tenant   ON appointment(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_appointment_dentist  ON appointment(dentist_staff_id);
 CREATE INDEX IF NOT EXISTS idx_appointment_patient  ON appointment(patient_id);
 CREATE INDEX IF NOT EXISTS idx_appointment_time     ON appointment(start_at, end_at);
+CREATE INDEX IF NOT EXISTS idx_appointment_conflict ON appointment(tenant_id, dentist_staff_id, status, start_at, end_at);
 
 -- notification (powiadomienia in-app)
 CREATE TABLE IF NOT EXISTS notification (

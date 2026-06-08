@@ -49,14 +49,14 @@ class CatalogViewModel @Inject constructor(
                 when {
                     response.isSuccessful -> _servicesState.value = response.body() ?: emptyList()
                     response.code() == 403 -> {
-                        _errorMessage.value = "Brak uprawnień do przeglądania usług."
+                        _errorMessage.value = "No permission to view services."
                         Log.e(TAG, "403 Forbidden: loadServices")
                     }
-                    else -> Log.e(TAG, "Błąd pobierania usług: ${response.code()}")
+                    else -> Log.e(TAG, "Error loading services: ${response.code()}")
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Brak połączenia z serwerem."
-                Log.e(TAG, "Błąd pobierania usług: ${e.message}")
+                _errorMessage.value = "No connection to server."
+                Log.e(TAG, "Error loading services: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
@@ -70,10 +70,10 @@ class CatalogViewModel @Inject constructor(
                 if (response.isSuccessful) {
                     _allCatalog.value = response.body() ?: emptyList()
                 } else {
-                    Log.e(TAG, "Błąd pobierania katalogu: ${response.code()}")
+                    Log.e(TAG, "Error loading catalog: ${response.code()}")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Błąd pobierania katalogu: ${e.message}")
+                Log.e(TAG, "Error loading catalog: ${e.message}")
             }
         }
     }
@@ -88,10 +88,10 @@ class CatalogViewModel @Inject constructor(
                 val request = ServiceCatalogRequest(name, duration, priceCents, active)
                 val response = apiService.createService(tId, request)
                 if (response.isSuccessful) {
-                    loadServices(tId) // Odśwież listę po sukcesie
+                    loadServices(tId)
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Błąd dodawania usługi: ${e.message}")
+                Log.e(TAG, "Error adding service: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
@@ -111,7 +111,7 @@ class CatalogViewModel @Inject constructor(
                     loadServices(tId)
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Błąd edycji usługi: ${e.message}")
+                Log.e(TAG, "Error updating service: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
@@ -126,11 +126,10 @@ class CatalogViewModel @Inject constructor(
             try {
                 val response = apiService.deleteService(tId, serviceId)
                 if (response.isSuccessful) {
-                    // Szybkie usunięcie z lokalnego stanu UI
                     _servicesState.value = _servicesState.value.filter { it.id != serviceId }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Błąd usuwania usługi: ${e.message}")
+                Log.e(TAG, "Error deleting service: ${e.message}")
             }
         }
     }

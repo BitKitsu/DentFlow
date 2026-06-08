@@ -2,15 +2,29 @@ package pl.edu.ur.dentflow.core.scheduling.api;
 
 import pl.edu.ur.dentflow.core.scheduling.application.SchedulingService;
 import jakarta.validation.Valid;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.OffsetDateTime;
 import java.util.List;
 
+/**
+ * REST controller managing schedule blockers in the DentFlow system.
+ *
+ * <p>Blockers represent time periods when a dentist is unavailable
+ * (e.g., vacation, sick leave, lunch break). The system uses blockers
+ * to prevent appointment booking during blocked periods.</p>
+ *
+ * <p>Endpoints:
+ * <ul>
+ *   <li>GET /tenants/{tenantId}/schedule/blockers - list all blockers</li>
+ *   <li>POST /tenants/{tenantId}/schedule/blockers - add a blocker (OWNER, DENTIST)</li>
+ *   <li>DELETE /tenants/{tenantId}/schedule/blockers/{blockerId} - delete a blocker (OWNER, DENTIST)</li>
+ * </ul>
+ *
+ * @see pl.edu.ur.dentflow.core.scheduling.application.SchedulingService
+ */
 @RestController
 @RequestMapping("/tenants/{tenantId}/schedule")
 public class SchedulingController {
@@ -21,43 +35,6 @@ public class SchedulingController {
         this.schedulingService = schedulingService;
     }
 
-    // ── Slots ──────────────────────────────────────────────────────────────────
-
-    @GetMapping("/slots")
-    public ResponseEntity<List<WorkScheduleSlotResponse>> getSlots(
-            @PathVariable Long tenantId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to) {
-        return ResponseEntity.ok(schedulingService.getSlots(tenantId, from, to));
-    }
-
-    @PostMapping("/slots")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
-    public ResponseEntity<WorkScheduleSlotResponse> addSlot(
-            @PathVariable Long tenantId,
-            @Valid @RequestBody CreateWorkScheduleSlotRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(schedulingService.addSlot(tenantId, request));
-    }
-
-    @PutMapping("/slots/{slotId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
-    public ResponseEntity<WorkScheduleSlotResponse> updateSlot(
-            @PathVariable Long tenantId,
-            @PathVariable Long slotId,
-            @Valid @RequestBody UpdateWorkScheduleSlotRequest request) {
-        return ResponseEntity.ok(schedulingService.updateSlot(tenantId, slotId, request));
-    }
-
-    @DeleteMapping("/slots/{slotId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
-    public ResponseEntity<Void> deleteSlot(
-            @PathVariable Long tenantId,
-            @PathVariable Long slotId) {
-        schedulingService.deleteSlot(tenantId, slotId);
-        return ResponseEntity.noContent().build();
-    }
-
     // ── Blockers ───────────────────────────────────────────────────────────────
 
     @GetMapping("/blockers")
@@ -66,7 +43,7 @@ public class SchedulingController {
     }
 
     @PostMapping("/blockers")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST')")
     public ResponseEntity<BlockerResponse> addBlocker(
             @PathVariable Long tenantId,
             @Valid @RequestBody CreateBlockerRequest request) {
@@ -75,7 +52,7 @@ public class SchedulingController {
     }
 
     @DeleteMapping("/blockers/{blockerId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'OWNER', 'DOCTOR')")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST')")
     public ResponseEntity<Void> deleteBlocker(
             @PathVariable Long tenantId,
             @PathVariable Long blockerId) {

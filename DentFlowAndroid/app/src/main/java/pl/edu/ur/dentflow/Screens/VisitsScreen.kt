@@ -228,7 +228,7 @@ fun VisitsScreen(
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = visitWithPatient.patient?.let { "${it.firstName} ${it.lastName}" }
-                            ?: "Pacjent ID: ${visit.patientId ?: "brak"}",
+                            ?: "Pacjent",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -607,7 +607,7 @@ fun UniversalVisitCard(item: VisitWithPatient, services: List<pl.edu.ur.dentflow
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = patient?.let { "${it.firstName} ${it.lastName}" } ?: "Pacjent ID: ${appointment.patientId ?: "brak"}",
+                    text = patient?.let { "${it.firstName} ${it.lastName}" } ?: "Pacjent",
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(

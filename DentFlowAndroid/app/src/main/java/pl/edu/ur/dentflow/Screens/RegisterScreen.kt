@@ -214,8 +214,8 @@ fun RegisterScreen(
             Spacer(modifier = Modifier.width(8.dp))
             OutlinedTextField(
                 value = addressZip,
-                onValueChange = { input -> 
-                    addressZip = input.filter { it.isDigit() }.take(5)
+                    onValueChange = { input -> 
+                        addressZip = input.filter { it.isDigit() }.take(5)
                     showError = false 
                 },
                 visualTransformation = { text ->

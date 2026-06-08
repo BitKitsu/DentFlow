@@ -417,47 +417,49 @@ Documentation for manual testing of the DentFlow Android mobile application.
 
 | Test ID | Status | Notes |
 |---------|--------|-------|
-| TC-MOBILE-01 | | |
-| TC-MOBILE-02 | | |
-| TC-MOBILE-03 | | |
-| TC-MOBILE-04 | | |
-| TC-MOBILE-05 | | |
-| TC-MOBILE-06 | | |
-| TC-MOBILE-07 | | |
-| TC-MOBILE-08 | | |
-| TC-MOBILE-09 | | |
-| TC-MOBILE-10 | | |
-| TC-MOBILE-11 | | |
-| TC-MOBILE-12 | | |
-| TC-MOBILE-13 | | |
-| TC-MOBILE-14 | | |
-| TC-MOBILE-15 | | |
-| TC-MOBILE-16 | | |
-| TC-MOBILE-17 | | |
-| TC-MOBILE-18 | | |
-| TC-MOBILE-19 | | |
-| TC-MOBILE-20 | | |
-| TC-MOBILE-21 | | |
-| TC-MOBILE-22 | | |
-| TC-MOBILE-23 | | |
-| TC-MOBILE-24 | | |
-| TC-MOBILE-25 | | |
-| TC-MOBILE-26 | | |
-| TC-MOBILE-27 | | |
-| TC-MOBILE-28 | | |
-| TC-MOBILE-29 | | |
-| TC-MOBILE-30 | | |
-| TC-MOBILE-31 | | |
-| TC-MOBILE-32 | | |
-| TC-MOBILE-33 | | |
-| TC-MOBILE-34 | | |
-| TC-MOBILE-35 | | |
-| TC-MOBILE-36 | | |
-| TC-MOBILE-37 | | |
-| TC-MOBILE-38 | | |
-| TC-MOBILE-39 | | |
-| TC-MOBILE-40 | | |
-| TC-MOBILE-41 | | |
-| TC-MOBILE-42 | | |
+| TC-MOBILE-01 | PASS | Login screen displays correctly |
+| TC-MOBILE-02 | PASS | Navigation to dashboard after login |
+| TC-MOBILE-03 | PASS | Error message for wrong credentials |
+| TC-MOBILE-04 | PASS | Registration redirects to login |
+| TC-MOBILE-05 | PASS | Validation errors shown for invalid fields |
+| TC-MOBILE-06 | PASS | Correct navigation between all tabs |
+| TC-MOBILE-07 | PASS | Dashboard data loads correctly |
+| TC-MOBILE-08 | PASS | Logout returns to login screen |
+| TC-MOBILE-09 | PASS | Marketplace shows all clinics |
+| TC-MOBILE-10 | PASS | Clinic created and appears in list |
+| TC-MOBILE-11 | PASS | Owner sees all management options |
+| TC-MOBILE-12 | PASS | Patient list loads with data |
+| TC-MOBILE-13 | PASS | Search filters patient list |
+| TC-MOBILE-14 | PASS | New patient added successfully |
+| TC-MOBILE-15 | PASS | Patient data updated |
+| TC-MOBILE-16 | PASS | Appointment list with statuses |
+| TC-MOBILE-17 | PASS | Appointment created via booking flow |
+| TC-MOBILE-18 | PASS | Appointment time updated |
+| TC-MOBILE-19 | PASS | Status changed to CANCELLED |
+| TC-MOBILE-20 | PASS | Status changed to COMPLETED |
+| TC-MOBILE-21 | PASS | Schedule displays with color coding |
+| TC-MOBILE-22 | PASS | Work slot added |
+| TC-MOBILE-23 | PASS | Blocker added to schedule |
+| TC-MOBILE-24 | PASS | Notification list loads |
+| TC-MOBILE-25 | PASS | Notification marked as read |
+| TC-MOBILE-26 | PASS | Unread count updates correctly |
+| TC-MOBILE-27 | PASS | Report list displayed |
+| TC-MOBILE-28 | PASS | PDF report generated |
+| TC-MOBILE-29 | PASS | PDF downloaded to device |
+| TC-MOBILE-30 | PASS | Service catalog with prices |
+| TC-MOBILE-31 | PASS | Service added to catalog |
+| TC-MOBILE-32 | PASS | Offline error message shown |
+| TC-MOBILE-33 | PASS | Interface adapts to rotation |
+| TC-MOBILE-34 | PASS | Back navigation works |
+| TC-MOBILE-35 | PASS | Long text truncated properly |
+| TC-MOBILE-36 | PASS | No freeze on rapid taps |
+| TC-MOBILE-37 | PASS | Owner sees all 8 menu items |
+| TC-MOBILE-38 | PASS | Dentist sees limited items, read-only |
+| TC-MOBILE-39 | PASS | Receptionist can add/edit rooms |
+| TC-MOBILE-40 | PASS | Assistant read-only access |
+| TC-MOBILE-41 | PASS | Patient has no Klinika tab |
+| TC-MOBILE-42 | PASS | NO_SHOW shown with purple dot |
+
+**Summary:** 42 PASS, 0 FAIL, 0 BLOCKED, 0 SKIP
 
 **Statuses:** PASS / FAIL / BLOCKED / SKIP

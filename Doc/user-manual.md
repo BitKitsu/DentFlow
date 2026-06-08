@@ -289,11 +289,13 @@ You can filter appointments by:
 
 ### Notification Types
 
-- **APPOINTMENT** - appointment information
-- **APPOINTMENT_REMINDER** - appointment reminder
-- **APPOINTMENT_CONFIRMED** - appointment confirmation
+- **APPOINTMENT** - new appointment created
+- **APPOINTMENT_CANCELLED** - appointment cancelled
+- **APPOINTMENT_COMPLETED** - appointment completed
+- **APPOINTMENT_CONFIRMED** - appointment confirmed by staff
 - **APPOINTMENT_NO_SHOW** - patient did not show up
-- **SCHEDULE_CHANGE** - schedule change
+- **APPOINTMENT_REMINDER_24H** - 24-hour reminder
+- **APPOINTMENT_REMINDER_12H** - 12-hour reminder
 
 ---
 

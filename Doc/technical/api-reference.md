@@ -176,6 +176,24 @@ GET /auth/user-by-email?email=user@example.com
 
 Response (200 OK): User data or 404 Not Found
 
+### Assign Tenant to User
+
+> Requires `OWNER` role.
+
+```
+POST /auth/assign-tenant-to-user
+```
+
+Request:
+```json
+{
+  "userId": 5,
+  "tenantId": 1
+}
+```
+
+Response: 204 No Content
+
 ### Delete Account
 
 ```
@@ -312,19 +330,17 @@ Response: 204 No Content
 #### Ensure Patient (Find or Create)
 
 ```
-POST /tenants/{tenantId}/patients/ensure
+GET /tenants/{tenantId}/patients/ensure?userId=5&firstName=Jan&lastName=Kowalski&email=jan@example.com&phone=+48123456789
 ```
 
-Request:
-```json
-{
-  "userId": 5,
-  "firstName": "Jan",
-  "lastName": "Kowalski",
-  "phone": "+48 123 456 789",
-  "email": "jan@example.com"
-}
-```
+Query parameters:
+| Parameter | Required | Description |
+|-----------|----------|-------------|
+| userId | Yes | User ID to link |
+| firstName | No | Patient first name |
+| lastName | No | Patient last name |
+| email | No | Patient email |
+| phone | No | Patient phone |
 
 Response (200 OK): PatientResponse
 
@@ -547,6 +563,8 @@ Response: 200 OK
 
 #### List Appointments
 
+> Requires: OWNER, DENTIST, RECEPTIONIST, ASSISTANT, or PATIENT role.
+
 ```
 GET /tenants/{tenantId}/appointments?from=2026-01-01T00:00:00Z&to=2026-12-31T23:59:59Z
 ```
@@ -572,6 +590,8 @@ GET /tenants/{tenantId}/appointments/{appointmentId}
 Response (200 OK): AppointmentResponse
 
 #### Create Appointment
+
+> Requires: OWNER, DENTIST, RECEPTIONIST, or PATIENT role.
 
 ```
 POST /tenants/{tenantId}/appointments

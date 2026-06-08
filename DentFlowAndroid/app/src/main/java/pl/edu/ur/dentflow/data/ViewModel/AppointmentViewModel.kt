@@ -82,9 +82,14 @@ class AppointmentViewModel @Inject constructor(
         _slotDurationMinutes = minutes
     }
 
-    fun loadBookingData(dentistStaffId: Long) {
-        val tenantId = currentTenantId
-        if (tenantId == -1L) return
+    fun syncTenantId(tenantId: Long) {
+        if (tenantId > 0 && prefs.getLong("tenant_id", 0L) != tenantId) {
+            prefs.edit().putLong("tenant_id", tenantId).apply()
+        }
+    }
+
+    fun loadBookingData(dentistStaffId: Long, tenantId: Long = currentTenantId) {
+        if (tenantId == -1L || tenantId == 0L) return
 
         viewModelScope.launch {
             _isLoading.value = true
@@ -109,6 +114,12 @@ class AppointmentViewModel @Inject constructor(
                 if (appointmentsRes.isSuccessful) {
                     _bookingAppointments.value = (appointmentsRes.body() as? List<AppointmentResponse> ?: emptyList())
                         .filter { it.dentistStaffId == dentistStaffId && it.status != "CANCELLED" }
+                } else {
+                    Log.w(TAG, "getAppointments failed: ${appointmentsRes.code()} - cannot show available slots without appointment data")
+                    _errorMessage.value = "Nie mozna pobrac danych o wizytach. Sprobuj ponownie."
+                    _isLoading.value = false
+                    _bookingLoadComplete.value = true
+                    return@launch
                 }
                 @Suppress("UNCHECKED_CAST")
                 if (blockersRes.isSuccessful) {
@@ -118,6 +129,27 @@ class AppointmentViewModel @Inject constructor(
                 @Suppress("UNCHECKED_CAST")
                 if (workingHoursRes.isSuccessful) {
                     _bookingWorkingHours = workingHoursRes.body() as? List<StaffWorkingHoursDTO> ?: emptyList()
+                } else {
+                    try {
+                        val staffRes = apiService.getStaffMembers(tenantId)
+                        if (staffRes.isSuccessful) {
+                            val staff = staffRes.body() ?: emptyList()
+                            val dentist = staff.find { it.id == dentistStaffId }
+                            if (dentist != null) {
+                                val start = dentist.workingHoursStart ?: "08:00"
+                                val end = dentist.workingHoursEnd ?: "16:00"
+                                _bookingWorkingHours = (1..5).map { day ->
+                                    StaffWorkingHoursDTO(
+                                        id = 0L,
+                                        staffMemberId = dentistStaffId,
+                                        dayOfWeek = day,
+                                        startTime = start,
+                                        endTime = end
+                                    )
+                                }
+                            }
+                        }
+                    } catch (_: Exception) {}
                 }
                 if (tenantRes.isSuccessful) {
                     @Suppress("UNCHECKED_CAST")
@@ -399,10 +431,9 @@ class AppointmentViewModel @Inject constructor(
     fun createAppointment(
         locId: Long, room: Long?, docId: Long, patId: Long?,
         servId: Long?, start: String, end: String, note: String,
-        onSuccess: () -> Unit
+        onSuccess: () -> Unit, tenantId: Long = currentTenantId
     ) {
-        val tenantId = currentTenantId
-        if (tenantId == -1L || _isCreating.value) return
+        if (tenantId == -1L || tenantId == 0L || _isCreating.value) return
 
         viewModelScope.launch {
             _isCreating.value = true
@@ -415,7 +446,8 @@ class AppointmentViewModel @Inject constructor(
                         userId = currentUserId,
                         firstName = prefs.getString("user_first_name", "") ?: "",
                         lastName = prefs.getString("user_last_name", "") ?: "",
-                        email = prefs.getString("user_email", "") ?: ""
+                        email = prefs.getString("user_email", "") ?: "",
+                        phone = prefs.getString("user_phone", "") ?: ""
                     )
                     if (ensureRes.isSuccessful) {
                         effectivePatientId = ensureRes.body()?.id

@@ -6,6 +6,7 @@ import pl.edu.ur.dentflow.core.patient.api.UpdatePatientRequest;
 import pl.edu.ur.dentflow.core.patient.domain.Patient;
 import pl.edu.ur.dentflow.core.patient.infrastructure.PatientRepository;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,12 +29,23 @@ import java.util.List;
 public class PatientService {
 
     private final PatientRepository patientRepository;
+    private final JdbcTemplate jdbcTemplate;
 
-    public PatientService(PatientRepository patientRepository) {
+    public PatientService(PatientRepository patientRepository, JdbcTemplate jdbcTemplate) {
         this.patientRepository = patientRepository;
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    private void requireTenantExists(Long tenantId) {
+        Boolean exists = jdbcTemplate.queryForObject(
+                "SELECT EXISTS(SELECT 1 FROM tenant WHERE id = ?)", Boolean.class, tenantId);
+        if (!Boolean.TRUE.equals(exists)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Klinika nie istnieje");
+        }
     }
 
     public List<PatientResponse> getPatients(Long tenantId, String searchTerm) {
+        requireTenantExists(tenantId);
         List<Patient> patients;
         if (searchTerm != null && !searchTerm.isBlank()) {
             patients = patientRepository.searchPatients(tenantId, searchTerm);
@@ -51,6 +63,7 @@ public class PatientService {
 
     @Transactional
     public PatientResponse addPatient(Long tenantId, CreatePatientRequest request) {
+        requireTenantExists(tenantId);
         Patient patient = Patient.builder()
                 .tenantId(tenantId)
                 .userId(request.userId())

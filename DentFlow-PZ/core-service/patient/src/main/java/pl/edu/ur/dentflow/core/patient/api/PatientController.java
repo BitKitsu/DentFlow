@@ -44,7 +44,7 @@ public class PatientController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST', 'ASSISTANT')")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST', 'RECEPTIONIST', 'ASSISTANT')")
     @Operation(summary = "List patients or search by name/phone")
     public ResponseEntity<List<PatientResponse>> getPatients(
             @PathVariable Long tenantId,

@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.edu.ur.dentflow.identity.auth.api.AssignTenantRequest;
+import pl.edu.ur.dentflow.identity.auth.api.AssignTenantToUserRequest;
 import pl.edu.ur.dentflow.identity.auth.api.AssignRoleRequest;
 import pl.edu.ur.dentflow.identity.auth.api.ChangePasswordRequest;
 import pl.edu.ur.dentflow.identity.auth.api.UpdateProfileRequest;
@@ -142,6 +143,16 @@ public class AuthController {
         log.info("Assigning role {} to user {}", request.role(), request.userId());
         AuthResponse response = authService.assignRoleToUser(request.userId(), request.role());
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/assign-tenant-to-user")
+    @Operation(summary = "Assign tenantId to a specific user (OWNER only)")
+    @SecurityRequirement(name = "bearerAuth")
+    @PreAuthorize("hasRole('OWNER')")
+    public ResponseEntity<Void> assignTenantToUser(@Valid @RequestBody AssignTenantToUserRequest request) {
+        log.info("Assigning tenant {} to user {}", request.tenantId(), request.userId());
+        authService.assignTenantToUser(request.userId(), request.tenantId());
+        return ResponseEntity.ok().build();
     }
 
 }

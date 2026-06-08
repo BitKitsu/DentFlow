@@ -138,6 +138,15 @@ public class AuthService {
         return toAuthResponse(token, saved);
     }
 
+    @Transactional
+    public void assignTenantToUser(Long userId, Long tenantId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "User does not exist"));
+        user.setTenantId(tenantId);
+        userRepository.save(user);
+    }
+
     // -------------------------------------------------------------------------
     // Password change
     // -------------------------------------------------------------------------

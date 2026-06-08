@@ -102,7 +102,7 @@ public class StaffMemberController {
     }
 
     @GetMapping("/{staffId}/working-hours")
-    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST')")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST', 'RECEPTIONIST', 'ASSISTANT', 'PATIENT')")
     @Operation(summary = "Get staff member working hours (per day of week)")
     public ResponseEntity<List<StaffWorkingHoursDTO>> getWorkingHours(
             @PathVariable Long tenantId,

@@ -39,6 +39,12 @@ interface AuthService {
 
     @POST("auth/assign-role")
     suspend fun assignRole(@Body request: AssignRoleRequest): Response<AuthResponse>
+
+    @POST("auth/assign-tenant-to-user")
+    suspend fun assignTenantToUser(@Body request: AssignTenantToUserRequest): Response<Unit>
+
+    @POST("auth/claim-ownership")
+    suspend fun claimOwnership(): Response<AuthResponse>
 }
 
 data class ChangePasswordRequest(

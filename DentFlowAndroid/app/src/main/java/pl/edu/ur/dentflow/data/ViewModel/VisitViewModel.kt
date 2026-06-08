@@ -53,11 +53,19 @@ class VisitViewModel @Inject constructor(
 
     init {
         refreshVisits()
+        prefs.registerOnSharedPreferenceChangeListener { _, key ->
+            if (key == "tenant_id") {
+                val newTenantId = prefs.getLong("tenant_id", -1L)
+                if (newTenantId > 0L) {
+                    refreshVisits()
+                }
+            }
+        }
     }
 
     fun refreshVisits() {
         val tenantId = currentTenantId
-        if (tenantId == -1L) return
+        if (tenantId <= 0L) return
 
         if (isPatient) {
             fetchMyVisits(tenantId)
@@ -75,8 +83,17 @@ class VisitViewModel @Inject constructor(
                 val response = apiService.getMyAppointments(tenantId)
                 when {
                     response.isSuccessful -> {
+                        val myPatient = PatientResponse(
+                            id = 0L,
+                            tenantId = tenantId,
+                            userId = currentUserId,
+                            firstName = prefs.getString("user_first_name", "") ?: "",
+                            lastName = prefs.getString("user_last_name", "") ?: "",
+                            email = prefs.getString("user_email", "") ?: "",
+                            phone = prefs.getString("user_phone", "") ?: ""
+                        )
                         _visits.value = (response.body() ?: emptyList()).map { appointment ->
-                            VisitWithPatient(visit = appointment, patient = null)
+                            VisitWithPatient(visit = appointment, patient = myPatient)
                         }
                     }
                     response.code() == 403 -> {
@@ -109,11 +126,16 @@ class VisitViewModel @Inject constructor(
                         val appointmentList = response.body() ?: emptyList()
                         val combinedList = appointmentList.map { appointment ->
                             async {
-                                val patientRes = appointment.patientId?.let { apiService.getPatientById(tenantId, it) }
-                                VisitWithPatient(
-                                    visit = appointment,
-                                    patient = if (patientRes != null && patientRes.isSuccessful) patientRes.body() else null
-                                )
+                                try {
+                                    val patientRes = appointment.patientId?.let { apiService.getPatientById(tenantId, it) }
+                                    VisitWithPatient(
+                                        visit = appointment,
+                                        patient = if (patientRes != null && patientRes.isSuccessful) patientRes.body() else null
+                                    )
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Error fetching patient for appointment ${appointment.id}: ${e.message}")
+                                    VisitWithPatient(visit = appointment, patient = null)
+                                }
                             }
                         }.awaitAll()
                         _visits.value = combinedList

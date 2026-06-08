@@ -41,7 +41,7 @@ public class AppointmentController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST', 'RECEPTIONIST', 'ASSISTANT')")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST', 'RECEPTIONIST', 'ASSISTANT', 'PATIENT')")
     public ResponseEntity<List<AppointmentResponse>> getAppointments(
             @PathVariable Long tenantId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
@@ -73,7 +73,7 @@ public class AppointmentController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST', 'RECEPTIONIST')")
+    @PreAuthorize("hasAnyRole('OWNER', 'DENTIST', 'RECEPTIONIST', 'PATIENT')")
     public ResponseEntity<AppointmentResponse> createAppointment(
             @PathVariable Long tenantId,
             @Valid @RequestBody CreateAppointmentRequest request) {

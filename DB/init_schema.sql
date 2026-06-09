@@ -1,8 +1,3 @@
--- ============================================================
--- DentFlow - Skrypt tworzący strukturę bazy danych (BEZ DANYCH)
--- Plik do umieszczenia w repozytorium (folder DB/)
--- ============================================================
-
 -- ##############################################################
 -- SCHEMAT IDENTITY SERVICE
 -- ##############################################################
@@ -10,6 +5,13 @@
 CREATE TABLE IF NOT EXISTS "user" (
     id              BIGSERIAL PRIMARY KEY,
     email           VARCHAR(255) NOT NULL UNIQUE,
+    first_name      VARCHAR(100),
+    last_name       VARCHAR(100),
+    phone           VARCHAR(20),
+    address_street  VARCHAR(100),
+    address_city    VARCHAR(100),
+    address_zip     VARCHAR(20),
+    address_country VARCHAR(50),
     password_hash   VARCHAR(255) NOT NULL,
     tenant_id       BIGINT NOT NULL,
     status          VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
@@ -145,6 +147,7 @@ CREATE INDEX IF NOT EXISTS idx_appointment_tenant   ON appointment(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_appointment_dentist  ON appointment(dentist_staff_id);
 CREATE INDEX IF NOT EXISTS idx_appointment_patient  ON appointment(patient_id);
 CREATE INDEX IF NOT EXISTS idx_appointment_time     ON appointment(start_at, end_at);
+CREATE INDEX IF NOT EXISTS idx_appointment_conflict ON appointment(tenant_id, dentist_staff_id, status, start_at, end_at);
 
 -- notification (powiadomienia in-app)
 CREATE TABLE IF NOT EXISTS notification (

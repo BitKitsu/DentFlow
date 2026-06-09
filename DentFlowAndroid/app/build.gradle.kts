@@ -18,11 +18,11 @@ if (localPropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.example.dentflow_android"
+    namespace = "pl.edu.ur.dentflow"
     compileSdk = 36 // Poprawiony zapis wersji
 
     defaultConfig {
-        applicationId = "com.example.dentflow_android"
+        applicationId = "pl.edu.ur.dentflow"
         minSdk = 31
         targetSdk = 36
         versionCode = 1
@@ -84,6 +84,8 @@ dependencies {
 
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("androidx.compose.material:material-icons-extended:1.7.0")
+    // Image Cropper
+    implementation("com.vanniktech:android-image-cropper:4.5.0")
 // Dodaj to w sekcji dependencies:
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     // HILT (Dependency Injection)

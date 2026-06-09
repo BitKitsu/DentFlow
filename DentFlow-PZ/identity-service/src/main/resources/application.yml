@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: ${PORT:8081}
 
 spring:
   application:
@@ -36,5 +36,5 @@ springdoc:
 
 logging:
   level:
-    com.dentflow: DEBUG
+    pl.edu.ur.dentflow: DEBUG
     org.springframework.security: DEBUG

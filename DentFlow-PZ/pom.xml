@@ -11,7 +11,7 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.dentflow</groupId>
+    <groupId>pl.edu.ur.dentflow</groupId>
     <artifactId>dentflow-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
@@ -21,6 +21,7 @@
     <modules>
         <module>identity-service</module>
         <module>core-service</module>
+        <module>pdf-generator</module>
     </modules>
 
     <properties>
@@ -72,37 +73,37 @@
 
             <!-- Internal modules -->
             <dependency>
-                <groupId>com.dentflow</groupId>
+                <groupId>pl.edu.ur.dentflow</groupId>
                 <artifactId>core-clinic</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.dentflow</groupId>
+                <groupId>pl.edu.ur.dentflow</groupId>
                 <artifactId>core-patient</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.dentflow</groupId>
+                <groupId>pl.edu.ur.dentflow</groupId>
                 <artifactId>core-scheduling</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.dentflow</groupId>
+                <groupId>pl.edu.ur.dentflow</groupId>
                 <artifactId>core-reservation</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.dentflow</groupId>
+                <groupId>pl.edu.ur.dentflow</groupId>
                 <artifactId>core-catalog</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.dentflow</groupId>
+                <groupId>pl.edu.ur.dentflow</groupId>
                 <artifactId>core-notification</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.dentflow</groupId>
+                <groupId>pl.edu.ur.dentflow</groupId>
                 <artifactId>core-file</artifactId>
                 <version>${project.version}</version>
             </dependency>

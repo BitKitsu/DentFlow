@@ -388,10 +388,3 @@ You can filter appointments by:
 3. Their work schedule will be displayed
 
 ---
-
-## Contact
-
-If you have any problems, contact us:
-- Email: support@dentflow.pl
-- Phone: +48 123 456 789
-- Website: https://dentflow.pl

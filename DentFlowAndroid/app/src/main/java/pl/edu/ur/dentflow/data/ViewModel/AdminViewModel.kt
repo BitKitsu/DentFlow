@@ -27,11 +27,14 @@ class AdminViewModel @Inject constructor(
 
     // Pobieramy tenantId z SharedPreferences zamiast przekazywać go w parametrze
     private val currentTenantId: Long
-        get() = prefs.getLong("tenant_id", -1L)
+        get() {
+            val id = prefs.getLong("tenant_id", -1L)
+            return if (id <= 0L) -1L else id
+        }
 
     fun loadStats() {
         // Jeśli nie mamy zapisanego tenantId, przerywamy ładowanie
-        if (currentTenantId == -1L) return
+        if (currentTenantId <= 0L) return
 
         viewModelScope.launch {
             try {

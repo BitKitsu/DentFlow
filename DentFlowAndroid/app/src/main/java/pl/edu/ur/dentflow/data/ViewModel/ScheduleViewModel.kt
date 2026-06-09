@@ -28,11 +28,14 @@ class ScheduleViewModel @Inject constructor(
 
     private val TAG = "SCHEDULE_VM_DEBUG"
 
-    private val currentTenantId: Long get() = prefs.getLong("tenant_id", -1L)
+    private val currentTenantId: Long get() {
+        val id = prefs.getLong("tenant_id", -1L)
+        return if (id <= 0L) -1L else id
+    }
     private val currentUserId: Long get() = prefs.getLong("user_id", -1L)
 
     private fun hasValidSession(): Boolean {
-        if (currentTenantId == -1L || currentUserId == -1L) {
+        if (currentTenantId <= 0L || currentUserId <= 0L) {
             Log.e(TAG, "Error: No active session (tenantId: $currentTenantId, userId: $currentUserId)")
             return false
         }

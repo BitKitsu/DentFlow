@@ -132,7 +132,7 @@ SELECT * FROM appointment WHERE tenant_id = 2;  -- SmileClinic Warszawa
 ### Schema (Flyway migrations)
 - `V1__init_identity_schema.sql` - user, user_role tables
 - `V1__init_clinic_schema.sql` - Business tables (12 tables)
-- `V2__*` - `V14__*` - Schema evolution
+- `V2__*` - `V15__*` - Schema evolution
 
 ### Main Tables
 | Table | Description |
@@ -183,7 +183,7 @@ List<Appointment> findConflictingForUpdate(...);
 Before creating an appointment, the system checks if the time slot overlaps with any existing blocker (vacation, inspection, etc.) via `BlockerRepository.findConflicting()`.
 
 ### Database Index
-`V16__add_appointment_conflict_index.sql` adds a composite index on `(tenant_id, dentist_staff_id, status, start_at, end_at)` for fast conflict lookups.
+`V15__add_appointment_conflict_index.sql` adds a composite index on `(tenant_id, dentist_staff_id, status, start_at, end_at)` for fast conflict lookups.
 
 ## Async Notifications
 

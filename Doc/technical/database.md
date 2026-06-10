@@ -69,10 +69,10 @@ tenant --+-- location -- room
 - `V7__add_patient_advanced_fields.sql` - Advanced patient fields
 - `V8__add_staff_phone_email.sql` - Staff phone and email
 - `V9__add_staff_working_hours_per_day.sql` - Per-day working hours
-- `V10-V14` - Further schema evolution
-- `V14__add_staff_working_hours_per_day.sql` - Per-day working hours table
-- `V15__add_staff_room_assignment_and_room_crud.sql` - Staff-room assignments
-- `V16__add_appointment_conflict_index.sql` - Composite index on (tenant_id, dentist_staff_id, status, start_at, end_at)
+- `V10-V15` - Further schema evolution
+- `V13__add_staff_working_hours_per_day.sql` - Per-day working hours table
+- `V14__add_staff_room_assignment_and_room_crud.sql` - Staff-room assignments
+- `V15__add_appointment_conflict_index.sql` - Composite index on (tenant_id, dentist_staff_id, status, start_at, end_at)
 
 ## Backup
 

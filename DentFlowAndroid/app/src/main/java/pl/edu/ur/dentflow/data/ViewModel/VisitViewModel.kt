@@ -37,7 +37,10 @@ class VisitViewModel @Inject constructor(
     private val TAG = "VISIT_VM_DEBUG"
 
     private val currentTenantId: Long
-        get() = prefs.getLong("tenant_id", -1L)
+        get() {
+            val id = prefs.getLong("tenant_id", -1L)
+            return if (id <= 0L) -1L else id
+        }
 
     private val userRole: String
         get() = prefs.getString("user_role", "PATIENT") ?: "PATIENT"
@@ -160,7 +163,7 @@ class VisitViewModel @Inject constructor(
 
     fun confirmAppointment(appointmentId: Long) {
         val tenantId = currentTenantId
-        if (tenantId == -1L) return
+        if (tenantId <= 0L) return
 
         viewModelScope.launch {
             try {
@@ -175,7 +178,7 @@ class VisitViewModel @Inject constructor(
 
     fun cancelAppointment(appointmentId: Long) {
         val tenantId = currentTenantId
-        if (tenantId == -1L) return
+        if (tenantId <= 0L) return
 
         viewModelScope.launch {
             try {
@@ -190,7 +193,7 @@ class VisitViewModel @Inject constructor(
 
     fun completeAppointment(appointmentId: Long) {
         val tenantId = currentTenantId
-        if (tenantId == -1L) return
+        if (tenantId <= 0L) return
 
         viewModelScope.launch {
             try {
@@ -205,7 +208,7 @@ class VisitViewModel @Inject constructor(
 
     fun fetchPatientHistory(patientId: Long) {
         val tenantId = currentTenantId
-        if (tenantId == -1L) return
+        if (tenantId <= 0L) return
 
         viewModelScope.launch {
             _isLoading.value = true
@@ -232,7 +235,7 @@ class VisitViewModel @Inject constructor(
 
     fun downloadReport(from: String, to: String, context: android.content.Context) {
         val tenantId = currentTenantId
-        if (tenantId == -1L) return
+        if (tenantId <= 0L) return
 
         viewModelScope.launch {
             try {
@@ -258,7 +261,7 @@ class VisitViewModel @Inject constructor(
 
     fun downloadRoomOccupancyReport(from: String, to: String, roomId: Long?, context: android.content.Context) {
         val tenantId = currentTenantId
-        if (tenantId == -1L) return
+        if (tenantId <= 0L) return
 
         viewModelScope.launch {
             try {
@@ -287,13 +290,39 @@ class VisitViewModel @Inject constructor(
         }
     }
 
-    fun downloadPatientHistoryReport(patientId: Long, context: android.content.Context) {
+    fun downloadMyVisitsReport(from: String, to: String, context: android.content.Context) {
         val tenantId = currentTenantId
-        if (tenantId == -1L) return
+        if (tenantId <= 0L) return
 
         viewModelScope.launch {
             try {
-                val response = apiService.getPatientHistoryReportPdf(tenantId, patientId)
+                val response = apiService.getMyPatientHistoryReportPdf(tenantId, from = from, to = to)
+                if (response.isSuccessful) {
+                    val bytes = response.body()?.bytes()
+                    if (bytes != null && bytes.size > 100) {
+                        savePdfToDisk(bytes, context, "Moje_Wizyty_${from}_$to.pdf")
+                    } else {
+                        android.widget.Toast.makeText(context, "Brak danych do wygenerowania raportu", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    val msg = extractErrorMessage(response.errorBody(), response.code())
+                    Log.e(TAG, "Błąd pobierania PDF moich wizyt: $msg")
+                    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Błąd sieci: ${e.message}")
+                android.widget.Toast.makeText(context, "Brak połączenia z serwerem", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    fun downloadPatientHistoryReport(patientId: Long, from: String? = null, to: String? = null, context: android.content.Context) {
+        val tenantId = currentTenantId
+        if (tenantId <= 0L) return
+
+        viewModelScope.launch {
+            try {
+                val response = apiService.getPatientHistoryReportPdf(tenantId, patientId, from = from, to = to)
                 if (response.isSuccessful) {
                     val bytes = response.body()?.bytes()
                     if (bytes != null && bytes.size > 100) {

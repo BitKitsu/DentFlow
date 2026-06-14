@@ -2,68 +2,53 @@ package pl.edu.ur.dentflow.core.reservation.api;
 
 import pl.edu.ur.dentflow.core.clinic.domain.Tenant;
 import pl.edu.ur.dentflow.core.clinic.infrastructure.TenantRepository;
+import pl.edu.ur.dentflow.core.patient.infrastructure.PatientRepository;
 import pl.edu.ur.dentflow.core.reservation.application.PatientVisitHistoryService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import org.springframework.http.HttpStatus;
 
 import java.time.LocalDate;
-import java.util.List;
 
-/**
- * REST controller providing patient visit history.
- *
- * <p>Endpoints:
- * <ul>
- *   <li>GET /tenants/{tenantId}/patients/{patientId}/visits - JSON visit history</li>
- *   <li>GET /tenants/{tenantId}/patients/{patientId}/visits/pdf - PDF visit history</li>
- * </ul>
- *
- * <p>Optional status parameter filters by SCHEDULED, COMPLETED, or CANCELLED.</p>
- *
- * @see pl.edu.ur.dentflow.core.reservation.application.PatientVisitHistoryService
- */
 @RestController
-@RequestMapping("/tenants/{tenantId}/patients/{patientId}/visits")
-public class PatientVisitHistoryController {
+@RequestMapping("/tenants/{tenantId}/patients/my/visits")
+public class MyPatientVisitHistoryController {
 
     private final PatientVisitHistoryService historyService;
     private final TenantRepository tenantRepository;
+    private final PatientRepository patientRepository;
 
-    public PatientVisitHistoryController(PatientVisitHistoryService historyService,
-                                          TenantRepository tenantRepository) {
+    public MyPatientVisitHistoryController(PatientVisitHistoryService historyService,
+                                            TenantRepository tenantRepository,
+                                            PatientRepository patientRepository) {
         this.historyService = historyService;
         this.tenantRepository = tenantRepository;
-    }
-
-    @GetMapping
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<PatientVisitHistoryDTO>> getPatientVisitHistoryJson(
-            @PathVariable Long tenantId,
-            @PathVariable Long patientId,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-
-        List<PatientVisitHistoryDTO> result = (status != null && !status.isBlank())
-                ? historyService.getPatientHistoryByStatus(tenantId, patientId, status, from, to)
-                : historyService.getPatientHistory(tenantId, patientId, from, to);
-        return ResponseEntity.ok(result);
+        this.patientRepository = patientRepository;
     }
 
     @GetMapping("/pdf")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<byte[]> getPatientVisitHistoryPdf(
+    public ResponseEntity<byte[]> getMyVisitHistoryPdf(
             @PathVariable Long tenantId,
-            @PathVariable Long patientId,
+            Authentication authentication,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+
+        Long userId = authentication.getCredentials() instanceof Long
+                ? (Long) authentication.getCredentials()
+                : 0L;
+
+        Long patientId = patientRepository.findByTenantIdAndUserId(tenantId, userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Nie znaleziono profilu pacjenta dla bieżącego użytkownika"))
+                .getId();
 
         String clinicName = tenantRepository.findById(tenantId)
                 .map(Tenant::getName)
@@ -71,7 +56,7 @@ public class PatientVisitHistoryController {
 
         try {
             byte[] pdf = historyService.generatePdf(tenantId, patientId, clinicName, status, from, to);
-            String filename = "historia_pacjenta_" + patientId + ".pdf";
+            String filename = "historia_wizyt.pdf";
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                     .contentType(MediaType.APPLICATION_PDF)

@@ -315,7 +315,18 @@ interface ApiService {
     suspend fun getPatientHistoryReportPdf(
         @Path("tenantId") tenantId: Long,
         @Path("patientId") patientId: Long,
-        @Query("status") status: String? = null
+        @Query("status") status: String? = null,
+        @Query("from") from: String? = null,
+        @Query("to") to: String? = null
+    ): Response<ResponseBody>
+
+    @Streaming
+    @GET("tenants/{tenantId}/patients/my/visits/pdf")
+    suspend fun getMyPatientHistoryReportPdf(
+        @Path("tenantId") tenantId: Long,
+        @Query("status") status: String? = null,
+        @Query("from") from: String? = null,
+        @Query("to") to: String? = null
     ): Response<ResponseBody>
 
     // --- REPORTS (RAPORTY) ---

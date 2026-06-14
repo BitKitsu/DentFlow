@@ -303,7 +303,7 @@ private fun ReportPatientHistory(
     Button(
         onClick = {
             selectedPatientId?.let { pid ->
-                visitViewModel.downloadPatientHistoryReport(pid, ctx)
+                visitViewModel.downloadPatientHistoryReport(pid, context = ctx)
             }
         },
         modifier = Modifier.fillMaxWidth(),

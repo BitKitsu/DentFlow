@@ -442,11 +442,13 @@ fun VisitsScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showPdfDialog = false
-                    viewModel.downloadReport(
-                        pdfFromDate.format(DateTimeFormatter.ISO_LOCAL_DATE),
-                        pdfToDate.format(DateTimeFormatter.ISO_LOCAL_DATE),
-                        ctx
-                    )
+                    val fromStr = pdfFromDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
+                    val toStr = pdfToDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
+                    if (isPatient) {
+                        viewModel.downloadMyVisitsReport(fromStr, toStr, ctx)
+                    } else {
+                        viewModel.downloadReport(fromStr, toStr, ctx)
+                    }
                 }) { Text("Pobierz") }
             },
             dismissButton = {

@@ -14,6 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -33,29 +36,41 @@ public class PatientVisitHistoryService {
     }
 
     @Transactional(readOnly = true)
-    public List<PatientVisitHistoryDTO> getPatientHistory(Long tenantId, Long patientId) {
+    public List<PatientVisitHistoryDTO> getPatientHistory(Long tenantId, Long patientId,
+                                                          LocalDate from, LocalDate to) {
         List<Appointment> appointments =
                 appointmentRepository.findByTenantIdAndPatientIdOrderByStartAtDesc(tenantId, patientId);
+
+        if (from != null && to != null) {
+            OffsetDateTime fromDt = from.atStartOfDay().atOffset(ZoneOffset.UTC);
+            OffsetDateTime toDt = to.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC);
+            appointments = appointments.stream()
+                    .filter(a -> !a.getStartAt().isBefore(fromDt) && a.getStartAt().isBefore(toDt))
+                    .toList();
+        }
+
         return appointments.stream().map(this::toDTO).toList();
     }
 
     @Transactional(readOnly = true)
-    public List<PatientVisitHistoryDTO> getPatientHistoryByStatus(Long tenantId, Long patientId, String status) {
-        return getPatientHistory(tenantId, patientId)
+    public List<PatientVisitHistoryDTO> getPatientHistoryByStatus(Long tenantId, Long patientId,
+                                                                   String status, LocalDate from, LocalDate to) {
+        return getPatientHistory(tenantId, patientId, from, to)
                 .stream()
                 .filter(v -> v.status().equalsIgnoreCase(status))
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public byte[] generatePdf(Long tenantId, Long patientId, String clinicName, String statusFilter) {
+    public byte[] generatePdf(Long tenantId, Long patientId, String clinicName, String statusFilter,
+                              LocalDate from, LocalDate to) {
         Patient patient = patientRepository.findByIdAndTenantId(patientId, tenantId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Pacjent o id=" + patientId + " nie istnieje w tym gabinecie"));
 
         List<PatientVisitHistoryDTO> visits = (statusFilter != null && !statusFilter.isBlank())
-                ? getPatientHistoryByStatus(tenantId, patientId, statusFilter)
-                : getPatientHistory(tenantId, patientId);
+                ? getPatientHistoryByStatus(tenantId, patientId, statusFilter, from, to)
+                : getPatientHistory(tenantId, patientId, from, to);
 
         if (visits.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,

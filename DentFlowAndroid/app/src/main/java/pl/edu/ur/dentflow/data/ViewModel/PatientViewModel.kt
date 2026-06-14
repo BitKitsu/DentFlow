@@ -33,11 +33,14 @@ class PatientViewModel @Inject constructor(
 
     // Dynamiczne pobieranie tenantId z sesji
     private val currentTenantId: Long
-        get() = prefs.getLong("tenant_id", -1L)
+        get() {
+            val id = prefs.getLong("tenant_id", -1L)
+            return if (id <= 0L) -1L else id
+        }
 
     // Funkcja sprawdzająca czy mamy ID kliniki przed wykonaniem zapytania
     private fun checkTenantId(): Boolean {
-        if (currentTenantId == -1L) {
+        if (currentTenantId <= 0L) {
             Log.e(TAG, "BŁĄD: Próba operacji na pacjentach bez przypisanego tenantId!")
             return false
         }

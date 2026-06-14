@@ -30,11 +30,14 @@ class ReportsViewModel @Inject constructor(
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     private val TAG = "REPORTS_VM_DEBUG"
-    private val currentTenantId: Long get() = prefs.getLong("tenant_id", -1L)
+    private val currentTenantId: Long get() {
+        val id = prefs.getLong("tenant_id", -1L)
+        return if (id <= 0L) -1L else id
+    }
 
     fun loadData() {
         val tenantId = currentTenantId
-        if (tenantId == -1L) return
+        if (tenantId <= 0L) return
 
         viewModelScope.launch {
             _isLoading.value = true

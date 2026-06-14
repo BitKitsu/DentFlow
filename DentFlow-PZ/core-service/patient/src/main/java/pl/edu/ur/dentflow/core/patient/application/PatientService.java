@@ -11,7 +11,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Service managing patient data in the DentFlow system.
@@ -36,6 +40,33 @@ public class PatientService {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    private Map<Long, String> fetchUserAvatars(Set<Long> userIds) {
+        if (userIds.isEmpty()) return Collections.emptyMap();
+        String placeholders = userIds.stream().map(String::valueOf).collect(Collectors.joining(","));
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                "SELECT id, avatar_url FROM \"user\" WHERE id IN (" + placeholders + ")"
+        );
+        return rows.stream().collect(Collectors.toMap(
+                row -> ((Number) row.get("id")).longValue(),
+                row -> row.get("avatar_url") != null ? row.get("avatar_url").toString() : null
+        ));
+    }
+
+    private PatientResponse enrichWithUserAvatar(PatientResponse response, Map<Long, String> userAvatars) {
+        if (response.avatarUrl() != null || response.userId() == null) return response;
+        String userAvatar = userAvatars.get(response.userId());
+        if (userAvatar == null) return response;
+        return new PatientResponse(
+                response.id(), response.tenantId(), response.userId(),
+                response.firstName(), response.lastName(), response.phone(),
+                response.email(), response.notes(), response.dateOfBirth(),
+                response.pesel(), response.gender(),
+                response.addressStreet(), response.addressCity(),
+                response.addressZip(), response.addressCountry(),
+                userAvatar
+        );
+    }
+
     private void requireTenantExists(Long tenantId) {
         Boolean exists = jdbcTemplate.queryForObject(
                 "SELECT EXISTS(SELECT 1 FROM tenant WHERE id = ?)", Boolean.class, tenantId);
@@ -52,13 +83,26 @@ public class PatientService {
         } else {
             patients = patientRepository.findByTenantId(tenantId);
         }
-        return patients.stream().map(PatientResponse::from).toList();
+        Set<Long> userIds = patients.stream()
+                .map(Patient::getUserId)
+                .filter(id -> id != null)
+                .collect(Collectors.toSet());
+        Map<Long, String> userAvatars = fetchUserAvatars(userIds);
+        return patients.stream()
+                .map(PatientResponse::from)
+                .map(r -> enrichWithUserAvatar(r, userAvatars))
+                .toList();
     }
 
     public PatientResponse getPatient(Long tenantId, Long patientId) {
         Patient patient = patientRepository.findByIdAndTenantId(patientId, tenantId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Pacjent nie istnieje"));
-        return PatientResponse.from(patient);
+        PatientResponse response = PatientResponse.from(patient);
+        if (response.avatarUrl() == null && response.userId() != null) {
+            Map<Long, String> userAvatars = fetchUserAvatars(Set.of(response.userId()));
+            response = enrichWithUserAvatar(response, userAvatars);
+        }
+        return response;
     }
 
     @Transactional
@@ -82,7 +126,12 @@ public class PatientService {
                 .avatarUrl(request.avatarUrl())
                 .build();
 
-        return PatientResponse.from(patientRepository.save(patient));
+        PatientResponse response = PatientResponse.from(patientRepository.save(patient));
+        if (response.avatarUrl() == null && response.userId() != null) {
+            Map<Long, String> userAvatars = fetchUserAvatars(Set.of(response.userId()));
+            response = enrichWithUserAvatar(response, userAvatars);
+        }
+        return response;
     }
 
     @Transactional
@@ -109,7 +158,12 @@ public class PatientService {
             patient.setAvatarUrl(request.avatarUrl());
         }
 
-        return PatientResponse.from(patientRepository.save(patient));
+        PatientResponse response = PatientResponse.from(patientRepository.save(patient));
+        if (response.avatarUrl() == null && response.userId() != null) {
+            Map<Long, String> userAvatars = fetchUserAvatars(Set.of(response.userId()));
+            response = enrichWithUserAvatar(response, userAvatars);
+        }
+        return response;
     }
 
     @Transactional
@@ -121,7 +175,7 @@ public class PatientService {
 
     @Transactional
     public PatientResponse ensurePatientForUser(Long tenantId, Long userId, String firstName, String lastName, String email, String phone) {
-        return patientRepository.findByTenantIdAndUserId(tenantId, userId)
+        PatientResponse response = patientRepository.findByTenantIdAndUserId(tenantId, userId)
                 .map(existing -> {
                     if (firstName != null && !firstName.isEmpty()) existing.setFirstName(firstName);
                     if (lastName != null && !lastName.isEmpty()) existing.setLastName(lastName);
@@ -140,5 +194,10 @@ public class PatientService {
                             .build();
                     return PatientResponse.from(patientRepository.save(patient));
                 });
+        if (response.avatarUrl() == null && response.userId() != null) {
+            Map<Long, String> userAvatars = fetchUserAvatars(Set.of(response.userId()));
+            response = enrichWithUserAvatar(response, userAvatars);
+        }
+        return response;
     }
 }

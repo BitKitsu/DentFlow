@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import pl.edu.ur.dentflow.data.remote.*
+import pl.edu.ur.dentflow.data.remote.AuthService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -24,6 +25,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AppointmentViewModel @Inject constructor(
     private val apiService: ApiService,
+    private val authService: AuthService,
     private val prefs: SharedPreferences
 ) : ViewModel() {
 
@@ -45,7 +47,10 @@ class AppointmentViewModel @Inject constructor(
     private val TAG = "AppointmentViewModel"
 
     private val currentTenantId: Long
-        get() = prefs.getLong("tenant_id", -1L)
+        get() {
+            val id = prefs.getLong("tenant_id", -1L)
+            return if (id <= 0L) -1L else id
+        }
 
     private val currentUserId: Long
         get() = prefs.getLong("user_id", -1L)
@@ -387,7 +392,7 @@ class AppointmentViewModel @Inject constructor(
     fun fetchAppointments(date: LocalDate) {
         val tenantId = currentTenantId
         val userId = currentUserId
-        if (tenantId == -1L || userId == -1L) return
+        if (tenantId <= 0L || userId == -1L) return
 
         viewModelScope.launch {
             _isLoading.value = true
@@ -414,7 +419,7 @@ class AppointmentViewModel @Inject constructor(
 
     fun getAppointmentDetails(appointmentId: Long) {
         val tenantId = currentTenantId
-        if (tenantId == -1L) return
+        if (tenantId <= 0L) return
 
         viewModelScope.launch {
             try {
@@ -454,6 +459,21 @@ class AppointmentViewModel @Inject constructor(
                     }
                 }
 
+                if (userRole == "PATIENT") {
+                    try {
+                        val assignRes = authService.assignTenant(AssignTenantRequest(tenantId = tenantId))
+                        if (assignRes.isSuccessful && assignRes.body() != null) {
+                            val authResponse = assignRes.body()!!
+                            prefs.edit()
+                                .putString("jwt_token", authResponse.token)
+                                .putLong("tenant_id", authResponse.tenantId)
+                                .apply()
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Failed to sync tenant to identity: ${e.message}")
+                    }
+                }
+
                 val request = CreateAppointmentRequest(
                     locationId = locId, roomId = room, dentistStaffId = docId,
                     patientId = effectivePatientId, serviceItemId = servId, startAt = start,
@@ -487,7 +507,7 @@ class AppointmentViewModel @Inject constructor(
         onSuccess: () -> Unit
     ) {
         val tenantId = currentTenantId
-        if (tenantId == -1L) return
+        if (tenantId <= 0L) return
 
         viewModelScope.launch {
             try {
@@ -505,7 +525,7 @@ class AppointmentViewModel @Inject constructor(
 
     fun completeAppointment(appointmentId: Long, onSuccess: () -> Unit) {
         val tenantId = currentTenantId
-        if (tenantId == -1L) return
+        if (tenantId <= 0L) return
 
         viewModelScope.launch {
             try {
@@ -519,7 +539,7 @@ class AppointmentViewModel @Inject constructor(
 
     fun cancelAppointment(appointmentId: Long, onSuccess: () -> Unit) {
         val tenantId = currentTenantId
-        if (tenantId == -1L) return
+        if (tenantId <= 0L) return
 
         viewModelScope.launch {
             try {

@@ -301,7 +301,7 @@ class AuthViewModel @Inject constructor(
             } else if (existingTenantId > 0L) {
                 // Preserve existing tenantId (e.g. patient who already selected a clinic)
             } else {
-                putLong("tenant_id",      0L)
+                remove("tenant_id")
             }
             putLong("user_id",            body.userId)
             putString("user_role",        role)

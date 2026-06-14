@@ -290,13 +290,39 @@ class VisitViewModel @Inject constructor(
         }
     }
 
-    fun downloadPatientHistoryReport(patientId: Long, context: android.content.Context) {
+    fun downloadMyVisitsReport(from: String, to: String, context: android.content.Context) {
         val tenantId = currentTenantId
         if (tenantId <= 0L) return
 
         viewModelScope.launch {
             try {
-                val response = apiService.getPatientHistoryReportPdf(tenantId, patientId)
+                val response = apiService.getMyPatientHistoryReportPdf(tenantId, from = from, to = to)
+                if (response.isSuccessful) {
+                    val bytes = response.body()?.bytes()
+                    if (bytes != null && bytes.size > 100) {
+                        savePdfToDisk(bytes, context, "Moje_Wizyty_${from}_$to.pdf")
+                    } else {
+                        android.widget.Toast.makeText(context, "Brak danych do wygenerowania raportu", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    val msg = extractErrorMessage(response.errorBody(), response.code())
+                    Log.e(TAG, "Błąd pobierania PDF moich wizyt: $msg")
+                    android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Błąd sieci: ${e.message}")
+                android.widget.Toast.makeText(context, "Brak połączenia z serwerem", android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    fun downloadPatientHistoryReport(patientId: Long, from: String? = null, to: String? = null, context: android.content.Context) {
+        val tenantId = currentTenantId
+        if (tenantId <= 0L) return
+
+        viewModelScope.launch {
+            try {
+                val response = apiService.getPatientHistoryReportPdf(tenantId, patientId, from = from, to = to)
                 if (response.isSuccessful) {
                     val bytes = response.body()?.bytes()
                     if (bytes != null && bytes.size > 100) {

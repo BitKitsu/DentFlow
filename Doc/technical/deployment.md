@@ -6,7 +6,7 @@
 - Maven 3.9+
 - Docker + Docker Compose
 - SendGrid account (for emails)
-- Supabase or Railway account (for S3 storage)
+- S3-compatible storage account (e.g. AWS S3, MinIO, Railway Object Storage)
 
 ## 1. Environment Configuration
 
@@ -32,7 +32,7 @@ cp .env.example .env
 | `MAIL_USERNAME` | SMTP user | `apikey` |
 | `AWS_ACCESS_KEY_ID` | S3 access key | `xxx` |
 | `AWS_SECRET_ACCESS_KEY` | S3 secret key | `xxx` |
-| `AWS_ENDPOINT_URL` | S3 endpoint URL | `https://xxx.supabase.co` |
+| `AWS_ENDPOINT_URL` | S3 endpoint URL | `https://s3.amazonaws.com` |
 | `AWS_REGION` | S3 region | `us-east-1` |
 | `S3_BUCKET_NAME` | Bucket name | `dentflow-files` |
 
@@ -44,10 +44,10 @@ openssl rand -hex 32
 
 ## 2. Local Development
 
-### Start Database
+### Start Database and MinIO
 
 ```bash
-docker-compose up -d postgres
+docker-compose up -d postgres minio
 ```
 
 ### Build and Start Services
@@ -109,16 +109,25 @@ docker-compose exec -T postgres psql -U dentflow -d dentflow < ../DB/init_schema
    MAIL_USERNAME=apikey
    ```
 
-## 6. S3 Configuration (Supabase Storage)
+## 6. S3 Configuration
 
-1. Create project at [Supabase](https://supabase.com)
-2. Create bucket in Storage
-3. Generate API Key (service_role)
-4. Add environment variables:
+### Local Development (MinIO)
+
+MinIO is included in `docker-compose.yml` and starts automatically with `docker-compose up`.
+The bucket is created automatically by the `minio-init` container.
+
+- API: http://localhost:9000
+- Console: http://localhost:9001 (login: `minioadmin` / `minioadmin`)
+
+### Production (AWS S3 / Railway)
+
+1. Create an S3-compatible storage bucket
+2. Generate access keys
+3. Add environment variables:
    ```
    AWS_ACCESS_KEY_ID=your-access-key
    AWS_SECRET_ACCESS_KEY=your-secret-key
-   AWS_ENDPOINT_URL=https://your-project.supabase.co
+   AWS_ENDPOINT_URL=https://your-s3-endpoint.com
    AWS_REGION=us-east-1
    S3_BUCKET_NAME=dentflow-files
    ```

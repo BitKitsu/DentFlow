@@ -2,10 +2,10 @@
 FROM maven:3.9-eclipse-temurin-21-alpine AS build
 WORKDIR /app
 
-# Kopiuj wszystko do budowy (naprawia problem z brakującymi modułami w parent pom)
+# Kopiuj wszystko do budowy
 COPY . .
 
-# Zbuduj JAR (pomiń testy)
+# Zbuduj JAR (pomiń testy, db nie jest dostepne w czasie budowy)
 RUN mvn -pl identity-service -am package -DskipTests -q
 
 # ---- Runtime stage ----

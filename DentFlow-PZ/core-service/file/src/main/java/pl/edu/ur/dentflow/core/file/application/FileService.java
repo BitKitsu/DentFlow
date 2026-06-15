@@ -36,12 +36,6 @@ public class FileService {
     @Value("${aws.bucket-name}")
     private String bucket;
 
-    @Value("${aws.endpoint-url}")
-    private String endpointUrl;
-
-    @Value("${RAILWAY_PUBLIC_DOMAIN:localhost:8080}")
-    private String appPublicDomain;
-
     public FileService(FileMetadataRepository fileMetadataRepository, S3Client s3Client) {
         this.fileMetadataRepository = fileMetadataRepository;
         this.s3Client = s3Client;
@@ -59,7 +53,7 @@ public class FileService {
      * @throws ResponseStatusException 413 if file exceeds 10 MB
      * @throws ResponseStatusException 502 if S3 upload fails
      */
-    public FileUploadResponse uploadFile(Long tenantId, Long uploadedByUserId, MultipartFile file) {
+    public FileUploadResponse uploadFile(Long tenantId, Long uploadedByUserId, MultipartFile file, String host, String proto) {
         if (file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File is empty");
         }
@@ -108,8 +102,9 @@ public class FileService {
                 .build();
 
         FileMetadata saved = fileMetadataRepository.save(metadata);
-        String protocol = appPublicDomain.contains("localhost") ? "http://" : "https://";
-        saved.setPublicUrl(protocol + appPublicDomain + "/public/files/" + saved.getId());
+        String publicHost = host != null ? host : "localhost:8080";
+        String protocol = "https".equals(proto) ? "https://" : "http://";
+        saved.setPublicUrl(protocol + publicHost + "/public/files/" + saved.getId());
         saved = fileMetadataRepository.save(saved);
 
         return toResponse(saved);

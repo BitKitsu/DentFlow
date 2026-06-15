@@ -40,11 +40,11 @@ The application enables:
 
 | Role | Description |
 |------|-------------|
-| OWNER | Clinic owner — full access to all features |
-| DENTIST | Dentist — manage appointments and patients, view rooms/catalog/schedule |
-| RECEPTIONIST | Receptionist — manage appointments and patients, manage rooms, view catalog/schedule |
-| ASSISTANT | Dental assistant — read-only access to appointments, patients, rooms, catalog, schedule |
-| PATIENT | Patient — view own appointments only |
+| OWNER | Clinic owner -- full access to all features |
+| DENTIST | Dentist -- manage appointments and patients, view rooms/catalog/schedule |
+| RECEPTIONIST | Receptionist -- manage appointments and patients, manage rooms, view catalog/schedule |
+| ASSISTANT | Dental assistant -- read-only access to appointments, patients, rooms, catalog, schedule |
+| PATIENT | Patient -- view own appointments only |
 
 ---
 
@@ -144,10 +144,10 @@ The **"Klinika"** tab is only visible to staff users (owner, dentist, receptioni
 
 1. Tap the **person-add** icon on the staff list screen
 2. The form is divided into numbered sections:
-   - **1. Sprawdź email pracownika** — enter email and tap **"Sprawdź"** to check if the user already exists
-   - **2. Dane osobowe** — Imię, Nazwisko, Telefon
-   - **3. Rola i dane zawodowe** — select Rola from dropdown (Dentysta, Recepcjonista, Asystent)
-   - **4. Konto logowania** — Hasło tymczasowe (only shown for new users)
+   - **1. Sprawdź email pracownika** -- enter email and tap **"Sprawdź"** to check if the user already exists
+   - **2. Dane osobowe** -- Imię, Nazwisko, Telefon
+   - **3. Rola i dane zawodowe** -- select Rola from dropdown (Dentysta, Recepcjonista, Asystent)
+   - **4. Konto logowania** -- Hasło tymczasowe (only shown for new users)
    - Bio / O mnie (optional)
 3. Tap **"DODAJ"**
 
@@ -175,10 +175,10 @@ The **"Klinika"** tab is only visible to staff users (owner, dentist, receptioni
 
 1. Tap the **"+"** FAB (bottom-right) on the patient list screen
 2. The form is divided into numbered sections:
-   - **1. Sprawdź email pacjenta** — enter email and tap **"Sprawdź"** to check if the user already exists
-   - **2. Dane osobowe** — Imię, Nazwisko, Telefon, E-mail (opcjonalny)
-   - **3. Dane medyczne** — Numer PESEL (11 cyfr), Płeć (dropdown: Kobieta, Mężczyzna, Inna, Nie podano), Data urodzenia (opcjonalna)
-   - **4. Adres (opcjonalny)** — Ulica i numer, Kod pocztowy, Miasto
+   - **1. Sprawdź email pacjenta** -- enter email and tap **"Sprawdź"** to check if the user already exists
+   - **2. Dane osobowe** -- Imię, Nazwisko, Telefon, E-mail (opcjonalny)
+   - **3. Dane medyczne** -- Numer PESEL (11 cyfr), Płeć (dropdown: Kobieta, Mężczyzna, Inna, Nie podano), Data urodzenia (opcjonalna)
+   - **4. Adres (opcjonalny)** -- Ulica i numer, Kod pocztowy, Miasto
 3. Tap **"Zapisz"**
 
 ### Edit Patient
@@ -214,16 +214,16 @@ The **"Klinika"** tab is only visible to staff users (owner, dentist, receptioni
 1. Navigate to the **"Klinika"** tab
 2. Tap **"Wizyty w klinice"** or use the appointment creation flow
 3. Follow the 3-step wizard:
-   - **Step 1: Lekarz** — select a dentist
-   - **Step 2: Termin** — select date and time slot
-   - **Step 3: Potwierdzenie** — review and confirm booking
+   - **Step 1: Lekarz** -- select a dentist
+   - **Step 2: Termin** -- select date and time slot
+   - **Step 3: Potwierdzenie** -- review and confirm booking
 
 ### View Appointments
 
 1. Navigate to the **"Wizyty"** tab
-2. The default view is **Calendar** mode — a monthly calendar grid
+2. The default view is **Calendar** mode -- a monthly calendar grid
 3. Tap a day to see appointments for that date
-4. Tap the **history** icon to switch to **"Historia Wizyt"** (Visit History) mode — a sorted list of past visits
+4. Tap the **history** icon to switch to **"Historia Wizyt"** (Visit History) mode -- a sorted list of past visits
 
 ### Cancel Appointment
 
@@ -241,11 +241,11 @@ The **"Klinika"** tab is only visible to staff users (owner, dentist, receptioni
 
 ### Appointment Statuses
 
-- **SCHEDULED** — appointment is booked
-- **CONFIRMED** — appointment is confirmed by staff
-- **COMPLETED** — appointment has been completed
-- **CANCELLED** — appointment was cancelled
-- **NO_SHOW** — patient did not show up
+- **SCHEDULED** -- appointment is booked
+- **CONFIRMED** -- appointment is confirmed by staff
+- **COMPLETED** -- appointment has been completed
+- **CANCELLED** -- appointment was cancelled
+- **NO_SHOW** -- patient did not show up
 
 ### Clinic Appointments View
 
@@ -273,11 +273,11 @@ The **"Klinika"** tab is only visible to staff users (owner, dentist, receptioni
 
 1. Tap the **"+"** FAB (bottom-right)
 2. Fill the form:
-   - Data (date) — tap to open date picker
-   - Od (start time) — tap to open time picker
-   - Do (end time) — tap to open time picker
-   - Powód (reason) — free text (e.g., urlop, przerwa)
-   - Lekarz (staff) — dropdown with staff list, or **"Wszyscy"** (All)
+   - Data (date) -- tap to open date picker
+   - Od (start time) -- tap to open time picker
+   - Do (end time) -- tap to open time picker
+   - Powód (reason) -- free text (e.g., urlop, przerwa)
+   - Lekarz (staff) -- dropdown with staff list, or **"Wszyscy"** (All)
 3. Tap **"Zapisz"**
 
 > **Note:** Break management is only available to clinic owners.
@@ -317,9 +317,9 @@ Working hours for individual staff members are managed separately via the staff 
 1. Tap the **"+"** icon in the top app bar
 2. Fill the form:
    - Nazwa zabiegu (service/treatment name, min. 2 characters)
-   - Cena (zł) — price in PLN
-   - Czas trwania (min) — duration in minutes
-   - Usługa aktywna — toggle switch
+   - Cena (zł) -- price in PLN
+   - Czas trwania (min) -- duration in minutes
+   - Usługa aktywna -- toggle switch
 3. Tap **"Zapisz"**
 
 ### Edit Service
@@ -350,8 +350,8 @@ Working hours for individual staff members are managed separately via the staff 
 ### Filter Notifications
 
 1. Use the filter chips at the top:
-   - **"Wszystkie (N)"** — show all notifications
-   - **"Nieprzeczytane (N)"** — show only unread notifications
+   - **"Wszystkie (N)"** -- show all notifications
+   - **"Nieprzeczytane (N)"** -- show only unread notifications
 
 ### Refresh Notifications
 
@@ -369,13 +369,13 @@ Working hours for individual staff members are managed separately via the staff 
 
 ### Notification Types
 
-- **APPOINTMENT** — new appointment created
-- **APPOINTMENT_CANCELLED** — appointment cancelled
-- **APPOINTMENT_COMPLETED** — appointment completed
-- **APPOINTMENT_CONFIRMED** — appointment confirmed by staff
-- **APPOINTMENT_NO_SHOW** — patient did not show up
-- **APPOINTMENT_REMINDER_24H** — 24-hour reminder
-- **APPOINTMENT_REMINDER_12H** — 12-hour reminder
+- **APPOINTMENT** -- new appointment created
+- **APPOINTMENT_CANCELLED** -- appointment cancelled
+- **APPOINTMENT_COMPLETED** -- appointment completed
+- **APPOINTMENT_CONFIRMED** -- appointment confirmed by staff
+- **APPOINTMENT_NO_SHOW** -- patient did not show up
+- **APPOINTMENT_REMINDER_24H** -- 24-hour reminder
+- **APPOINTMENT_REMINDER_12H** -- 12-hour reminder
 
 ---
 
@@ -386,14 +386,14 @@ Working hours for individual staff members are managed separately via the staff 
 ### Access Reports
 
 Reports can be accessed from:
-- The **"Klinika"** tab → **"Raporty PDF"** menu item
-- The **"Konto"** tab → **"RAPORTY PDF"** button
+- The **"Klinika"** tab -> **"Raporty PDF"** menu item
+- The **"Konto"** tab -> **"RAPORTY PDF"** button
 
 ### Available Reports
 
-1. **Lista wizyt** (Appointment list) — appointment report for a specific date range
-2. **Obłożenie gabinetów** (Room occupancy) — room occupancy statistics with room selector
-3. **Historia pacjenta** (Patient visit history) — visit history for a selected patient
+1. **Lista wizyt** (Appointment list) -- appointment report for a specific date range
+2. **Obłożenie gabinetów** (Room occupancy) -- room occupancy statistics with room selector
+3. **Historia pacjenta** (Patient visit history) -- visit history for a selected patient
 
 ### Download Report
 
@@ -458,10 +458,10 @@ Reports can be accessed from:
 ### How to add staff with a user account?
 
 1. Staff member must first create an account in the system (via registration)
-2. Navigate to **"Klinika"** → **"Pracownicy"**
+2. Navigate to **"Klinika"** -> **"Pracownicy"**
 3. Tap the **person-add** icon
 4. Enter the staff member's email in section 1
-5. Tap **"Sprawdź"** — if the user exists, their data will be auto-filled automatically
+5. Tap **"Sprawdź"** -- if the user exists, their data will be auto-filled automatically
 6. Complete the remaining fields and tap **"DODAJ"**
 
 ### How to view dentist schedule?
@@ -473,7 +473,7 @@ Reports can be accessed from:
 
 ### How to generate a report?
 
-1. Navigate to the **"Klinika"** tab → **"Raporty PDF"** (or **"Konto"** → **"RAPORTY PDF"**)
+1. Navigate to the **"Klinika"** tab -> **"Raporty PDF"** (or **"Konto"** -> **"RAPORTY PDF"**)
 2. Select report type
 3. Set parameters
 4. Tap **"Pobierz PDF"**

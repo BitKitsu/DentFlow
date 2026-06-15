@@ -18,8 +18,6 @@ import org.springframework.boot.test.context.SpringBootTest;
     "spring.mail.properties.mail.smtp.auth=false",
     "spring.mail.properties.mail.smtp.starttls.enable=false",
     "jwt.secret=test-secret-key-for-unit-tests-only-min-256-bits-long",
-    "supabase.url=https://fake.supabase.co",
-    "supabase.service-key=fake-key",
     "aws.access-key-id=test-access-key",
     "aws.secret-access-key=test-secret-key",
     "aws.endpoint-url=https://s3.test.com",

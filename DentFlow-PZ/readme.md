@@ -1,7 +1,7 @@
 # DentFlow Backend
 
 Backend system for the DentFlow dental clinic management application.
-Microservices architecture with two Spring Boot services and PostgreSQL database.
+Microservices architecture with two Spring Boot services, PostgreSQL database, and MinIO (S3-compatible) object storage.
 
 ## Structure
 
@@ -24,7 +24,7 @@ DentFlow-PZ/
 |       |-- reservation/       # Appointments (reservations)
 |       |-- catalog/           # Service catalog
 |       |-- notification/      # In-app notifications + email
-|       |-- file/              # Files (S3/Supabase Storage)
+|       |-- file/              # Files (S3)
 |       +-- core-app/          # Main app, security, configuration
 |-- pdf-generator/             # PDF report generation library
 |-- docker-compose.yml         # PostgreSQL + both services
@@ -43,7 +43,7 @@ DentFlow-PZ/
 | Containerization | Docker + Docker Compose |
 | API Documentation | Springdoc OpenAPI (Swagger UI) |
 | Email | SendGrid SMTP |
-| Files | AWS S3 (Supabase Storage) |
+| Files | S3 (MinIO locally, AWS S3 / Railway in production) |
 | PDF | iText 8 (AGPL) |
 | Testing | JUnit 5, Mockito, AssertJ, H2 |
 
@@ -54,16 +54,36 @@ DentFlow-PZ/
 - Maven 3.9+
 - Docker + Docker Compose
 
-### Running
+### Running (Docker Compose -- all services)
+
+```bash
+# 1. Configure environment
+cp .env.example .env
+# Defaults work for local dev -- edit .env for production
+
+# 2. Start everything (PostgreSQL + MinIO + both services)
+docker-compose up -d --build
+
+# 3. Check logs
+docker-compose logs -f
+```
+
+MinIO console is available at http://localhost:9001 (login: `minioadmin` / `minioadmin`).
+
+### Running (local development, without Docker)
 
 ```bash
 # 1. Start database
 docker-compose up -d postgres
 
-# 2. Install modules
+# 2. Configure environment
+cp .env.example .env
+# Edit .env -- SPRING_DATASOURCE_URL must point to localhost
+
+# 3. Install parent POM + modules
 mvn install -DskipTests
 
-# 3. Start services (separate terminals)
+# 4. Start services (separate terminals)
 mvn spring-boot:run -pl identity-service -Dspring-boot.run.profiles=dev
 mvn spring-boot:run -pl core-service/core-app -Dspring-boot.run.profiles=dev
 ```
@@ -72,8 +92,30 @@ mvn spring-boot:run -pl core-service/core-app -Dspring-boot.run.profiles=dev
 
 ```bash
 cp .env.example .env
-# Fill in environment variables in .env
+# Defaults work out of the box for local dev (dentflow123)
+# For production: change POSTGRES_PASSWORD, JWT_SECRET, SENDGRID_API_KEY
 ```
+
+## Android App Connection
+
+The Android app (`DentFlowAndroid/`) reads server URLs from `local.properties`:
+
+```properties
+# Android emulator (maps 10.0.2.2 -> host localhost)
+API_AUTH_URL="http://10.0.2.2:8081/"
+API_CORE_URL="http://10.0.2.2:8080/"
+
+# Physical device on same network (replace with your machine's IP)
+# Find it with: hostname -I
+API_AUTH_URL="http://192.168.x.x:8081/"
+API_CORE_URL="http://192.168.x.x:8080/"
+
+# Production (Railway)
+API_AUTH_URL="https://identity-service-production-6149.up.railway.app/"
+API_CORE_URL="https://core-service-production-9ce3.up.railway.app/"
+```
+
+Set these in `DentFlowAndroid/local.properties` (not committed to git).
 
 ## API
 
@@ -99,7 +141,23 @@ cp .env.example .env
 
 ## Testing
 
+### Test Types
+
+| Type | Framework | Description |
+|------|-----------|-------------|
+| **Unit** | JUnit 5 + Mockito | Service logic with mocked repositories (no Spring context) |
+| **WebMvc** | Spring WebMvcTest | Controller layer: HTTP status, request validation, JSON mapping |
+| **Validation** | Jakarta Validation | DTO field constraints (email, size, regex) |
+| **Repository** | Spring DataJpaTest | JPA query correctness with H2 in-memory database |
+| **Integration** | SpringBootTest + H2 | Full application flow across multiple services |
+| **Context Load** | SpringBootTest | Verifies Spring context boots without errors |
+
+### Running Tests
+
 ```bash
+# Run all tests
+./test.sh
+
 # Run all tests
 mvn test
 
@@ -112,48 +170,71 @@ mvn test -Dtest='*IntegrationTest'
 
 ## Test Structure
 
+14 test classes across 8 Maven modules. Run with `./test.sh`.
+
 ```
-src/test/java/
-|-- auth/
-|   |-- api/
-|   |   |-- AuthControllerTest.java              # Controller tests (WebMvcTest)
-|   |   +-- RegisterRequestValidationTest.java   # DTO validation
-|   +-- application/
-|       |-- AuthServiceTest.java                 # Unit tests
-|       +-- AuthFlowIntegrationTest.java         # Integration test (full flow)
-|-- reservation/
-|   +-- application/
-|       |-- AppointmentServiceTest.java          # Unit tests
-|       |-- ReservationFlowIntegrationTest.java  # Integration test (full flow)
-|       +-- AppointmentNotificationIntegrationTest.java
-|   +-- infrastructure/
-|       +-- AppointmentRepositoryTest.java       # Repository test (DataJpaTest)
-|-- patient/
-|   +-- application/
-|       +-- PatientServiceTest.java
-|-- scheduling/
-|   +-- application/
-|       +-- SchedulingServiceTest.java
+identity-service/
++-- src/test/java/.../identity/
+    |-- IdentityServiceApplicationTests.java           # Context load (placeholder)
+    |-- auth/
+    |   |-- api/
+    |   |   |-- AuthControllerTest.java                # WebMvcTest: HTTP status, validation
+    |   |   +-- RegisterRequestValidationTest.java     # DTO validation (Jakarta)
+    |   +-- application/
+    |       |-- AuthServiceTest.java                   # Unit tests (Mockito)
+    |       +-- AuthFlowIntegrationTest.java           # Integration: register -> login -> change password
+core-service/
+|-- core-app/
+|   +-- src/test/java/.../core/
+|       +-- CoreServiceApplicationTests.java           # Context load (H2, Flyway off)
 |-- clinic/
-|   +-- application/
-|       +-- StaffMemberServiceTest.java
+|   +-- src/test/java/.../clinic/application/
+|       +-- StaffMemberServiceTest.java               # Unit tests (Mockito)
+|-- patient/
+|   +-- src/test/java/.../patient/application/
+|       +-- PatientServiceTest.java                   # Unit tests (Mockito)
+|-- scheduling/
+|   +-- src/test/java/.../scheduling/application/
+|       +-- SchedulingServiceTest.java                # Unit tests (Mockito)
+|-- reservation/
+|   +-- src/test/java/.../reservation/
+|       |-- application/
+|       |   |-- AppointmentServiceTest.java           # Unit tests (Mockito)
+|       |   |-- ReservationFlowIntegrationTest.java   # Integration: create -> update -> cancel
+|       |   +-- AppointmentNotificationIntegrationTest.java  # (@Disabled) event -> notification
+|       +-- infrastructure/
+|           +-- AppointmentRepositoryTest.java        # DataJpaTest: JPA queries, sorting
 +-- notification/
-    +-- application/
-        +-- NotificationServiceTest.java
+    +-- src/test/java/.../notification/application/
+        +-- NotificationServiceTest.java              # Unit tests (Mockito)
+
+pdf-generator/
++-- src/test/java/.../pdf/
+    +-- DentFlowPdfGeneratorTest.java                 # PDF generation
 ```
 
 ## Docker
 
 ```bash
-# Start all services
-docker-compose up -d
+# Build and start all services
+docker-compose up -d --build
 
-# Database only
-docker-compose up -d postgres
+# Rebuild a single service
+docker-compose up -d --build identity-service
+docker-compose up -d --build core-service
+
+# Database + MinIO only
+docker-compose up -d postgres minio
 
 # Logs
 docker-compose logs -f identity-service
 docker-compose logs -f core-service
+
+# Stop everything
+docker-compose down
+
+# Stop and remove volumes (fresh start)
+docker-compose down -v
 ```
 
 ## Coding Conventions

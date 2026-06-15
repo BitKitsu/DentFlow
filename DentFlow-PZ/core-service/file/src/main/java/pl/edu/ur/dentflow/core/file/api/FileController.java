@@ -1,6 +1,7 @@
 package pl.edu.ur.dentflow.core.file.api;
 
 import pl.edu.ur.dentflow.core.file.application.FileService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -11,7 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 /**
- * File management endpoints with Supabase Storage integration.
+ * File management endpoints with S3 integration.
  * SCRUM-64
  *
  * POST   /tenants/{tenantId}/files              – upload file
@@ -34,9 +35,12 @@ public class FileController {
     public ResponseEntity<FileUploadResponse> uploadFile(
             @PathVariable Long tenantId,
             @RequestParam(defaultValue = "0") Long uploadedByUserId,
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file,
+            HttpServletRequest request) {
 
-        FileUploadResponse response = fileService.uploadFile(tenantId, uploadedByUserId, file);
+        String host = request.getHeader("Host");
+        String proto = request.getHeader("X-Forwarded-Proto");
+        FileUploadResponse response = fileService.uploadFile(tenantId, uploadedByUserId, file, host, proto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

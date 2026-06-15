@@ -30,10 +30,6 @@ spring:
 jwt:
   secret: test-secret-key-for-unit-tests-only-min-256-bits-long
 
-supabase:
-  url: https://fake.supabase.co
-  service-key: fake-test-key
-
 logging:
   level:
     org.hibernate.tool.schema: ERROR

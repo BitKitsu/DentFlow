@@ -14,7 +14,3 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET:dev-only-secret-key-replace-in-production-min-256bit}
-
-supabase:
-  url: ${SUPABASE_URL:https://fake.supabase.co}
-  service-key: ${SUPABASE_SERVICE_KEY:}

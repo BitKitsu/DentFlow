@@ -14,7 +14,7 @@ PZ-26-BORDOWI/
 |   |   |-- reservation/   # Rezerwacje wizyt
 |   |   |-- catalog/       # Cennik uslug
 |   |   |-- notification/  # Powiadomienia in-app
-|   |   └── file/          # Pliki (Supabase Storage)
+|   |   |-- file/          # Pliki (S3)
 |   |-- docker-compose.yml
 |   └── .env.example
 |-- DentFlowAndroid/       # Aplikacja mobilna (Kotlin, Jetpack Compose)
@@ -159,7 +159,7 @@ git push -u origin feat/SCRUM-45-clinic-crud
 | `feat/` | Nowa funkcjonalnosc | `feat/SCRUM-43-jwt-auth` |
 | `fix/` | Naprawa bledu | `fix/SCRUM-50-appointment-conflict` |
 | `refactor/` | Refaktoryzacja | `refactor/SCRUM-42-code-style` |
-| `chore/` | Konfiguracja, CI | `chore/SCRUM-36-supabase-config` |
+| `chore/` | Konfiguracja, CI | `chore/SCRUM-36-s3-config` |
 | `docs/` | Dokumentacja | `docs/SCRUM-77-uzupelnienie-doc` |
 
 ### Zasady

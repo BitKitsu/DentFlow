@@ -31,7 +31,7 @@ The architecture is based on a multi-tenant model where each clinic is a separat
             v                                v
 +------------------------+    +----------------------------------+
 |    PostgreSQL 15       |    |       S3 Storage                 |
-|    (port 5432)         |    |    (Supabase / Railway)          |
+|    (port 5432)         |    |    (S3-compatible)               |
 |                        |    +----------------------------------+
 |  - flyway_schema_      |
 |    history_identity    |
@@ -106,7 +106,7 @@ SELECT * FROM appointment WHERE tenant_id = 2;  -- SmileClinic Warszawa
 
 ### 7. File
 - `FileMetadata` - File metadata
-- S3 integration (Supabase Storage)
+- S3 integration (any S3-compatible storage)
 
 ## Data Flows
 

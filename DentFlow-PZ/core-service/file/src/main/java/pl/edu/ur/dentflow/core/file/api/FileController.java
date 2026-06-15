@@ -11,7 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 /**
- * File management endpoints with Supabase Storage integration.
+ * File management endpoints with S3 integration.
  * SCRUM-64
  *
  * POST   /tenants/{tenantId}/files              – upload file

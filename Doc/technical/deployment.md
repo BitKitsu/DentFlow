@@ -6,7 +6,7 @@
 - Maven 3.9+
 - Docker + Docker Compose
 - SendGrid account (for emails)
-- Supabase or Railway account (for S3 storage)
+- S3-compatible storage account (e.g. AWS S3, MinIO, Railway Object Storage)
 
 ## 1. Environment Configuration
 
@@ -32,7 +32,7 @@ cp .env.example .env
 | `MAIL_USERNAME` | SMTP user | `apikey` |
 | `AWS_ACCESS_KEY_ID` | S3 access key | `xxx` |
 | `AWS_SECRET_ACCESS_KEY` | S3 secret key | `xxx` |
-| `AWS_ENDPOINT_URL` | S3 endpoint URL | `https://xxx.supabase.co` |
+| `AWS_ENDPOINT_URL` | S3 endpoint URL | `https://s3.amazonaws.com` |
 | `AWS_REGION` | S3 region | `us-east-1` |
 | `S3_BUCKET_NAME` | Bucket name | `dentflow-files` |
 
@@ -109,16 +109,15 @@ docker-compose exec -T postgres psql -U dentflow -d dentflow < ../DB/init_schema
    MAIL_USERNAME=apikey
    ```
 
-## 6. S3 Configuration (Supabase Storage)
+## 6. S3 Configuration
 
-1. Create project at [Supabase](https://supabase.com)
-2. Create bucket in Storage
-3. Generate API Key (service_role)
-4. Add environment variables:
+1. Create an S3-compatible storage bucket (AWS S3, MinIO, Railway Object Storage, etc.)
+2. Generate access keys
+3. Add environment variables:
    ```
    AWS_ACCESS_KEY_ID=your-access-key
    AWS_SECRET_ACCESS_KEY=your-secret-key
-   AWS_ENDPOINT_URL=https://your-project.supabase.co
+   AWS_ENDPOINT_URL=https://your-s3-endpoint.com
    AWS_REGION=us-east-1
    S3_BUCKET_NAME=dentflow-files
    ```

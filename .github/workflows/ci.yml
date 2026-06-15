@@ -68,8 +68,6 @@ jobs:
           MAIL_HOST: smtp.sendgrid.net
           MAIL_PORT: 587
           MAIL_USERNAME: apikey
-          SUPABASE_URL: https://fake.supabase.co
-          SUPABASE_SERVICE_KEY: fake-key-for-ci
         run: mvn test -q
 
       - name: Package

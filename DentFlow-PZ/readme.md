@@ -1,7 +1,7 @@
 # DentFlow Backend
 
 Backend system for the DentFlow dental clinic management application.
-Microservices architecture with two Spring Boot services and PostgreSQL database.
+Microservices architecture with two Spring Boot services, PostgreSQL database, and MinIO (S3-compatible) object storage.
 
 ## Structure
 
@@ -43,7 +43,7 @@ DentFlow-PZ/
 | Containerization | Docker + Docker Compose |
 | API Documentation | Springdoc OpenAPI (Swagger UI) |
 | Email | SendGrid SMTP |
-| Files | AWS S3 |
+| Files | S3 (MinIO locally, AWS S3 / Railway in production) |
 | PDF | iText 8 (AGPL) |
 | Testing | JUnit 5, Mockito, AssertJ, H2 |
 
@@ -61,12 +61,14 @@ DentFlow-PZ/
 cp .env.example .env
 # Defaults work for local dev -- edit .env for production
 
-# 2. Start everything (PostgreSQL + both services)
+# 2. Start everything (PostgreSQL + MinIO + both services)
 docker-compose up -d --build
 
 # 3. Check logs
 docker-compose logs -f
 ```
+
+MinIO console is available at http://localhost:9001 (login: `minioadmin` / `minioadmin`).
 
 ### Running (local development, without Docker)
 
@@ -221,8 +223,8 @@ docker-compose up -d --build
 docker-compose up -d --build identity-service
 docker-compose up -d --build core-service
 
-# Database only
-docker-compose up -d postgres
+# Database + MinIO only
+docker-compose up -d postgres minio
 
 # Logs
 docker-compose logs -f identity-service

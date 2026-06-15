@@ -44,10 +44,10 @@ openssl rand -hex 32
 
 ## 2. Local Development
 
-### Start Database
+### Start Database and MinIO
 
 ```bash
-docker-compose up -d postgres
+docker-compose up -d postgres minio
 ```
 
 ### Build and Start Services
@@ -111,7 +111,17 @@ docker-compose exec -T postgres psql -U dentflow -d dentflow < ../DB/init_schema
 
 ## 6. S3 Configuration
 
-1. Create an S3-compatible storage bucket (AWS S3, MinIO, Railway Object Storage, etc.)
+### Local Development (MinIO)
+
+MinIO is included in `docker-compose.yml` and starts automatically with `docker-compose up`.
+The bucket is created automatically by the `minio-init` container.
+
+- API: http://localhost:9000
+- Console: http://localhost:9001 (login: `minioadmin` / `minioadmin`)
+
+### Production (AWS S3 / Railway)
+
+1. Create an S3-compatible storage bucket
 2. Generate access keys
 3. Add environment variables:
    ```

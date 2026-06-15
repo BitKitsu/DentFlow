@@ -62,14 +62,16 @@ tenant --+-- location -- room
 
 ### Core Service
 - `V1__init_clinic_schema.sql` - Main schema (12 tables)
-- `V3__add_logo_url.sql` - Clinic logo
-- `V4__add_patient_date_of_birth.sql` - Patient date of birth
-- `V5__add_staff_bio.sql` - Staff bio
-- `V6__split_staff_name.sql` - Split first and last name
-- `V7__add_patient_advanced_fields.sql` - Advanced patient fields
-- `V8__add_staff_phone_email.sql` - Staff phone and email
-- `V9__add_staff_working_hours_per_day.sql` - Per-day working hours
-- `V10-V15` - Further schema evolution
+- `V3__add_logo_and_file_public_url.sql` - Clinic logo and file public URL
+- `V4__make_file_tenant_optional.sql` - Make file tenant optional
+- `V5__add_patient_date_of_birth.sql` - Patient date of birth
+- `V6__add_staff_bio.sql` - Staff bio
+- `V7__split_staff_name.sql` - Split first and last name
+- `V8__add_patient_advanced_fields.sql` - Advanced patient fields
+- `V9__add_staff_member_avatar_url.sql` - Staff member avatar
+- `V10__add_staff_member_phone_email.sql` - Staff phone and email
+- `V11__add_patient_avatar_url.sql` - Patient avatar
+- `V12__add_staff_working_hours.sql` - Staff working hours (single row)
 - `V13__add_staff_working_hours_per_day.sql` - Per-day working hours table
 - `V14__add_staff_room_assignment_and_room_crud.sql` - Staff-room assignments
 - `V15__add_appointment_conflict_index.sql` - Composite index on (tenant_id, dentist_staff_id, status, start_at, end_at)

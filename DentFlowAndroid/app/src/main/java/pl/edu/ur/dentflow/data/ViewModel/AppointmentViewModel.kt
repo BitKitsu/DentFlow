@@ -1,11 +1,13 @@
 package pl.edu.ur.dentflow.data.ViewModel
 
+import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import pl.edu.ur.dentflow.data.remote.*
 import pl.edu.ur.dentflow.data.remote.AuthService
+import pl.edu.ur.dentflow.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -26,7 +28,8 @@ import javax.inject.Inject
 class AppointmentViewModel @Inject constructor(
     private val apiService: ApiService,
     private val authService: AuthService,
-    private val prefs: SharedPreferences
+    private val prefs: SharedPreferences,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _appointments = MutableStateFlow<List<AppointmentResponse>>(emptyList())
@@ -121,7 +124,7 @@ class AppointmentViewModel @Inject constructor(
                         .filter { it.dentistStaffId == dentistStaffId && it.status != "CANCELLED" }
                 } else {
                     Log.w(TAG, "getAppointments failed: ${appointmentsRes.code()} - cannot show available slots without appointment data")
-                    _errorMessage.value = "Nie mozna pobrac danych o wizytach. Sprobuj ponownie."
+                    _errorMessage.value = context.getString(R.string.error_cannot_load_visits)
                     _isLoading.value = false
                     _bookingLoadComplete.value = true
                     return@launch
@@ -175,7 +178,7 @@ class AppointmentViewModel @Inject constructor(
                 _bookingLoadComplete.value = true
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading booking data: ${e.message}")
-                _errorMessage.value = "Nie udalo sie zaladowac danych. Sprawdz polaczenie z serwerem."
+                _errorMessage.value = context.getString(R.string.error_cannot_load_data)
             } finally {
                 _isLoading.value = false
             }
@@ -483,9 +486,9 @@ class AppointmentViewModel @Inject constructor(
                 if (response.isSuccessful) onSuccess()
                 else {
                     val errorMsg = when (response.code()) {
-                        409 -> "Termin jest juz zajety. Wybierz inny."
-                        400 -> "Bledne dane rezerwacji."
-                        else -> "Blad serwera (${response.code()}). Sprobuj ponownie."
+                        409 -> context.getString(R.string.error_slot_taken)
+                        400 -> context.getString(R.string.error_bad_booking)
+                        else -> context.getString(R.string.error_booking_server, response.code())
                     }
                     Log.e(TAG, "Error create appointment: ${response.code()} ${response.errorBody()?.string()}")
                     _errorMessage.value = errorMsg
@@ -493,7 +496,7 @@ class AppointmentViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error create: ${e.message}")
-                _errorMessage.value = "Brak polaczenia z serwerem. Sprawdz internet."
+                _errorMessage.value = context.getString(R.string.error_no_internet)
                 _isCreating.value = false
             } finally {
                 _isLoading.value = false

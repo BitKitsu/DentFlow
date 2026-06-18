@@ -18,6 +18,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import pl.edu.ur.dentflow.data.ViewModel.TenantViewModel
 import pl.edu.ur.dentflow.utils.ValidationUtils
+import pl.edu.ur.dentflow.R
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 
 private val CLINIC_NAME_REGEX = Regex("^[\\w\\s\\-\\.ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,80}$")
 
@@ -27,6 +30,7 @@ fun CreateTenantScreen(
     onBack: () -> Unit,
     tenantViewModel: TenantViewModel
 ) {
+    val context = LocalContext.current
     var name by remember { mutableStateOf("") }
     var locationName by remember { mutableStateOf("") }
     var street by remember { mutableStateOf("") }
@@ -70,7 +74,7 @@ fun CreateTenantScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Zarejestruj Klinikę") },
+                title = { Text(stringResource(R.string.tenant_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
@@ -89,7 +93,7 @@ fun CreateTenantScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Dane podstawowe",
+                text = stringResource(R.string.tenant_basic_data),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -97,11 +101,11 @@ fun CreateTenantScreen(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it; showErrors = false },
-                label = { Text("Nazwa kliniki") },
+                label = { Text(stringResource(R.string.tenant_clinic_name)) },
                 leadingIcon = { Icon(Icons.Default.Business, contentDescription = null) },
                 isError = nameError,
                 supportingText = {
-                    if (nameError) Text("Min. 2 znaki", color = MaterialTheme.colorScheme.error)
+                    if (nameError) Text(stringResource(R.string.min_2_chars), color = MaterialTheme.colorScheme.error)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -112,19 +116,19 @@ fun CreateTenantScreen(
             OutlinedTextField(
                 value = locationName,
                 onValueChange = { locationName = it; showErrors = false },
-                label = { Text("Nazwa placówki (np. Gabinet Główny)") },
+                label = { Text(stringResource(R.string.tenant_location_name)) },
                 leadingIcon = { Icon(Icons.Default.Place, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = textFieldColors,
                 singleLine = true,
                 isError = locationNameError,
-                supportingText = { if (locationNameError) Text("Nazwa placówki musi mieć co najmniej 2 znaki") }
+                supportingText = { if (locationNameError) Text(stringResource(R.string.tenant_location_name_error)) }
             )
 
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Adres",
+                text = stringResource(R.string.tenant_address),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -132,11 +136,11 @@ fun CreateTenantScreen(
             OutlinedTextField(
                 value = street,
                 onValueChange = { street = it; showErrors = false },
-                label = { Text("Ulica i numer") },
+                label = { Text(stringResource(R.string.tenant_street)) },
                 leadingIcon = { Icon(Icons.Default.AddRoad, contentDescription = null) },
                 isError = streetError,
                 supportingText = {
-                    if (streetError) Text("Min. 3 znaki", color = MaterialTheme.colorScheme.error)
+                    if (streetError) Text(stringResource(R.string.min_3_chars), color = MaterialTheme.colorScheme.error)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -148,10 +152,10 @@ fun CreateTenantScreen(
                 OutlinedTextField(
                     value = city,
                     onValueChange = { city = it; showErrors = false },
-                    label = { Text("Miasto") },
+                    label = { Text(stringResource(R.string.tenant_city)) },
                     isError = cityError,
                     supportingText = {
-                        if (cityError) Text("Min. 2 znaki", color = MaterialTheme.colorScheme.error)
+                        if (cityError) Text(stringResource(R.string.min_2_chars), color = MaterialTheme.colorScheme.error)
                     },
                     modifier = Modifier.weight(2f),
                     shape = RoundedCornerShape(12.dp),
@@ -176,14 +180,14 @@ fun CreateTenantScreen(
                     },
                     label = {
                         Text(
-                            text = "Kod pocztowy",
+                            text = stringResource(R.string.tenant_zip),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     },
                     isError = zipError,
                     supportingText = {
-                        if (zipError) Text("00-000", color = MaterialTheme.colorScheme.error)
+                        if (zipError) Text(stringResource(R.string.postal_code_hint), color = MaterialTheme.colorScheme.error)
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
@@ -196,11 +200,11 @@ fun CreateTenantScreen(
             OutlinedTextField(
                 value = country,
                 onValueChange = { country = it; showErrors = false },
-                label = { Text("Kraj") },
+                label = { Text(stringResource(R.string.tenant_country)) },
                 leadingIcon = { Icon(Icons.Default.Flag, contentDescription = null) },
                 isError = showErrors && !isCountryValid,
                 supportingText = {
-                    if (showErrors && !isCountryValid) Text("Min. 2 znaki", color = MaterialTheme.colorScheme.error)
+                    if (showErrors && !isCountryValid) Text(stringResource(R.string.min_2_chars), color = MaterialTheme.colorScheme.error)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -215,7 +219,7 @@ fun CreateTenantScreen(
                     if (canSubmit) {
                         tenantViewModel.registerClinic(
                             name = name,
-                            locationName = locationName.ifBlank { "Placówka Główna" },
+                            locationName = locationName.ifBlank { context.getString(R.string.tenant_main_location) },
                             street = street,
                             city = city,
                             zip = "${zip.take(2)}-${zip.drop(2)}",
@@ -238,7 +242,7 @@ fun CreateTenantScreen(
                 } else {
                     Icon(Icons.Default.AddBusiness, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("UTWÓRZ I ZAREJESTRUJ", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.tenant_create), fontWeight = FontWeight.Bold)
                 }
             }
         }

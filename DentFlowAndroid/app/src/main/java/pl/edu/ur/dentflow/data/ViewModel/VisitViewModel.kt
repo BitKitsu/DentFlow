@@ -1,10 +1,12 @@
 package pl.edu.ur.dentflow.data.ViewModel
 
+import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import pl.edu.ur.dentflow.data.remote.*
+import pl.edu.ur.dentflow.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -22,7 +24,8 @@ data class VisitWithPatient(
 @HiltViewModel
 class VisitViewModel @Inject constructor(
     private val apiService: ApiService,
-    private val prefs: SharedPreferences
+    private val prefs: SharedPreferences,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _visits = MutableStateFlow<List<VisitWithPatient>>(emptyList())
@@ -100,7 +103,7 @@ class VisitViewModel @Inject constructor(
                         }
                     }
                     response.code() == 403 -> {
-                        _errorMessage.value = "Brak uprawnień do pobrania wizyt."
+                        _errorMessage.value = context.getString(R.string.error_no_permission_visits)
                         Log.e(TAG, "403 Forbidden on /appointments/my")
                     }
                     else -> {
@@ -109,7 +112,7 @@ class VisitViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Brak połączenia z serwerem."
+                _errorMessage.value = context.getString(R.string.error_connection_server)
                 Log.e(TAG, "Exception: ${e.message}")
             } finally {
                 _isLoading.value = false
@@ -144,7 +147,7 @@ class VisitViewModel @Inject constructor(
                         _visits.value = combinedList
                     }
                     response.code() == 403 -> {
-                        _errorMessage.value = "Brak uprawnień do listy wizyt."
+                        _errorMessage.value = context.getString(R.string.error_no_permission_visit_list)
                         Log.e(TAG, "403 Forbidden on /appointments")
                     }
                     else -> {
@@ -153,7 +156,7 @@ class VisitViewModel @Inject constructor(
                     }
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Brak połączenia z serwerem."
+                _errorMessage.value = context.getString(R.string.error_connection_server)
                 Log.e(TAG, "Exception: ${e.message}")
             } finally {
                 _isLoading.value = false
@@ -245,7 +248,7 @@ class VisitViewModel @Inject constructor(
                     if (bytes != null && bytes.size > 100) {
                         savePdfToDisk(bytes, context, "Raport_Wizyt_${from}_$to.pdf")
                     } else {
-                        android.widget.Toast.makeText(context, "Brak danych do wygenerowania raportu", android.widget.Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(context, context.getString(R.string.error_no_data_report), android.widget.Toast.LENGTH_SHORT).show()
                     }
                 } else {
                     val msg = extractErrorMessage(response.errorBody(), response.code())
@@ -254,7 +257,7 @@ class VisitViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Błąd sieci: ${e.message}")
-                android.widget.Toast.makeText(context, "Brak połączenia z serwerem", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(context, context.getString(R.string.error_connection_server), android.widget.Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -276,7 +279,7 @@ class VisitViewModel @Inject constructor(
                         val suffix = if (roomId != null && roomId > 0) "_gabinet_$roomId" else ""
                         savePdfToDisk(bytes, context, "Raport_Oblzenia${suffix}_${from}_$to.pdf")
                     } else {
-                        android.widget.Toast.makeText(context, "Brak danych do wygenerowania raportu", android.widget.Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(context, context.getString(R.string.error_no_data_report), android.widget.Toast.LENGTH_SHORT).show()
                     }
                 } else {
                     val msg = extractErrorMessage(response.errorBody(), response.code())
@@ -285,7 +288,7 @@ class VisitViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Błąd sieci obłożenie: ${e.message}")
-                android.widget.Toast.makeText(context, "Brak połączenia z serwerem", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(context, context.getString(R.string.error_connection_server), android.widget.Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -302,7 +305,7 @@ class VisitViewModel @Inject constructor(
                     if (bytes != null && bytes.size > 100) {
                         savePdfToDisk(bytes, context, "Moje_Wizyty_${from}_$to.pdf")
                     } else {
-                        android.widget.Toast.makeText(context, "Brak danych do wygenerowania raportu", android.widget.Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(context, context.getString(R.string.error_no_data_report), android.widget.Toast.LENGTH_SHORT).show()
                     }
                 } else {
                     val msg = extractErrorMessage(response.errorBody(), response.code())
@@ -311,7 +314,7 @@ class VisitViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Błąd sieci: ${e.message}")
-                android.widget.Toast.makeText(context, "Brak połączenia z serwerem", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(context, context.getString(R.string.error_connection_server), android.widget.Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -328,7 +331,7 @@ class VisitViewModel @Inject constructor(
                     if (bytes != null && bytes.size > 100) {
                         savePdfToDisk(bytes, context, "Historia_Pacjenta_$patientId.pdf")
                     } else {
-                        android.widget.Toast.makeText(context, "Brak danych do wygenerowania raportu", android.widget.Toast.LENGTH_SHORT).show()
+                        android.widget.Toast.makeText(context, context.getString(R.string.error_no_data_report), android.widget.Toast.LENGTH_SHORT).show()
                     }
                 } else {
                     val msg = extractErrorMessage(response.errorBody(), response.code())
@@ -337,16 +340,16 @@ class VisitViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Błąd sieci historia: ${e.message}")
-                android.widget.Toast.makeText(context, "Brak połączenia z serwerem", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(context, context.getString(R.string.error_connection_server), android.widget.Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private fun extractErrorMessage(body: ResponseBody?, fallbackCode: Int): String {
         return try {
-            body?.string()?.takeIf { it.isNotBlank() } ?: "Błąd serwera: $fallbackCode"
+            body?.string()?.takeIf { it.isNotBlank() } ?: context.getString(R.string.error_booking_server, fallbackCode)
         } catch (_: Exception) {
-            "Błąd serwera: $fallbackCode"
+            context.getString(R.string.error_booking_server, fallbackCode)
         }
     }
 
@@ -363,13 +366,13 @@ class VisitViewModel @Inject constructor(
                 resolver.openOutputStream(uri)?.use { outputStream ->
                     outputStream.write(bytes)
                 }
-                android.widget.Toast.makeText(context, "Zapisano PDF w Pobranych", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(context, context.getString(R.string.success_pdf_saved), android.widget.Toast.LENGTH_SHORT).show()
             } else {
-                android.widget.Toast.makeText(context, "Nie udało się zapisać pliku", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(context, context.getString(R.string.error_pdf_save), android.widget.Toast.LENGTH_SHORT).show()
             }
         } catch (e: Exception) {
             Log.e(TAG, "Błąd zapisu pliku: ${e.message}")
-            android.widget.Toast.makeText(context, "Błąd zapisu: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+            android.widget.Toast.makeText(context, context.getString(R.string.error_file_connection, e.message ?: ""), android.widget.Toast.LENGTH_SHORT).show()
         }
     }
 }

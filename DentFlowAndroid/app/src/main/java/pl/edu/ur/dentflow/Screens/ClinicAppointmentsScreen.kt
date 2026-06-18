@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import pl.edu.ur.dentflow.data.ViewModel.StaffViewModel
 import pl.edu.ur.dentflow.data.ViewModel.VisitViewModel
+import pl.edu.ur.dentflow.R
+import androidx.compose.ui.res.stringResource
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -58,10 +60,10 @@ fun ClinicAppointmentsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Wizyty w klinice", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.clinic_appointments_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrot")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 windowInsets = WindowInsets(0, 0, 0, 0)
@@ -91,7 +93,7 @@ fun ClinicAppointmentsScreen(
                     }
 
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-                        listOf("Pn", "Wt", "Sr", "Cz", "Pt", "Sb", "Nd").forEach { d ->
+                        listOf(stringResource(R.string.day_mon_short), stringResource(R.string.day_tue_short), stringResource(R.string.day_wed_short), stringResource(R.string.day_thu_short), stringResource(R.string.day_fri_short), stringResource(R.string.day_sat_short), stringResource(R.string.day_sun_short)).forEach { d ->
                             Text(d, Modifier.weight(1f), textAlign = TextAlign.Center, fontSize = 12.sp, color = Color.Gray)
                         }
                     }
@@ -150,7 +152,7 @@ fun ClinicAppointmentsScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.EventBusy, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.outline)
                         Spacer(Modifier.height(8.dp))
-                        Text("Brak wizyt na ten dzien", color = Color.Gray)
+                        Text(stringResource(R.string.clinic_appointments_empty), color = Color.Gray)
                     }
                 }
             } else {
@@ -180,13 +182,13 @@ fun ClinicAppointmentsScreen(
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.primary
                                         )
-                                        Text("Pacjent: ${v.patient?.firstName} ${v.patient?.lastName}")
+                                        Text(stringResource(R.string.clinic_appointments_patient, v.patient?.firstName ?: "", v.patient?.lastName ?: ""))
                                     }
                                     val (statusColor, statusLabel) = when (v.visit.status.uppercase()) {
-                                        "CONFIRMED" -> Pair(Color(0xFF4CAF50), "Potwierdzona")
-                                        "COMPLETED" -> Pair(MaterialTheme.colorScheme.outline, "Zakonczona")
-                                        "CANCELLED" -> Pair(MaterialTheme.colorScheme.error, "Anulowana")
-                                        "SCHEDULED" -> Pair(Color(0xFFFF9800), "Zaplanowana")
+                                        "CONFIRMED" -> Pair(Color(0xFF4CAF50), stringResource(R.string.status_confirmed))
+                                        "COMPLETED" -> Pair(MaterialTheme.colorScheme.outline, stringResource(R.string.status_completed))
+                                        "CANCELLED" -> Pair(MaterialTheme.colorScheme.error, stringResource(R.string.status_cancelled))
+                                        "SCHEDULED" -> Pair(Color(0xFFFF9800), stringResource(R.string.status_planned))
                                         else -> Pair(MaterialTheme.colorScheme.outline, v.visit.status)
                                     }
                                     Surface(shape = RoundedCornerShape(8.dp), color = statusColor.copy(alpha = 0.15f)) {
@@ -200,7 +202,7 @@ fun ClinicAppointmentsScreen(
                                     }
                                 }
                                 if (st != null) Text(
-                                    "Lekarz: ${st.firstName} ${st.lastName}",
+                                    stringResource(R.string.clinic_appointments_doctor, st.firstName, st.lastName),
                                     style = MaterialTheme.typography.bodySmall
                                 )
 
@@ -219,7 +221,7 @@ fun ClinicAppointmentsScreen(
                                             ) {
                                                 Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(18.dp))
                                                 Spacer(Modifier.width(4.dp))
-                                                Text("Potwierdz", fontWeight = FontWeight.Bold)
+                                                Text(stringResource(R.string.clinic_appointments_confirm), fontWeight = FontWeight.Bold)
                                             }
                                         }
                                         if (isConfirmed) {
@@ -231,7 +233,7 @@ fun ClinicAppointmentsScreen(
                                             ) {
                                                 Icon(Icons.Default.DoneAll, null, modifier = Modifier.size(18.dp))
                                                 Spacer(Modifier.width(4.dp))
-                                                Text("Zakoncz", fontWeight = FontWeight.Bold)
+                                                Text(stringResource(R.string.clinic_appointments_complete), fontWeight = FontWeight.Bold)
                                             }
                                         }
                                         OutlinedButton(
@@ -242,7 +244,7 @@ fun ClinicAppointmentsScreen(
                                         ) {
                                             Icon(Icons.Default.Cancel, null, modifier = Modifier.size(18.dp))
                                             Spacer(Modifier.width(4.dp))
-                                            Text("Anuluj", fontWeight = FontWeight.Bold)
+                                            Text(stringResource(R.string.clinic_appointments_cancel), fontWeight = FontWeight.Bold)
                                         }
                                     }
                                 }
@@ -258,17 +260,17 @@ fun ClinicAppointmentsScreen(
         AlertDialog(
             onDismissRequest = { showCancelConfirm = null },
             icon = { Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error) },
-            title = { Text("Anulowac wizyte?") },
-            text = { Text("Ta operacja jest nieodwracalna.") },
+            title = { Text(stringResource(R.string.clinic_appointments_cancel_title)) },
+            text = { Text(stringResource(R.string.clinic_appointments_cancel_text)) },
             confirmButton = {
                 Button(
                     onClick = { visitViewModel.cancelAppointment(appointmentId); showCancelConfirm = null },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     shape = RoundedCornerShape(12.dp)
-                ) { Text("Anuluj wizyte") }
+                ) { Text(stringResource(R.string.clinic_appointments_cancel_button)) }
             },
             dismissButton = {
-                TextButton(onClick = { showCancelConfirm = null }) { Text("Zostaw") }
+                TextButton(onClick = { showCancelConfirm = null }) { Text(stringResource(R.string.clinic_appointments_leave)) }
             }
         )
     }

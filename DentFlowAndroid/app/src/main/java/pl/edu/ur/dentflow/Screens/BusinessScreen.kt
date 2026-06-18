@@ -43,6 +43,8 @@ import pl.edu.ur.dentflow.data.ViewModel.ScheduleViewModel
 import pl.edu.ur.dentflow.data.ViewModel.TenantViewModel
 import pl.edu.ur.dentflow.data.ViewModel.VisitViewModel
 import pl.edu.ur.dentflow.utils.ValidationUtils
+import pl.edu.ur.dentflow.R
+import androidx.compose.ui.res.stringResource
 
 private val CLINIC_NAME_VAL = Regex("^[\\w\\s\\-\\.ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]{2,80}$")
 
@@ -104,14 +106,14 @@ fun BusinessScreen(
                         val loc = t.locations?.firstOrNull()
                         tenantViewModel.saveBusinessData(
                             name = t.name,
-                            locName = loc?.name ?: "Placówka Główna",
+                            locName = loc?.name ?: context.getString(R.string.business_main_location),
                             street = loc?.addressStreet ?: "",
                             city = loc?.addressCity ?: "",
                             zip = loc?.addressZip ?: "",
                             logoUrl = url
                         )
                     }
-                    android.widget.Toast.makeText(context, "Logo zaktualizowane", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(context, context.getString(R.string.business_logo_updated), android.widget.Toast.LENGTH_SHORT).show()
                 },
                 onError = { msg ->
                     android.widget.Toast.makeText(context, msg, android.widget.Toast.LENGTH_LONG).show()
@@ -187,12 +189,12 @@ fun BusinessScreen(
                     .verticalScroll(rememberScrollState()).padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Moja Klinika", style = MaterialTheme.typography.headlineMedium,
+                Text(stringResource(R.string.business_my_clinic), style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.fillMaxWidth())
                 Text(
                     tenantData?.locations?.firstOrNull()?.let { "${it.addressStreet}, ${it.addressCity}" }
-                        ?: "Brak skonfigurowanego adresu",
+                        ?: stringResource(R.string.business_no_address),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth()
@@ -223,7 +225,7 @@ fun BusinessScreen(
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Icon(Icons.Default.AddPhotoAlternate, contentDescription = null,
                                     tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(32.dp))
-                                Text("Logo", style = MaterialTheme.typography.labelSmall,
+                                Text(stringResource(R.string.business_logo), style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.outline)
                             }
                         }
@@ -236,37 +238,37 @@ fun BusinessScreen(
                 }
                 if (isUploading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
                 Spacer(modifier = Modifier.height(12.dp))
-                Text(tenantData?.name ?: "-", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(tenantData?.name ?: stringResource(R.string.placeholder_dash), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Stats
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    BizStatCard(Modifier.weight(1f), "Wizyty", visits.size.toString(), Icons.Default.Event,
+                    BizStatCard(Modifier.weight(1f), stringResource(R.string.business_visits), visits.size.toString(), Icons.Default.Event,
                         MaterialTheme.colorScheme.primary) { showVisitsScreen = true }
-                    BizStatCard(Modifier.weight(1f), "Pacjenci", patients.size.toString(), Icons.Default.Group,
+                    BizStatCard(Modifier.weight(1f), stringResource(R.string.business_patients), patients.size.toString(), Icons.Default.Group,
                         MaterialTheme.colorScheme.secondary) { showPatientScreen = true }
-                    BizStatCard(Modifier.weight(1f), "Zabiegi", services.size.toString(), Icons.Default.MedicalServices,
+                    BizStatCard(Modifier.weight(1f), stringResource(R.string.business_treatments), services.size.toString(), Icons.Default.MedicalServices,
                         MaterialTheme.colorScheme.tertiary) { showCatalogScreen = true }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Menu
-                Text("Zarządzanie", modifier = Modifier.fillMaxWidth(),
+                Text(stringResource(R.string.business_management), modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (isOwner) {
-                        BizMenuRow("Pracownicy", Icons.Default.Badge) { showStaffManagement = true }
+                        BizMenuRow(stringResource(R.string.business_staff), Icons.Default.Badge) { showStaffManagement = true }
                     }
-                    BizMenuRow("Pacjenci", Icons.Default.People) { showPatientScreen = true }
-                    BizMenuRow("Gabinety", Icons.Default.MeetingRoom) { showRoomScreen = true }
-                    BizMenuRow("Wizyty w klinice", Icons.Default.DateRange) { showClinicAppointmentsScreen = true }
-                    BizMenuRow("Cennik usług", Icons.Default.Payments) { showCatalogScreen = true }
-                    BizMenuRow("Grafik pracy", Icons.Default.CalendarMonth) { showScheduleScreen = true }
+                    BizMenuRow(stringResource(R.string.business_patients), Icons.Default.People) { showPatientScreen = true }
+                    BizMenuRow(stringResource(R.string.business_rooms), Icons.Default.MeetingRoom) { showRoomScreen = true }
+                    BizMenuRow(stringResource(R.string.business_clinic_visits), Icons.Default.DateRange) { showClinicAppointmentsScreen = true }
+                    BizMenuRow(stringResource(R.string.business_catalog), Icons.Default.Payments) { showCatalogScreen = true }
+                    BizMenuRow(stringResource(R.string.business_schedule), Icons.Default.CalendarMonth) { showScheduleScreen = true }
                     if (isOwner) {
-                        BizMenuRow("Raporty PDF", Icons.Default.PictureAsPdf) { showReportsScreen = true }
-                        BizMenuRow("Edytuj dane kliniki", Icons.Default.Edit) { showEditScreen = true }
+                        BizMenuRow(stringResource(R.string.business_reports), Icons.Default.PictureAsPdf) { showReportsScreen = true }
+                        BizMenuRow(stringResource(R.string.business_edit_data), Icons.Default.Edit) { showEditScreen = true }
                     }
                 }
             }
@@ -350,8 +352,8 @@ fun EditClinicScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Usuń klinikę") },
-            text = { Text("Czy na pewno chcesz bezpowrotnie usunąć klinikę? Tej operacji nie można cofnąć.") },
+            title = { Text(stringResource(R.string.business_delete_title)) },
+            text = { Text(stringResource(R.string.business_delete_text)) },
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteDialog = false
@@ -361,10 +363,10 @@ fun EditClinicScreen(
                         },
                         onError = { msg -> saveError = msg }
                     )
-                }) { Text("Usuń", color = MaterialTheme.colorScheme.error) }
+                }) { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text("Anuluj") }
+                TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -372,10 +374,10 @@ fun EditClinicScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Edytuj dane kliniki", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.business_edit_screen_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Wróć")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 windowInsets = WindowInsets(0, 0, 0, 0)
@@ -394,25 +396,25 @@ fun EditClinicScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Business, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Dane kliniki", style = MaterialTheme.typography.titleMedium,
+                Text(stringResource(R.string.business_clinic_data), style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             }
 
             OutlinedTextField(
                 value = name, onValueChange = { name = it; saveSuccess = null; saveError = null },
-                label = { Text("Nazwa kliniki") },
+                label = { Text(stringResource(R.string.business_clinic_name)) },
                 leadingIcon = { Icon(Icons.Default.Business, null) },
                 isError = nameError,
-                supportingText = { if (nameError) Text("Min. 2 znaki", color = MaterialTheme.colorScheme.error) },
+                supportingText = { if (nameError) Text(stringResource(R.string.min_2_chars), color = MaterialTheme.colorScheme.error) },
                 modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = tfColors, singleLine = true
             )
 
             OutlinedTextField(
                 value = locName, onValueChange = { locName = it; saveSuccess = null; saveError = null },
-                label = { Text("Nazwa placówki") },
+                label = { Text(stringResource(R.string.business_location_name)) },
                 leadingIcon = { Icon(Icons.Default.Place, null) },
                 isError = locNameError,
-                supportingText = { if (locNameError) Text("Min. 2 znaki", color = MaterialTheme.colorScheme.error) },
+                supportingText = { if (locNameError) Text(stringResource(R.string.min_2_chars), color = MaterialTheme.colorScheme.error) },
                 modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = tfColors, singleLine = true
             )
 
@@ -420,25 +422,25 @@ fun EditClinicScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Home, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Adres kliniki", style = MaterialTheme.typography.titleMedium,
+                Text(stringResource(R.string.business_address), style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             }
 
             OutlinedTextField(
                 value = street, onValueChange = { street = it; saveSuccess = null; saveError = null },
-                label = { Text("Ulica i numer") },
+                label = { Text(stringResource(R.string.tenant_street)) },
                 leadingIcon = { Icon(Icons.Default.AddRoad, null) },
                 isError = streetError,
-                supportingText = { if (streetError) Text("Min. 3 znaki", color = MaterialTheme.colorScheme.error) },
+                supportingText = { if (streetError) Text(stringResource(R.string.min_3_chars), color = MaterialTheme.colorScheme.error) },
                 modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = tfColors, singleLine = true
             )
 
             Row(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = city, onValueChange = { city = it; saveSuccess = null; saveError = null },
-                    label = { Text("Miasto") },
+                    label = { Text(stringResource(R.string.tenant_city)) },
                     isError = cityError,
-                    supportingText = { if (cityError) Text("Min. 2 znaki", color = MaterialTheme.colorScheme.error) },
+                    supportingText = { if (cityError) Text(stringResource(R.string.min_2_chars), color = MaterialTheme.colorScheme.error) },
                     modifier = Modifier.weight(2f), shape = RoundedCornerShape(12.dp), colors = tfColors, singleLine = true
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -454,9 +456,9 @@ fun EditClinicScreen(
                         }
                         androidx.compose.ui.text.input.TransformedText(androidx.compose.ui.text.AnnotatedString(out), offsetMapping)
                     },
-                    label = { Text("Kod pocztowy", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    label = { Text(stringResource(R.string.tenant_zip), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                     isError = zipError,
-                    supportingText = { if (zipError) Text("00-000", color = MaterialTheme.colorScheme.error) },
+                    supportingText = { if (zipError) Text(stringResource(R.string.postal_code_hint), color = MaterialTheme.colorScheme.error) },
                     modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = tfColors, singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
@@ -492,12 +494,12 @@ fun EditClinicScreen(
                         saveSuccess = null; saveError = null
                         tenantViewModel.saveBusinessData(
                             name = name,
-                            locName = locName.ifBlank { "Placówka Główna" },
+                            locName = locName.ifBlank { context.getString(R.string.tenant_main_location) },
                             street = street,
                             city = city,
                             zip = "${zip.take(2)}-${zip.drop(2)}"
                         )
-                        saveSuccess = "Dane zostały zapisane."
+                        saveSuccess = context.getString(R.string.business_saved)
                     } else {
                         showErrors = true
                     }
@@ -512,7 +514,7 @@ fun EditClinicScreen(
                 } else {
                     Icon(Icons.Default.Save, null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Zapisz dane", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.business_save_data), fontWeight = FontWeight.SemiBold)
                 }
             }
 
@@ -522,7 +524,7 @@ fun EditClinicScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.DeleteForever, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Strefa niebezpieczna", style = MaterialTheme.typography.titleMedium,
+                Text(stringResource(R.string.business_danger_zone), style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
             }
 
@@ -535,7 +537,7 @@ fun EditClinicScreen(
             ) {
                 Icon(Icons.Default.DeleteForever, null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Usuń klinikę", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.business_delete_clinic), fontWeight = FontWeight.SemiBold)
             }
 
             Spacer(modifier = Modifier.height(24.dp))

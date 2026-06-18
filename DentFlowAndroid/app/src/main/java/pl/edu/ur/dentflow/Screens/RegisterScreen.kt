@@ -13,11 +13,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import pl.edu.ur.dentflow.R
 import pl.edu.ur.dentflow.data.remote.RegisterRequest
 import pl.edu.ur.dentflow.data.remote.*
 import pl.edu.ur.dentflow.utils.ValidationUtils
@@ -88,12 +90,12 @@ fun RegisterScreen(
         ) {
             Spacer(modifier = Modifier.height(30.dp))
 
-            Text("Dołącz do DentFlow",
+            Text(stringResource(R.string.register_title),
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold)
 
-            Text("Zarządzaj swoją kliniką z łatwością",
+            Text(stringResource(R.string.register_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
 
@@ -103,12 +105,12 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = firstname,
                     onValueChange = { firstname = it; showError = false },
-                    label = { Text("Imię") },
+                    label = { Text(stringResource(R.string.register_firstname)) },
                     enabled = !isLoading,
                     isError = firstNameError,
                     supportingText = {
                         if (firstNameError)
-                            Text("Min. 2 znaki, tylko litery",
+                            Text(stringResource(R.string.register_name_error),
                                 color = MaterialTheme.colorScheme.error)
                     },
                     modifier = Modifier.weight(1f),
@@ -120,12 +122,12 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = lastname,
                     onValueChange = { lastname = it; showError = false },
-                    label = { Text("Nazwisko") },
+                    label = { Text(stringResource(R.string.register_lastname)) },
                     enabled = !isLoading,
                     isError = lastNameError,
                     supportingText = {
                         if (lastNameError)
-                            Text("Min. 2 znaki, tylko litery",
+                            Text(stringResource(R.string.register_name_error),
                                 color = MaterialTheme.colorScheme.error)
                     },
                     modifier = Modifier.weight(1f),
@@ -140,13 +142,13 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = phone,
                 onValueChange = { phone = it; showError = false },
-                label = { Text("Numer telefonu") },
+                label = { Text(stringResource(R.string.register_phone)) },
                 leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
                 enabled = !isLoading,
                 isError = phoneError,
                 supportingText = {
                     if (phoneError)
-                        Text("Nieprawidłowy numer (np. +48 123 456 789)",
+                        Text(stringResource(R.string.register_phone_error),
                             color = MaterialTheme.colorScheme.error)
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -161,13 +163,13 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it; showError = false },
-                label = { Text("E-mail") },
+                label = { Text(stringResource(R.string.register_email)) },
                 leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                 enabled = !isLoading,
                 isError = emailError,
                 supportingText = {
                     if (emailError)
-                        Text("Nieprawidłowy adres e-mail (np. jan@example.com)",
+                        Text(stringResource(R.string.register_email_error),
                             color = MaterialTheme.colorScheme.error)
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -182,12 +184,12 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = addressStreet,
                 onValueChange = { addressStreet = it; showError = false },
-                label = { Text("Ulica i numer") },
+                label = { Text(stringResource(R.string.register_street)) },
                 leadingIcon = { Icon(Icons.Default.Place, null) },
                 enabled = !isLoading,
                 isError = streetError,
                 supportingText = {
-                    if (streetError) Text("Min. 3 znaki", color = MaterialTheme.colorScheme.error)
+                    if (streetError) Text(stringResource(R.string.min_3_chars), color = MaterialTheme.colorScheme.error)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -200,11 +202,11 @@ fun RegisterScreen(
                 OutlinedTextField(
                     value = addressCity,
                     onValueChange = { addressCity = it; showError = false },
-                    label = { Text("Miasto") },
+                    label = { Text(stringResource(R.string.register_city)) },
                     enabled = !isLoading,
                     isError = cityError,
                     supportingText = {
-                        if (cityError) Text("Min. 2 znaki", color = MaterialTheme.colorScheme.error)
+                        if (cityError) Text(stringResource(R.string.min_2_chars), color = MaterialTheme.colorScheme.error)
                     },
                     modifier = Modifier.weight(2f),
                     shape = RoundedCornerShape(12.dp),
@@ -241,7 +243,7 @@ fun RegisterScreen(
                     },
                     label = {
                         Text(
-                            text = "Kod pocztowy",
+                            text = stringResource(R.string.register_zip),
                             maxLines = 1,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
@@ -249,7 +251,7 @@ fun RegisterScreen(
                     enabled = !isLoading,
                     isError = zipError,
                     supportingText = {
-                        if (zipError) Text("00-000", color = MaterialTheme.colorScheme.error)
+                        if (zipError) Text(stringResource(R.string.postal_code_hint), color = MaterialTheme.colorScheme.error)
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
@@ -262,12 +264,12 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = addressCountry,
                 onValueChange = { addressCountry = it; showError = false },
-                label = { Text("Kraj") },
+                label = { Text(stringResource(R.string.register_country)) },
                 leadingIcon = { Icon(Icons.Default.Flag, null) },
                 enabled = !isLoading,
                 isError = countryError,
                 supportingText = {
-                    if (countryError) Text("Min. 2 znaki", color = MaterialTheme.colorScheme.error)
+                    if (countryError) Text(stringResource(R.string.min_2_chars), color = MaterialTheme.colorScheme.error)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -280,13 +282,13 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it; showError = false },
-                label = { Text("Hasło (min. 8 znaków)") },
+                label = { Text(stringResource(R.string.register_password)) },
                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                 enabled = !isLoading,
                 isError = passwordError,
                 supportingText = {
                     if (passwordError)
-                        Text("Hasło musi mieć co najmniej 8 znaków",
+                        Text(stringResource(R.string.register_password_error),
                             color = MaterialTheme.colorScheme.error)
                 },
                 visualTransformation = PasswordVisualTransformation(),
@@ -301,7 +303,7 @@ fun RegisterScreen(
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it; showError = false },
-                label = { Text("Powtórz hasło") },
+                label = { Text(stringResource(R.string.register_confirm_password)) },
                 leadingIcon = { Icon(Icons.Default.LockReset, contentDescription = null) },
                 enabled = !isLoading,
                 isError = confirmError,
@@ -312,7 +314,7 @@ fun RegisterScreen(
                 singleLine = true,
                 supportingText = {
                     if (confirmError)
-                        Text("Hasła muszą być identyczne",
+                        Text(stringResource(R.string.register_passwords_match),
                             color = MaterialTheme.colorScheme.error)
                 }
             )
@@ -360,12 +362,12 @@ fun RegisterScreen(
                     CircularProgressIndicator(color = Color.White,
                         modifier = Modifier.size(24.dp))
                 } else {
-                    Text("ZAREJESTRUJ SIĘ", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.register_button), fontWeight = FontWeight.Bold)
                 }
             }
 
             TextButton(onClick = { onBackToLogin() }, enabled = !isLoading) {
-                Text("Masz już konto? Zaloguj się",
+                Text(stringResource(R.string.register_has_account),
                     color = MaterialTheme.colorScheme.secondary,
                     fontWeight = FontWeight.Bold)
             }
@@ -382,7 +384,7 @@ fun RegisterScreen(
         ) {
             Icon(
                 imageVector = Icons.Default.Settings,
-                contentDescription = "Ustawienia serwera",
+                contentDescription = stringResource(R.string.login_settings_desc),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

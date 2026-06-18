@@ -21,12 +21,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import pl.edu.ur.dentflow.R
 import pl.edu.ur.dentflow.data.ViewModel.*
 import pl.edu.ur.dentflow.data.remote.ServiceCatalogItemDTO
 import pl.edu.ur.dentflow.data.remote.StaffMemberResponse
@@ -138,9 +140,9 @@ fun CreateAppointmentScreen(
                 title = {
                     Text(
                         when (currentStep) {
-                            1 -> "Wybierz lekarza"
-                            2 -> "Wybierz termin"
-                            3 -> "Potwierdzenie"
+                            1 -> stringResource(R.string.appointment_step_doctor)
+                            2 -> stringResource(R.string.appointment_step_date)
+                            3 -> stringResource(R.string.appointment_step_confirm)
                             else -> ""
                         },
                         fontWeight = FontWeight.Bold
@@ -298,9 +300,9 @@ fun StepIndicator(currentStep: Int) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = when (step) {
-                        1 -> "Lekarz"
-                        2 -> "Termin"
-                        3 -> "Godzina"
+                        1 -> stringResource(R.string.appointment_label_doctor)
+                        2 -> stringResource(R.string.appointment_label_date)
+                        3 -> stringResource(R.string.appointment_label_time)
                         else -> ""
                     },
                     fontSize = 11.sp,
@@ -342,7 +344,7 @@ fun Step1ChooseDentist(
             .padding(16.dp)
     ) {
         Text(
-            text = "Wybierz lekarza, u którego chcesz umówić wizytę",
+            text = stringResource(R.string.appointment_select_doctor),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 16.dp)
@@ -405,7 +407,7 @@ fun DentistCard(
                 if (!dentist.avatarUrl.isNullOrBlank()) {
                     AsyncImage(
                         model = dentist.avatarUrl,
-                        contentDescription = "${dentist.firstName} avatar",
+                        contentDescription = stringResource(R.string.doctor_format, dentist.firstName, dentist.lastName),
                         modifier = Modifier.fillMaxSize().clip(CircleShape),
                         contentScale = ContentScale.Crop
                     )
@@ -421,7 +423,7 @@ fun DentistCard(
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "dr ${dentist.firstName} ${dentist.lastName}",
+                    text = stringResource(R.string.doctor_format, dentist.firstName, dentist.lastName),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -468,7 +470,7 @@ fun Step2PickDate(
                     Icon(Icons.Default.Person, null, tint = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "dr ${it.firstName} ${it.lastName}",
+                        text = stringResource(R.string.doctor_format, it.firstName, it.lastName),
                         fontWeight = FontWeight.SemiBold
                     )
                 }
@@ -483,7 +485,7 @@ fun Step2PickDate(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = { currentMonth = currentMonth.minusMonths(1) }) {
-                Icon(Icons.Default.ChevronLeft, "Previous month")
+                Icon(Icons.Default.ChevronLeft, stringResource(R.string.appointment_prev_month))
             }
             Text(
                 text = currentMonth.month.getDisplayName(TextStyle.FULL, Locale("pl"))
@@ -492,14 +494,22 @@ fun Step2PickDate(
                 fontWeight = FontWeight.Bold
             )
             IconButton(onClick = { currentMonth = currentMonth.plusMonths(1) }) {
-                Icon(Icons.Default.ChevronRight, "Next month")
+                Icon(Icons.Default.ChevronRight, stringResource(R.string.appointment_next_month))
             }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Row(modifier = Modifier.fillMaxWidth()) {
-            listOf("Pn", "Wt", "Śr", "Cz", "Pt", "Sb", "Nd").forEach { day ->
+            listOf(
+                stringResource(R.string.day_mon_short),
+                stringResource(R.string.day_tue_short),
+                stringResource(R.string.day_wed_short),
+                stringResource(R.string.day_thu_short),
+                stringResource(R.string.day_fri_short),
+                stringResource(R.string.day_sat_short),
+                stringResource(R.string.day_sun_short)
+            ).forEach { day ->
                 Text(
                     text = day,
                     modifier = Modifier.weight(1f),
@@ -539,7 +549,7 @@ fun Step2PickDate(
                     .background(MaterialTheme.colorScheme.primary)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Dostępny termin", style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.appointment_available), style = MaterialTheme.typography.bodySmall)
             Spacer(modifier = Modifier.width(16.dp))
             Box(
                 modifier = Modifier
@@ -548,7 +558,7 @@ fun Step2PickDate(
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Brak dostępności", style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.appointment_unavailable), style = MaterialTheme.typography.bodySmall)
         }
     }
 }
@@ -646,7 +656,7 @@ fun Step3PickTime(
     ) {
         dentist?.let {
             Text(
-                text = "dr ${it.firstName} ${it.lastName}",
+                text = stringResource(R.string.doctor_format, it.firstName, it.lastName),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -663,7 +673,7 @@ fun Step3PickTime(
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = "Dostępne godziny",
+            text = stringResource(R.string.appointment_available_hours),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold
         )
@@ -675,7 +685,7 @@ fun Step3PickTime(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
             ) {
                 Text(
-                    text = "Brak dostępnych terminów na wybrany dzień",
+                    text = stringResource(R.string.appointment_no_hours),
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     textAlign = TextAlign.Center
@@ -738,7 +748,7 @@ fun Step3PickTime(
                     Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (service != null) "${service.name} (${service.durationMinutes} min, ${"%.2f".format(service.priceCents / 100.0)} zl)"
+                        text = if (service != null) stringResource(R.string.service_format, service.name, service.durationMinutes, "%.2f".format(service.priceCents / 100.0))
                                else "Usługa #$initialServiceId",
                         fontWeight = FontWeight.SemiBold
                     )
@@ -746,7 +756,7 @@ fun Step3PickTime(
             }
         } else {
             Text(
-                text = "Usługa (opcjonalne)",
+                text = stringResource(R.string.appointment_service_optional),
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -757,10 +767,10 @@ fun Step3PickTime(
                 onExpandedChange = { serviceMenuExpanded = it }
             ) {
                 OutlinedTextField(
-                    value = selectedService?.let { "${it.name} (${it.durationMinutes} min, ${"%.2f".format(it.priceCents / 100.0)} zl)" } ?: "",
+                    value = selectedService?.let { stringResource(R.string.service_format, it.name, it.durationMinutes, "%.2f".format(it.priceCents / 100.0)) } ?: "",
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Wybierz uslugę") },
+                    label = { Text(stringResource(R.string.appointment_select_service)) },
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = serviceMenuExpanded) },
                     modifier = Modifier.fillMaxWidth().menuAnchor()
                 )
@@ -769,7 +779,7 @@ fun Step3PickTime(
                     onDismissRequest = { serviceMenuExpanded = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Brak uslugi") },
+                        text = { Text(stringResource(R.string.appointment_no_service)) },
                         onClick = {
                             onServiceSelected(ServiceCatalogItemDTO(
                                 id = 0L, tenantId = 0L, name = "",
@@ -781,7 +791,7 @@ fun Step3PickTime(
                     services.filter { it.active }.forEach { service ->
                         DropdownMenuItem(
                             text = {
-                                Text("${service.name} (${service.durationMinutes} min, ${"%.2f".format(service.priceCents / 100.0)} zl)")
+                                Text(stringResource(R.string.service_format, service.name, service.durationMinutes, "%.2f".format(service.priceCents / 100.0)))
                             },
                             onClick = {
                                 onServiceSelected(service)
@@ -798,7 +808,7 @@ fun Step3PickTime(
         OutlinedTextField(
             value = notes,
             onValueChange = onNotesChange,
-            label = { Text("Notatki (opcjonalne)") },
+            label = { Text(stringResource(R.string.appointment_notes_optional)) },
             modifier = Modifier.fillMaxWidth().height(100.dp),
             maxLines = 3
         )
@@ -818,7 +828,7 @@ fun Step3PickTime(
             } else {
                 Icon(Icons.Default.Check, null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("POTWIERDŹ REZERWACJĘ", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.appointment_confirm), fontWeight = FontWeight.Bold)
             }
         }
     }

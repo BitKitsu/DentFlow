@@ -14,9 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import pl.edu.ur.dentflow.R
 import pl.edu.ur.dentflow.data.remote.*
 
 // Model UI łączący dane dla jednego kafelka
@@ -31,7 +33,7 @@ data class ServiceDisplayModel(
 @Composable
 fun HomeScreen(
     isDarkTheme: Boolean,
-    onThemeChange: (Boolean) -> Unit,
+    onThemeChange: (String) -> Unit,
     onStaffClick: (StaffMemberResponse) -> Unit,
     onBookClick: (Long, Long) -> Unit = { _, _ -> },
     staffList: List<StaffMemberResponse>,
@@ -81,7 +83,7 @@ fun HomeScreen(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = { Text("Szukaj usług lub specjalisty...", maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
+            placeholder = { Text(stringResource(R.string.home_search), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis) },
             leadingIcon = { Icon(Icons.Default.Search, null, tint = MaterialTheme.colorScheme.primary) },
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
@@ -195,14 +197,14 @@ fun ServiceTile(item: ServiceDisplayModel, onStaffClick: (StaffMemberResponse) -
 
             // 3. Specjaliści
             Text(
-                text = "Dostępni specjaliści:",
+                text = stringResource(R.string.home_available_specialists),
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.Gray
             )
 
             if (item.specialists.isEmpty()) {
                 Text(
-                    text = "Brak przypisanych lekarzy",
+                    text = stringResource(R.string.home_no_doctors),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.LightGray,
                     modifier = Modifier.padding(top = 4.dp)
@@ -235,7 +237,7 @@ fun ServiceTile(item: ServiceDisplayModel, onStaffClick: (StaffMemberResponse) -
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("Czas trwania", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                        Text(stringResource(R.string.home_duration), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
                         Text("${item.service.durationMinutes} min", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                     }
                     Button(
@@ -243,7 +245,7 @@ fun ServiceTile(item: ServiceDisplayModel, onStaffClick: (StaffMemberResponse) -
                         enabled = item.specialists.isNotEmpty(),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
-                        Text("ZAREZERWUJ")
+                        Text(stringResource(R.string.home_book))
                     }
                 }
             }
@@ -257,11 +259,11 @@ fun EmptyStateSection(isError: Boolean) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(Icons.Default.SearchOff, null, modifier = Modifier.size(64.dp), tint = Color.LightGray)
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Brak dostępnych usług", color = Color.Gray, fontWeight = FontWeight.Medium)
+            Text(stringResource(R.string.home_no_services), color = Color.Gray, fontWeight = FontWeight.Medium)
 
             if (isError) {
                 Text(
-                    "Błąd autoryzacji lub połączenia (403)",
+                    stringResource(R.string.home_auth_error),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(top = 4.dp)
@@ -272,7 +274,7 @@ fun EmptyStateSection(isError: Boolean) {
 }
 
 @Composable
-fun HeaderSection(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
+fun HeaderSection(isDarkTheme: Boolean, onThemeChange: (String) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -282,23 +284,23 @@ fun HeaderSection(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
     ) {
         Column {
             Text(
-                text = "DentFlow",
+                text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = "Witaj w klinice",
+                text = stringResource(R.string.home_welcome),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.ExtraBold
             )
         }
         IconButton(
-            onClick = { onThemeChange(!isDarkTheme) },
+            onClick = { onThemeChange(if (isDarkTheme) "light" else "dark") },
             modifier = Modifier.background(MaterialTheme.colorScheme.surface, CircleShape)
         ) {
             Icon(
                 imageVector = if (isDarkTheme) Icons.Default.WbSunny else Icons.Default.NightsStay,
-                contentDescription = "Zmień motyw"
+                contentDescription = stringResource(R.string.home_change_theme)
             )
         }
     }

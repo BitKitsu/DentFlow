@@ -1,10 +1,12 @@
 package pl.edu.ur.dentflow.data.ViewModel
 
+import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import pl.edu.ur.dentflow.data.remote.*
+import pl.edu.ur.dentflow.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,7 +18,8 @@ import javax.inject.Inject
 class StaffViewModel @Inject constructor(
     private val apiService: ApiService,
     private val authService: AuthService,
-    private val prefs: SharedPreferences // Dodajemy prefs dla dynamicznego tenantId
+    private val prefs: SharedPreferences,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _staffMembers = MutableStateFlow<List<StaffMemberResponse>>(emptyList())
@@ -69,7 +72,7 @@ class StaffViewModel @Inject constructor(
                 if (sRes.isSuccessful) {
                     _staffMembers.value = sRes.body() ?: emptyList()
                 } else if (sRes.code() == 403) {
-                    _errorMessage.value = "Brak uprawnień do przeglądania personelu."
+                    _errorMessage.value = context.getString(R.string.error_no_permission_staff)
                     Log.e(TAG, "403 Forbidden: getStaffMembers")
                 } else {
                     Log.e(TAG, "Błąd pobierania pracowników: ${sRes.code()}")
@@ -99,13 +102,13 @@ class StaffViewModel @Inject constructor(
                         _staffMembers.value = response.body() ?: emptyList()
                     }
                     response.code() == 403 -> {
-                        _errorMessage.value = "Brak uprawnień do zarządzania personelem."
+                        _errorMessage.value = context.getString(R.string.error_no_permission_staff_manage)
                         Log.e(TAG, "403 Forbidden: loadStaff")
                     }
                     else -> Log.e(TAG, "Błąd loadStaff: ${response.code()}")
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Brak połączenia z serwerem."
+                _errorMessage.value = context.getString(R.string.error_connection_server)
                 Log.e(TAG, "Exception loadStaff: ${e.message}")
             } finally {
                 _isLoading.value = false

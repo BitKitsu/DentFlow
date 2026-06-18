@@ -1,11 +1,13 @@
 package pl.edu.ur.dentflow.data.ViewModel
 
+import android.content.Context
 import android.util.Log
 import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import pl.edu.ur.dentflow.data.remote.ApiService
 import pl.edu.ur.dentflow.data.remote.NotificationDTO
+import pl.edu.ur.dentflow.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +19,8 @@ private const val TAG = "NotificationViewModel"
 @HiltViewModel
 class NotificationViewModel @Inject constructor(
     private val apiService: ApiService,
-    private val sharedPrefs: SharedPreferences
+    private val sharedPrefs: SharedPreferences,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _notifications = MutableStateFlow<List<NotificationDTO>>(emptyList())
@@ -56,7 +59,7 @@ class NotificationViewModel @Inject constructor(
     fun fetchNotifications() {
         val (tenantId, userId) = getSessionData()
         if (tenantId == -1L || userId == -1L) {
-            _errorMessage.value = "Brak danych sesji. Zaloguj się ponownie."
+            _errorMessage.value = context.getString(R.string.error_no_session)
             return
         }
 
@@ -69,7 +72,7 @@ class NotificationViewModel @Inject constructor(
                 if (listResponse.isSuccessful) {
                     _notifications.value = listResponse.body() ?: emptyList()
                 } else {
-                    _errorMessage.value = "Nie udało się pobrać powiadomień (${listResponse.code()})."
+                    _errorMessage.value = context.getString(R.string.error_notifications, listResponse.code())
                 }
 
                 // 2. Licznik nieprzeczytanych
@@ -78,7 +81,7 @@ class NotificationViewModel @Inject constructor(
                     _unreadCount.value = countResponse.body() ?: 0
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Błąd połączenia z serwerem."
+                _errorMessage.value = context.getString(R.string.error_connection_server)
                 Log.e(TAG, "fetchNotifications error", e)
             } finally {
                 _isLoading.value = false

@@ -24,11 +24,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import pl.edu.ur.dentflow.R
 import pl.edu.ur.dentflow.data.ViewModel.AppointmentViewModel
 import pl.edu.ur.dentflow.data.ViewModel.CatalogViewModel
 import pl.edu.ur.dentflow.data.ViewModel.TenantViewModel
@@ -92,7 +94,7 @@ fun VisitsScreen(
             ) {
                 Column {
                     Text(
-                        text = if (isHistoryMode) "Historia Wizyt" else "Kalendarz",
+                        text = if (isHistoryMode) stringResource(R.string.visits_history) else stringResource(R.string.visits_calendar),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -111,7 +113,7 @@ fun VisitsScreen(
                         IconButton(onClick = { showPdfDialog = true }) {
                             Icon(
                                 imageVector = Icons.Default.PictureAsPdf,
-                                contentDescription = "Pobierz PDF",
+                                contentDescription = stringResource(R.string.visits_download_pdf),
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }
@@ -183,7 +185,7 @@ fun VisitsScreen(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Default.EventBusy, null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.outline)
                             Spacer(Modifier.height(8.dp))
-                            Text("Brak zarejestrowanych wizyt", color = Color.Gray)
+                            Text(stringResource(R.string.visits_empty), color = Color.Gray)
                         }
                     }
                 } else {
@@ -220,7 +222,7 @@ fun VisitsScreen(
                     .padding(bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("Szczegóły wizyty", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.visits_details), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 
                 // Patient
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -228,7 +230,7 @@ fun VisitsScreen(
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = visitWithPatient.patient?.let { "${it.firstName} ${it.lastName}" }
-                            ?: "Pacjent",
+                            ?: stringResource(R.string.visits_patient),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -248,7 +250,7 @@ fun VisitsScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.MedicalServices, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(8.dp))
-                    val serviceName = services.find { it.id == visit.serviceItemId }?.name ?: "Usługa ID: ${visit.serviceItemId}"
+                    val serviceName = services.find { it.id == visit.serviceItemId }?.name ?: stringResource(R.string.visits_service_id, visit.serviceItemId ?: 0L)
                     Text(text = serviceName, style = MaterialTheme.typography.bodyMedium)
                 }
 
@@ -263,11 +265,11 @@ fun VisitsScreen(
 
                 // Status chip
                 val (statusColor, statusLabel) = when (visit.status.uppercase()) {
-                    "CONFIRMED" -> Pair(Color(0xFF4CAF50), "Potwierdzona")
-                    "COMPLETED" -> Pair(MaterialTheme.colorScheme.outline, "Zakończona")
-                    "CANCELLED" -> Pair(MaterialTheme.colorScheme.error, "Anulowana")
-                    "SCHEDULED" -> Pair(Color(0xFFFF9800), "Zaplanowana")
-                    "NO_SHOW" -> Pair(Color(0xFF9C27B0), "Nieobecność")
+                    "CONFIRMED" -> Pair(Color(0xFF4CAF50), stringResource(R.string.status_confirmed))
+                    "COMPLETED" -> Pair(MaterialTheme.colorScheme.outline, stringResource(R.string.status_completed))
+                    "CANCELLED" -> Pair(MaterialTheme.colorScheme.error, stringResource(R.string.status_cancelled))
+                    "SCHEDULED" -> Pair(Color(0xFFFF9800), stringResource(R.string.status_planned))
+                    "NO_SHOW" -> Pair(Color(0xFF9C27B0), stringResource(R.string.status_absence))
                     else -> Pair(MaterialTheme.colorScheme.outline, visit.status)
                 }
                 Surface(shape = RoundedCornerShape(8.dp), color = statusColor.copy(alpha = 0.15f)) {
@@ -291,7 +293,7 @@ fun VisitsScreen(
                     ) {
                         Icon(Icons.Default.Edit, null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Edytuj wizytę")
+                        Text(stringResource(R.string.visits_edit))
                     }
                 }
                 if (canComplete) {
@@ -302,7 +304,7 @@ fun VisitsScreen(
                     ) {
                         Icon(Icons.Default.CheckCircle, null, modifier = Modifier.size(18.dp), tint = Color(0xFF4CAF50))
                         Spacer(Modifier.width(8.dp))
-                        Text("Zakończ wizytę", color = Color(0xFF4CAF50))
+                        Text(stringResource(R.string.visits_complete), color = Color(0xFF4CAF50))
                     }
                 }
                 if (canModify) {
@@ -314,7 +316,7 @@ fun VisitsScreen(
                     ) {
                         Icon(Icons.Default.Cancel, null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Anuluj wizytę")
+                        Text(stringResource(R.string.visits_cancel))
                     }
                 }
             }
@@ -353,8 +355,8 @@ fun VisitsScreen(
         AlertDialog(
             onDismissRequest = { showCancelConfirm = false },
             icon = { Icon(Icons.Default.Cancel, null, tint = MaterialTheme.colorScheme.error) },
-            title = { Text("Anulować wizytę?") },
-            text = { Text("Tej operacji nie można cofnąć. Pacjent otrzyma powiadomienie.") },
+            title = { Text(stringResource(R.string.visits_cancel_title)) },
+            text = { Text(stringResource(R.string.visits_cancel_text)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -368,10 +370,10 @@ fun VisitsScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     shape = RoundedCornerShape(12.dp)
-                ) { Text("Anuluj wizytę") }
+                ) { Text(stringResource(R.string.visits_cancel)) }
             },
             dismissButton = {
-                TextButton(onClick = { showCancelConfirm = false }) { Text("Wróć") }
+                TextButton(onClick = { showCancelConfirm = false }) { Text(stringResource(R.string.visits_back)) }
             }
         )
     }
@@ -381,8 +383,8 @@ fun VisitsScreen(
         AlertDialog(
             onDismissRequest = { showCompleteConfirm = false },
             icon = { Icon(Icons.Default.CheckCircle, null, tint = Color(0xFF4CAF50)) },
-            title = { Text("Zakończyć wizytę?") },
-            text = { Text("Wizyta zostanie oznaczona jako zakończona.") },
+            title = { Text(stringResource(R.string.visits_complete_title)) },
+            text = { Text(stringResource(R.string.visits_complete_text)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -396,10 +398,10 @@ fun VisitsScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
                     shape = RoundedCornerShape(12.dp)
-                ) { Text("Zakończ") }
+                ) { Text(stringResource(R.string.visits_pdf_download)) }
             },
             dismissButton = {
-                TextButton(onClick = { showCompleteConfirm = false }) { Text("Anuluj") }
+                TextButton(onClick = { showCompleteConfirm = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -427,15 +429,15 @@ fun VisitsScreen(
 
         AlertDialog(
             onDismissRequest = { showPdfDialog = false },
-            title = { Text("Zakres raportu PDF") },
+            title = { Text(stringResource(R.string.visits_pdf_range)) },
             text = {
                 Column {
                     OutlinedButton(onClick = { fromDatePicker.show() }, modifier = Modifier.fillMaxWidth()) {
-                        Text("Od: ${pdfFromDate.format(DateTimeFormatter.ISO_LOCAL_DATE)}")
+                        Text(stringResource(R.string.visits_pdf_from, pdfFromDate.format(DateTimeFormatter.ISO_LOCAL_DATE)))
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedButton(onClick = { toDatePicker.show() }, modifier = Modifier.fillMaxWidth()) {
-                        Text("Do: ${pdfToDate.format(DateTimeFormatter.ISO_LOCAL_DATE)}")
+                        Text(stringResource(R.string.visits_pdf_to, pdfToDate.format(DateTimeFormatter.ISO_LOCAL_DATE)))
                     }
                 }
             },
@@ -449,10 +451,10 @@ fun VisitsScreen(
                     } else {
                         viewModel.downloadReport(fromStr, toStr, ctx)
                     }
-                }) { Text("Pobierz") }
+                }) { Text(stringResource(R.string.visits_pdf_download)) }
             },
             dismissButton = {
-                TextButton(onClick = { showPdfDialog = false }) { Text("Anuluj") }
+                TextButton(onClick = { showPdfDialog = false }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
@@ -503,7 +505,7 @@ fun EditAppointmentDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edytuj wizytę", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.visits_edit_title), fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 // Date
@@ -515,19 +517,19 @@ fun EditAppointmentDialog(
                 // Time
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = { startPickerDialog.show() }, modifier = Modifier.weight(1f)) {
-                        Text("Od: ${selectedStartTime.format(DateTimeFormatter.ofPattern("HH:mm"))}")
+                        Text(stringResource(R.string.visits_from, selectedStartTime.format(DateTimeFormatter.ofPattern("HH:mm"))))
                     }
                     OutlinedButton(onClick = { endPickerDialog.show() }, modifier = Modifier.weight(1f)) {
-                        Text("Do: ${selectedEndTime.format(DateTimeFormatter.ofPattern("HH:mm"))}")
+                        Text(stringResource(R.string.visits_to, selectedEndTime.format(DateTimeFormatter.ofPattern("HH:mm"))))
                     }
                 }
                 // Service
                 if (services.isNotEmpty()) {
                     ExposedDropdownMenuBox(expanded = serviceExpanded, onExpandedChange = { serviceExpanded = it }) {
                         OutlinedTextField(
-                            value = services.find { it.id == selectedServiceId }?.name ?: "Wybierz usługę",
+                            value = services.find { it.id == selectedServiceId }?.name ?: stringResource(R.string.visits_select_service),
                             onValueChange = {}, readOnly = true,
-                            label = { Text("Usługa") },
+                            label = { Text(stringResource(R.string.visits_service)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = serviceExpanded) },
                             modifier = Modifier.menuAnchor().fillMaxWidth()
                         )
@@ -542,9 +544,9 @@ fun EditAppointmentDialog(
                 if (rooms.isNotEmpty()) {
                     ExposedDropdownMenuBox(expanded = roomExpanded, onExpandedChange = { roomExpanded = it }) {
                         OutlinedTextField(
-                            value = rooms.find { it.id == selectedRoomId }?.name ?: "Wybierz gabinet",
+                            value = rooms.find { it.id == selectedRoomId }?.name ?: stringResource(R.string.visits_select_room),
                             onValueChange = {}, readOnly = true,
-                            label = { Text("Gabinet") },
+                            label = { Text(stringResource(R.string.visits_room)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = roomExpanded) },
                             modifier = Modifier.menuAnchor().fillMaxWidth()
                         )
@@ -558,7 +560,7 @@ fun EditAppointmentDialog(
                 // Notes
                 OutlinedTextField(
                     value = notes, onValueChange = { notes = it },
-                    label = { Text("Notatki") },
+                    label = { Text(stringResource(R.string.visits_notes)) },
                     modifier = Modifier.fillMaxWidth().height(80.dp),
                     maxLines = 3
                 )
@@ -572,9 +574,9 @@ fun EditAppointmentDialog(
                     onConfirm(startIso, endIso, selectedServiceId, selectedRoomId, notes)
                 },
                 shape = RoundedCornerShape(12.dp)
-            ) { Text("Zapisz") }
+            ) { Text(stringResource(R.string.save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Anuluj") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )
 }
 
@@ -609,12 +611,12 @@ fun UniversalVisitCard(item: VisitWithPatient, services: List<pl.edu.ur.dentflow
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = patient?.let { "${it.firstName} ${it.lastName}" } ?: "Pacjent",
+                    text = patient?.let { "${it.firstName} ${it.lastName}" } ?: stringResource(R.string.visits_patient),
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     text = services.find { it.id == appointment.serviceItemId }?.name
-                        ?: if (appointment.serviceItemId != null) "Usługa ID: ${appointment.serviceItemId}" else "Brak usługi",
+                        ?: if (appointment.serviceItemId != null) stringResource(R.string.visits_service_id, appointment.serviceItemId) else stringResource(R.string.visits_no_service),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray
                 )
@@ -637,7 +639,15 @@ fun CalendarGrid(
     val daysInMonth = currentMonth.lengthOfMonth()
     val firstDayOfMonth = currentMonth.atDay(1).dayOfWeek.value
     val days = (1..daysInMonth).toList()
-    val weekDays = listOf("Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd")
+    val weekDays = listOf(
+        stringResource(R.string.day_mon_short),
+        stringResource(R.string.day_tue_short),
+        stringResource(R.string.day_wed_short),
+        stringResource(R.string.day_thu_short),
+        stringResource(R.string.day_fri_short),
+        stringResource(R.string.day_sat_short),
+        stringResource(R.string.day_sun_short)
+    )
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Row(modifier = Modifier.fillMaxWidth()) {

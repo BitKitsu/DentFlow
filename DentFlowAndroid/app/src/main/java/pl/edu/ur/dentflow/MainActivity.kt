@@ -20,6 +20,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import pl.edu.ur.dentflow.R
 import pl.edu.ur.dentflow.ui.theme.DentFlowAndroidTheme
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -27,16 +28,44 @@ import pl.edu.ur.dentflow.Screens.*
 import pl.edu.ur.dentflow.data.ViewModel.*
 import pl.edu.ur.dentflow.data.remote.AuthViewModel
 import pl.edu.ur.dentflow.di.NetworkModule
+import androidx.compose.ui.res.stringResource
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: android.content.Context) {
+        val prefs = newBase.getSharedPreferences(NetworkModule.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+        val lang = prefs.getString(NetworkModule.LANGUAGE_KEY, null)
+            ?: if (java.util.Locale.getDefault().language == "pl") "pl" else "en"
+        if (prefs.getString(NetworkModule.LANGUAGE_KEY, null) == null) {
+            prefs.edit().putString(NetworkModule.LANGUAGE_KEY, lang).apply()
+        }
+        val config = android.content.res.Configuration(newBase.resources.configuration)
+        config.setLocale(java.util.Locale(lang))
+        val updatedContext = newBase.createConfigurationContext(config)
+        super.attachBaseContext(updatedContext)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             val systemInDark = isSystemInDarkTheme()
-            var isDarkTheme by remember { mutableStateOf(systemInDark) }
+
+            val ctx = androidx.compose.ui.platform.LocalContext.current
+            val startPrefs = ctx.getSharedPreferences(NetworkModule.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+            val themePref = startPrefs.getString(NetworkModule.THEME_KEY, "system") ?: "system"
+
+            var isDarkTheme by remember(systemInDark, themePref) {
+                mutableStateOf(
+                    when (themePref) {
+                        "dark" -> true
+                        "light" -> false
+                        else -> systemInDark
+                    }
+                )
+            }
+            var themeMode by remember { mutableStateOf(themePref) }
 
             DentFlowAndroidTheme(darkTheme = isDarkTheme) {
                 val navController = rememberNavController()
@@ -54,6 +83,12 @@ class MainActivity : ComponentActivity() {
                 }
                 var coreUrl by remember {
                     mutableStateOf(startPrefs.getString(NetworkModule.CORE_URL_KEY, "") ?: "")
+                }
+                var language by remember {
+                    mutableStateOf(
+                        startPrefs.getString(NetworkModule.LANGUAGE_KEY, null)
+                            ?: if (java.util.Locale.getDefault().language == "pl") "pl" else "en"
+                    )
                 }
 
                 Surface(
@@ -85,7 +120,16 @@ class MainActivity : ComponentActivity() {
                     composable("main_dashboard") {
                         MainDashboard(
                             isDarkTheme = isDarkTheme,
-                            onThemeChange = { isDarkTheme = it },
+                            themeMode = themeMode,
+                            onThemeChange = {
+                                themeMode = it
+                                startPrefs.edit().putString(NetworkModule.THEME_KEY, it).apply()
+                                isDarkTheme = when (it) {
+                                    "dark" -> true
+                                    "light" -> false
+                                    else -> systemInDark
+                                }
+                            },
                             navController = navController,
                             tenantViewModel = tenantViewModel,
                             selectedItem = currentDashboardTab,
@@ -99,6 +143,12 @@ class MainActivity : ComponentActivity() {
                             onCoreUrlChange = {
                                 coreUrl = it
                                 startPrefs.edit().putString(NetworkModule.CORE_URL_KEY, it).apply()
+                            },
+                            language = language,
+                            onLanguageChange = {
+                                language = it
+                                startPrefs.edit().putString(NetworkModule.LANGUAGE_KEY, it).apply()
+                                (ctx as? android.app.Activity)?.recreate()
                             }
                         )
                     }
@@ -162,7 +212,16 @@ class MainActivity : ComponentActivity() {
                     composable("settings") {
                         SettingsScreen(
                             isDarkTheme = isDarkTheme,
-                            onThemeChange = { isDarkTheme = it },
+                            themeMode = themeMode,
+                            onThemeChange = {
+                                themeMode = it
+                                startPrefs.edit().putString(NetworkModule.THEME_KEY, it).apply()
+                                isDarkTheme = when (it) {
+                                    "dark" -> true
+                                    "light" -> false
+                                    else -> systemInDark
+                                }
+                            },
                             authUrl = authUrl,
                             coreUrl = coreUrl,
                             onAuthUrlChange = {
@@ -172,6 +231,12 @@ class MainActivity : ComponentActivity() {
                             onCoreUrlChange = {
                                 coreUrl = it
                                 startPrefs.edit().putString(NetworkModule.CORE_URL_KEY, it).apply()
+                            },
+                            language = language,
+                            onLanguageChange = {
+                                language = it
+                                startPrefs.edit().putString(NetworkModule.LANGUAGE_KEY, it).apply()
+                                (ctx as? android.app.Activity)?.recreate()
                             },
                             onBackClick = { navController.popBackStack() }
                         )
@@ -205,7 +270,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainDashboard(
     isDarkTheme: Boolean,
-    onThemeChange: (Boolean) -> Unit,
+    themeMode: String,
+    onThemeChange: (String) -> Unit,
     navController: NavHostController,
     selectedItem: Int,
     onTabChange: (Int) -> Unit,
@@ -213,6 +279,8 @@ fun MainDashboard(
     coreUrl: String,
     onAuthUrlChange: (String) -> Unit,
     onCoreUrlChange: (String) -> Unit,
+    language: String,
+    onLanguageChange: (String) -> Unit,
     staffViewModel: StaffViewModel = hiltViewModel(),
     tenantViewModel: TenantViewModel = hiltViewModel(),
     notificationViewModel: NotificationViewModel = hiltViewModel(),
@@ -244,13 +312,19 @@ fun MainDashboard(
 
     val hasClinic = currentTenant != null && currentTenant.id != 0L
 
+    val tabOffers = stringResource(R.string.tab_offers)
+    val tabClinic = stringResource(R.string.tab_clinic)
+    val tabVisits = stringResource(R.string.tab_visits)
+    val tabNotifications = stringResource(R.string.tab_notifications)
+    val tabAccount = stringResource(R.string.tab_account)
+
     data class NavItem(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector, val tabIndex: Int)
     val navItems = buildList {
-        add(NavItem("Oferty", Icons.Default.LocalOffer, 0))
-        if (isStaff && hasClinic) add(NavItem("Klinika", Icons.Default.Business, 1))
-        add(NavItem("Wizyty", Icons.Default.CalendarMonth, 2))
-        add(NavItem("Powiadomienia", Icons.Default.Notifications, 3))
-        add(NavItem("Konto", Icons.Default.AccountCircle, 4))
+        add(NavItem(tabOffers, Icons.Default.LocalOffer, 0))
+        if (isStaff && hasClinic) add(NavItem(tabClinic, Icons.Default.Business, 1))
+        add(NavItem(tabVisits, Icons.Default.CalendarMonth, 2))
+        add(NavItem(tabNotifications, Icons.Default.Notifications, 3))
+        add(NavItem(tabAccount, Icons.Default.AccountCircle, 4))
     }
 
     LaunchedEffect(selectedItem) {
@@ -340,11 +414,14 @@ fun MainDashboard(
                     } else {
                         SettingsScreen(
                             isDarkTheme = isDarkTheme,
+                            themeMode = themeMode,
                             onThemeChange = onThemeChange,
                             authUrl = authUrl,
                             coreUrl = coreUrl,
                             onAuthUrlChange = onAuthUrlChange,
                             onCoreUrlChange = onCoreUrlChange,
+                            language = language,
+                            onLanguageChange = onLanguageChange,
                             onBackClick = { isShowingSettings = false }
                         )
                     }

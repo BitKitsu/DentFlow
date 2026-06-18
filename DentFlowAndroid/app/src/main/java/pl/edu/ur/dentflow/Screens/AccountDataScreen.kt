@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -32,6 +33,7 @@ import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
+import pl.edu.ur.dentflow.R
 import pl.edu.ur.dentflow.data.ViewModel.FileViewModel
 import pl.edu.ur.dentflow.data.remote.AuthViewModel
 import pl.edu.ur.dentflow.utils.ValidationUtils
@@ -148,10 +150,10 @@ fun AccountDataScreen(
         topBar = {
             @OptIn(ExperimentalMaterial3Api::class)
             TopAppBar(
-                title = { Text("Dane konta", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.account_data_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Wróć")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -186,7 +188,7 @@ fun AccountDataScreen(
                         if (avatarUrl.isNotBlank()) {
                             AsyncImage(
                                 model = avatarUrl,
-                                contentDescription = "Avatar",
+                                contentDescription = stringResource(R.string.account_data_avatar),
                                 modifier = Modifier.fillMaxSize(),
                                 contentScale = ContentScale.Crop
                             )
@@ -210,7 +212,7 @@ fun AccountDataScreen(
                     ) {
                         Icon(
                             Icons.Default.CameraAlt,
-                            contentDescription = "Zmień zdjęcie",
+                            contentDescription = stringResource(R.string.account_data_change_photo),
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onPrimary
                         )
@@ -222,16 +224,16 @@ fun AccountDataScreen(
             }
 
             // Personal data
-            SectionHeader(icon = Icons.Default.Person, title = "Dane osobowe")
+            SectionHeader(icon = Icons.Default.Person, title = stringResource(R.string.account_data_personal))
 
             Row(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = firstName,
                     onValueChange = { firstName = it; profileError = null; profileSuccess = null },
-                    label = { Text("Imię") },
+                    label = { Text(stringResource(R.string.account_data_firstname)) },
                     isError = firstNameError,
                     supportingText = {
-                        if (firstNameError) Text("Min. 2 znaki, tylko litery",
+                        if (firstNameError) Text(stringResource(R.string.account_data_name_error),
                             color = MaterialTheme.colorScheme.error)
                     },
                     modifier = Modifier.weight(1f),
@@ -242,10 +244,10 @@ fun AccountDataScreen(
                 OutlinedTextField(
                     value = lastName,
                     onValueChange = { lastName = it; profileError = null; profileSuccess = null },
-                    label = { Text("Nazwisko") },
+                    label = { Text(stringResource(R.string.account_data_lastname)) },
                     isError = lastNameError,
                     supportingText = {
-                        if (lastNameError) Text("Min. 2 znaki, tylko litery",
+                        if (lastNameError) Text(stringResource(R.string.account_data_name_error),
                             color = MaterialTheme.colorScheme.error)
                     },
                     modifier = Modifier.weight(1f),
@@ -257,11 +259,11 @@ fun AccountDataScreen(
             OutlinedTextField(
                 value = phone,
                 onValueChange = { phone = it; profileError = null; profileSuccess = null },
-                label = { Text("Numer telefonu") },
+                label = { Text(stringResource(R.string.account_data_phone)) },
                 leadingIcon = { Icon(Icons.Default.Phone, null) },
                 isError = phoneError,
                 supportingText = {
-                    if (phoneError) Text("Np. +48 123 456 789", color = MaterialTheme.colorScheme.error)
+                    if (phoneError) Text(stringResource(R.string.account_data_phone_hint), color = MaterialTheme.colorScheme.error)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -272,11 +274,11 @@ fun AccountDataScreen(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it; profileError = null; profileSuccess = null },
-                label = { Text("Adres e-mail") },
+                label = { Text(stringResource(R.string.account_data_email)) },
                 leadingIcon = { Icon(Icons.Default.Email, null) },
                 isError = emailError,
                 supportingText = {
-                    if (emailError) Text("Nieprawidłowy adres e-mail",
+                    if (emailError) Text(stringResource(R.string.account_data_email_error),
                         color = MaterialTheme.colorScheme.error)
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -286,16 +288,16 @@ fun AccountDataScreen(
             )
 
             // Address
-            SectionHeader(icon = Icons.Default.Home, title = "Adres zamieszkania")
+            SectionHeader(icon = Icons.Default.Home, title = stringResource(R.string.account_data_address))
 
             OutlinedTextField(
                 value = addressStreet,
                 onValueChange = { addressStreet = it; profileError = null; profileSuccess = null },
-                label = { Text("Ulica i numer") },
+                label = { Text(stringResource(R.string.account_data_street)) },
                 leadingIcon = { Icon(Icons.Default.Place, null) },
                 isError = streetError,
                 supportingText = {
-                    if (streetError) Text("Min. 3 znaki", color = MaterialTheme.colorScheme.error)
+                    if (streetError) Text(stringResource(R.string.validation_min_3), color = MaterialTheme.colorScheme.error)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -307,10 +309,10 @@ fun AccountDataScreen(
                 OutlinedTextField(
                     value = addressCity,
                     onValueChange = { addressCity = it; profileError = null; profileSuccess = null },
-                    label = { Text("Miasto") },
+                    label = { Text(stringResource(R.string.account_data_city)) },
                     isError = cityError,
                     supportingText = {
-                        if (cityError) Text("Min. 2 znaki", color = MaterialTheme.colorScheme.error)
+                        if (cityError) Text(stringResource(R.string.min_2_chars), color = MaterialTheme.colorScheme.error)
                     },
                     modifier = Modifier.weight(2f),
                     shape = RoundedCornerShape(12.dp),
@@ -347,14 +349,14 @@ fun AccountDataScreen(
                     },
                     label = { 
                         Text(
-                            text = "Kod pocztowy",
+                            text = stringResource(R.string.account_data_zip),
                             maxLines = 1,
                             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                         )
                     },
                     isError = zipError,
                     supportingText = {
-                        if (zipError) Text("00-000", color = MaterialTheme.colorScheme.error)
+                        if (zipError) Text(stringResource(R.string.postal_code_hint), color = MaterialTheme.colorScheme.error)
                     },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
@@ -366,11 +368,11 @@ fun AccountDataScreen(
             OutlinedTextField(
                 value = addressCountry,
                 onValueChange = { addressCountry = it; profileError = null; profileSuccess = null },
-                label = { Text("Kraj") },
+                label = { Text(stringResource(R.string.account_data_country)) },
                 leadingIcon = { Icon(Icons.Default.Flag, null) },
                 isError = countryError,
                 supportingText = {
-                    if (countryError) Text("Min. 2 znaki", color = MaterialTheme.colorScheme.error)
+                    if (countryError) Text(stringResource(R.string.min_2_chars), color = MaterialTheme.colorScheme.error)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -398,7 +400,7 @@ fun AccountDataScreen(
                         addressCity    = addressCity.takeIf    { it.isNotBlank() },
                         addressZip     = addressZip.takeIf     { it.isNotBlank() }?.let { if (it.length == 5) "${it.take(2)}-${it.drop(2)}" else it },
                         addressCountry = addressCountry.takeIf { it.isNotBlank() },
-                        onSuccess = { profileSuccess = "Dane zostały zapisane." },
+                        onSuccess = { profileSuccess = context.getString(R.string.account_data_saved) },
                         onError   = { profileError   = it }
                     )
                 },
@@ -412,19 +414,19 @@ fun AccountDataScreen(
                 } else {
                     Icon(Icons.Default.Save, null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Zapisz dane", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.account_data_save), fontWeight = FontWeight.SemiBold)
                 }
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
             // Password change
-            SectionHeader(icon = Icons.Default.Lock, title = "Zmiana hasła")
+            SectionHeader(icon = Icons.Default.Lock, title = stringResource(R.string.account_data_change_password))
 
             OutlinedTextField(
                 value = currentPassword,
                 onValueChange = { currentPassword = it; passwordError = null; passwordSuccess = null },
-                label = { Text("Obecne hasło") },
+                label = { Text(stringResource(R.string.account_data_current_password)) },
                 leadingIcon = { Icon(Icons.Default.Lock, null) },
                 trailingIcon = {
                     IconButton(onClick = { showCurrent = !showCurrent }) {
@@ -441,7 +443,7 @@ fun AccountDataScreen(
             OutlinedTextField(
                 value = newPassword,
                 onValueChange = { newPassword = it; passwordError = null; passwordSuccess = null },
-                label = { Text("Nowe hasło") },
+                label = { Text(stringResource(R.string.account_data_new_password)) },
                 leadingIcon = { Icon(Icons.Default.LockReset, null) },
                 trailingIcon = {
                     IconButton(onClick = { showNew = !showNew }) {
@@ -455,10 +457,10 @@ fun AccountDataScreen(
                 isError = (newPassword.isNotBlank() && newPassword.length < 8) || sameAsOld,
                 supportingText = {
                     when {
-                        sameAsOld -> Text("Nowe hasło nie może być takie samo jak obecne",
+                        sameAsOld -> Text(stringResource(R.string.account_data_new_password_same),
                             color = MaterialTheme.colorScheme.error)
                         newPassword.isNotBlank() && newPassword.length < 8 ->
-                            Text("Minimum 8 znaków", color = MaterialTheme.colorScheme.error)
+                            Text(stringResource(R.string.account_data_password_min), color = MaterialTheme.colorScheme.error)
                     }
                 },
                 singleLine = true
@@ -467,7 +469,7 @@ fun AccountDataScreen(
             OutlinedTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it; passwordError = null; passwordSuccess = null },
-                label = { Text("Powtórz nowe hasło") },
+                label = { Text(stringResource(R.string.account_data_confirm_password)) },
                 leadingIcon = { Icon(Icons.Default.LockOpen, null) },
                 trailingIcon = {
                     IconButton(onClick = { showConfirm = !showConfirm }) {
@@ -481,7 +483,7 @@ fun AccountDataScreen(
                 isError = confirmPassword.isNotBlank() && !passwordsMatch,
                 supportingText = {
                     if (confirmPassword.isNotBlank() && !passwordsMatch)
-                        Text("Hasła nie są identyczne", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.account_data_passwords_match), color = MaterialTheme.colorScheme.error)
                 },
                 singleLine = true
             )
@@ -501,7 +503,7 @@ fun AccountDataScreen(
                         currentPassword = currentPassword,
                         newPassword     = newPassword,
                         onSuccess = {
-                            passwordSuccess = "Hasło zostało zmienione."
+                            passwordSuccess = context.getString(R.string.account_data_password_changed)
                             currentPassword = ""; newPassword = ""; confirmPassword = ""
                         },
                         onError = { passwordError = it }
@@ -519,7 +521,7 @@ fun AccountDataScreen(
                 } else {
                     Icon(Icons.Default.Key, null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Zmień hasło", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.account_data_change_password_button), fontWeight = FontWeight.SemiBold)
                 }
             }
             Spacer(modifier = Modifier.height(24.dp))

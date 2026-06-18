@@ -1,0 +1,491 @@
+<resources>
+    <string name="app_name">DentFlow</string>
+
+    <!-- ==================== COMMON ==================== -->
+    <string name="back">Back</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="close">Close</string>
+    <string name="add">Add</string>
+    <string name="confirm">Confirm</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="loading">Loading…</string>
+    <string name="error_connection">Server connection error.</string>
+    <string name="min_2_chars">Min. 2 characters</string>
+    <string name="min_3_chars">Min. 3 characters</string>
+    <string name="postal_code_hint">00-000</string>
+
+    <!-- ==================== LOGIN ==================== -->
+    <string name="login_title">DentFlow</string>
+    <string name="login_welcome">Welcome back</string>
+    <string name="login_email_label">Email</string>
+    <string name="login_password_label">Password</string>
+    <string name="login_button">LOG IN</string>
+    <string name="login_no_account">Don\'t have an account?</string>
+    <string name="login_register">Sign up</string>
+    <string name="login_settings_desc">Server settings</string>
+
+    <!-- ==================== REGISTER ==================== -->
+    <string name="register_title">Join DentFlow</string>
+    <string name="register_subtitle">Manage your clinic with ease</string>
+    <string name="register_firstname">First name</string>
+    <string name="register_lastname">Last name</string>
+    <string name="register_name_error">Min. 2 characters, letters only</string>
+    <string name="register_phone">Phone number</string>
+    <string name="register_phone_error">Invalid number (e.g. +48 123 456 789)</string>
+    <string name="register_email">E-mail</string>
+    <string name="register_email_error">Invalid e-mail address (e.g. jan@example.com)</string>
+    <string name="register_street">Street and number</string>
+    <string name="register_city">City</string>
+    <string name="register_zip">Postal code</string>
+    <string name="register_country">Country</string>
+    <string name="register_password">Password (min. 8 characters)</string>
+    <string name="register_password_error">Password must be at least 8 characters</string>
+    <string name="register_confirm_password">Confirm password</string>
+    <string name="register_passwords_match">Passwords must match</string>
+    <string name="register_button">SIGN UP</string>
+    <string name="register_has_account">Already have an account? Log in</string>
+
+    <!-- ==================== HOME ==================== -->
+    <string name="home_search">Search services or specialists…</string>
+    <string name="home_available_specialists">Available specialists:</string>
+    <string name="home_no_doctors">No assigned doctors</string>
+    <string name="home_duration">Duration</string>
+    <string name="home_book">BOOK</string>
+    <string name="home_no_services">No services available</string>
+    <string name="home_auth_error">Authorization or connection error (403)</string>
+    <string name="home_welcome">Welcome to the clinic</string>
+    <string name="home_change_theme">Change theme</string>
+    <string name="price_format">%d zł</string>
+    <string name="price_format_decimal">%.2f zł</string>
+    <string name="duration_format">%d min</string>
+    <string name="service_format">%1$s (%2$d min, %3$s)</string>
+
+    <!-- ==================== VISITS ==================== -->
+    <string name="visits_history">Visit History</string>
+    <string name="visits_calendar">Calendar</string>
+    <string name="visits_download_pdf">Download PDF</string>
+    <string name="visits_empty">No registered visits</string>
+    <string name="visits_details">Visit details</string>
+    <string name="visits_patient">Patient</string>
+    <string name="visits_service_id">Service ID: %d</string>
+    <string name="visits_no_service">No service</string>
+    <string name="status_confirmed">Confirmed</string>
+    <string name="status_completed">Completed</string>
+    <string name="status_cancelled">Cancelled</string>
+    <string name="status_planned">Planned</string>
+    <string name="status_absence">Absence</string>
+    <string name="visits_edit">Edit visit</string>
+    <string name="visits_complete">Complete visit</string>
+    <string name="visits_cancel">Cancel visit</string>
+    <string name="visits_cancel_title">Cancel visit?</string>
+    <string name="visits_cancel_text">This operation cannot be undone. The patient will receive a notification.</string>
+    <string name="visits_complete_title">Complete visit?</string>
+    <string name="visits_complete_text">The visit will be marked as completed.</string>
+    <string name="visits_back">Back</string>
+    <string name="visits_pdf_range">PDF report range</string>
+    <string name="visits_pdf_from">From: %s</string>
+    <string name="visits_pdf_to">To: %s</string>
+    <string name="visits_pdf_download">Download</string>
+    <string name="visits_edit_title">Edit visit</string>
+    <string name="visits_from">From: %s</string>
+    <string name="visits_to">To: %s</string>
+    <string name="visits_select_service">Select service</string>
+    <string name="visits_service">Service</string>
+    <string name="visits_select_room">Select room</string>
+    <string name="visits_room">Room</string>
+    <string name="visits_notes">Notes</string>
+    <string name="day_mon_short">Mon</string>
+    <string name="day_tue_short">Tue</string>
+    <string name="day_wed_short">Wed</string>
+    <string name="day_thu_short">Thu</string>
+    <string name="day_fri_short">Fri</string>
+    <string name="day_sat_short">Sat</string>
+    <string name="day_sun_short">Sun</string>
+
+    <!-- ==================== PATIENT LIST ==================== -->
+    <string name="patients_title">Patient Database</string>
+    <string name="patients_add">Add patient</string>
+    <string name="patients_phone_format">Tel: %s</string>
+    <string name="patients_phone_none">None</string>
+    <string name="patients_history">Visit history</string>
+    <string name="patients_no_gender">Not specified</string>
+    <string name="patients_add_title">Add patient</string>
+    <string name="patients_edit_title">Edit patient</string>
+    <string name="patients_step1_email">1. Check patient email</string>
+    <string name="patients_check">Check</string>
+    <string name="patients_user_exists">User exists - data will be auto-filled</string>
+    <string name="patients_new_user">New patient</string>
+    <string name="patients_personal_data">Personal data</string>
+    <string name="patients_step2_personal">2. Personal data</string>
+    <string name="patients_firstname">First name</string>
+    <string name="patients_firstname_error">First name must be 2-50 characters (letters)</string>
+    <string name="patients_lastname">Last name</string>
+    <string name="patients_lastname_error">Last name must be 2-50 characters (letters)</string>
+    <string name="patients_phone">Phone</string>
+    <string name="patients_phone_error">Phone number is invalid</string>
+    <string name="patients_email_optional">E-mail (optional)</string>
+    <string name="patients_email_error">Email is invalid</string>
+    <string name="patients_step3_medical">3. Medical data</string>
+    <string name="patients_pesel">PESEL number (11 digits)</string>
+    <string name="patients_pesel_error">PESEL must contain exactly 11 digits</string>
+    <string name="patients_gender">Gender</string>
+    <string name="patients_gender_female">Female</string>
+    <string name="patients_gender_male">Male</string>
+    <string name="patients_gender_other">Other</string>
+    <string name="patients_birthdate">Date of birth (optional)</string>
+    <string name="patients_birthdate_pick">Select date of birth</string>
+    <string name="patients_step4_address">4. Address (optional)</string>
+    <string name="patients_street">Street and number</string>
+    <string name="patients_street_error">Street must be at least 3 characters</string>
+    <string name="patients_zip">Postal code</string>
+    <string name="patients_zip_error">Code: 5 digits</string>
+    <string name="patients_city">City</string>
+    <string name="patients_city_error">City must be at least 2 characters</string>
+    <string name="patients_save">Save</string>
+    <string name="patients_visit_history">Visit history</string>
+    <string name="patients_no_history">No visit history</string>
+    <string name="patients_empty">Patient database is empty</string>
+    <string name="patients_profile">Patient profile</string>
+    <string name="patients_pesel_format">PESEL: %s</string>
+
+    <!-- ==================== APPOINTMENT ==================== -->
+    <string name="appointment_step_doctor">Select doctor</string>
+    <string name="appointment_step_date">Select appointment</string>
+    <string name="appointment_step_confirm">Confirmation</string>
+    <string name="appointment_label_doctor">Doctor</string>
+    <string name="appointment_label_date">Appointment</string>
+    <string name="appointment_label_time">Time</string>
+    <string name="appointment_select_doctor">Select the doctor you want to book an appointment with</string>
+    <string name="appointment_doctor_format">dr %1$s %2$s</string>
+    <string name="appointment_available">Available appointment</string>
+    <string name="appointment_unavailable">No availability</string>
+    <string name="appointment_available_hours">Available hours</string>
+    <string name="appointment_no_hours">No available appointments for the selected day</string>
+    <string name="appointment_service_optional">Service (optional)</string>
+    <string name="appointment_select_service">Select service</string>
+    <string name="appointment_no_service">No service</string>
+    <string name="appointment_notes_optional">Notes (optional)</string>
+    <string name="appointment_confirm">CONFIRM BOOKING</string>
+    <string name="appointment_prev_month">Previous month</string>
+    <string name="appointment_next_month">Next month</string>
+
+    <!-- ==================== SCHEDULE ==================== -->
+    <string name="schedule_title">Breaks</string>
+    <string name="schedule_add">Add</string>
+    <string name="schedule_delete_title">Delete break?</string>
+    <string name="schedule_delete_text">The block will be removed.</string>
+    <string name="schedule_empty">No breaks / holidays on this day</string>
+    <string name="schedule_all">All</string>
+    <string name="schedule_unknown">Unknown</string>
+    <string name="schedule_break">Break</string>
+    <string name="schedule_add_title">Add break / holiday</string>
+    <string name="schedule_from">From: %s</string>
+    <string name="schedule_to">To: %s</string>
+    <string name="schedule_reason">Reason (e.g. holiday, break)</string>
+    <string name="schedule_doctor_optional">All (optional)</string>
+    <string name="schedule_doctor">Doctor</string>
+    <string name="schedule_default_reason">Break</string>
+    <string name="day_mon">Mon</string>
+    <string name="day_tue">Tue</string>
+    <string name="day_wed">Wed</string>
+    <string name="day_thu">Thu</string>
+    <string name="day_fri">Fri</string>
+    <string name="day_sat">Sat</string>
+    <string name="day_sun">Sun</string>
+
+    <!-- ==================== ACCOUNT ==================== -->
+    <string name="account_title">User profile</string>
+    <string name="role_owner">Clinic Owner</string>
+    <string name="role_dentist">Dentist</string>
+    <string name="role_receptionist">Receptionist</string>
+    <string name="role_assistant">Assistant</string>
+    <string name="role_patient">Patient</string>
+    <string name="role_staff">Employee</string>
+    <string name="account_your_company">Your Company</string>
+    <string name="account_no_clinic">No clinic assigned</string>
+    <string name="account_no_clinic_desc">Create a business profile to start setting up the calendar and adding staff.</string>
+    <string name="account_create_clinic">CREATE CLINIC</string>
+    <string name="account_no_name">No name</string>
+    <string name="account_no_address">No address</string>
+    <string name="account_manage_clinic">MANAGE CLINIC</string>
+    <string name="account_reports_pdf">PDF REPORTS</string>
+    <string name="account_security">Account and Security</string>
+    <string name="account_settings">App settings</string>
+    <string name="account_data">Account data</string>
+    <string name="account_delete">Delete account</string>
+    <string name="account_delete_title">Delete account</string>
+    <string name="account_delete_text">Are you sure you want to permanently delete your account? This operation cannot be undone.</string>
+    <string name="account_logout">LOG OUT</string>
+
+    <!-- ==================== ACCOUNT DATA ==================== -->
+    <string name="account_data_title">Account data</string>
+    <string name="account_data_avatar">Avatar</string>
+    <string name="account_data_change_photo">Change photo</string>
+    <string name="account_data_personal">Personal data</string>
+    <string name="account_data_firstname">First name</string>
+    <string name="account_data_name_error">Min. 2 characters, letters only</string>
+    <string name="account_data_lastname">Last name</string>
+    <string name="account_data_phone">Phone number</string>
+    <string name="account_data_phone_hint">e.g. +48 123 456 789</string>
+    <string name="account_data_email">E-mail address</string>
+    <string name="account_data_email_error">Invalid e-mail address</string>
+    <string name="account_data_address">Residence address</string>
+    <string name="account_data_street">Street and number</string>
+    <string name="account_data_city">City</string>
+    <string name="account_data_zip">Postal code</string>
+    <string name="account_data_country">Country</string>
+    <string name="account_data_saved">Data has been saved.</string>
+    <string name="account_data_save">Save data</string>
+    <string name="account_data_change_password">Change password</string>
+    <string name="account_data_current_password">Current password</string>
+    <string name="account_data_new_password">New password</string>
+    <string name="account_data_new_password_same">New password cannot be the same as the current one</string>
+    <string name="account_data_password_min">Minimum 8 characters</string>
+    <string name="account_data_confirm_password">Confirm new password</string>
+    <string name="account_data_passwords_match">Passwords do not match</string>
+    <string name="account_data_password_changed">Password has been changed.</string>
+    <string name="account_data_change_password_button">Change password</string>
+
+    <!-- ==================== SETTINGS ==================== -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_dark">Dark mode</string>
+    <string name="settings_theme_light">Light mode</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_servers">Server addresses</string>
+    <string name="settings_api_config">API address configuration</string>
+    <string name="settings_auth_url">Auth server URL</string>
+    <string name="settings_core_url">Core server URL</string>
+    <string name="settings_save_urls">Save addresses</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_polish">Polski</string>
+    <string name="settings_language_english">English</string>
+
+    <!-- ==================== STAFF MANAGEMENT ==================== -->
+    <string name="staff_title">Staff Management</string>
+    <string name="staff_add">Add Employee</string>
+    <string name="staff_step1_email">1. Check employee email</string>
+    <string name="staff_email">Email</string>
+    <string name="staff_check">Check</string>
+    <string name="staff_user_exists">User exists - data will be auto-filled</string>
+    <string name="staff_new_user">New user - an account will be created</string>
+    <string name="staff_step2_personal">2. Personal data</string>
+    <string name="staff_name_hint">2-50 characters (letters)</string>
+    <string name="staff_phone">Phone</string>
+    <string name="staff_phone_error">Phone number is invalid</string>
+    <string name="staff_step3_role">3. Role and professional data</string>
+    <string name="staff_role">Role</string>
+    <string name="staff_bio">Bio / About me</string>
+    <string name="staff_step4_account">4. Login account</string>
+    <string name="staff_temp_password">Temporary password</string>
+    <string name="staff_password_error">Password must be at least 8 characters</string>
+    <string name="staff_add_button">ADD</string>
+    <string name="staff_cancel">CANCEL</string>
+    <string name="staff_edit_title">Edit data</string>
+    <string name="staff_edit_bio">Short Bio / About me</string>
+    <string name="staff_save">SAVE</string>
+    <string name="staff_delete">Delete from clinic</string>
+    <string name="staff_profile">Employee profile</string>
+    <string name="staff_work_hours">Working hours</string>
+    <string name="staff_edit_hours">Edit hours</string>
+    <string name="staff_no_hours">No working hours set</string>
+    <string name="staff_hours_title">Working hours</string>
+    <string name="staff_hours_end_error">End must be later than start</string>
+    <string name="staff_day_off">Day off</string>
+
+    <!-- ==================== STAFF PROFILE ==================== -->
+    <string name="staff_profile_title">Specialist Profile</string>
+    <string name="staff_about">About the specialist</string>
+    <string name="staff_no_info">No additional information about the specialist.</string>
+    <string name="staff_book_visit">Book an appointment</string>
+
+    <!-- ==================== ROOM MANAGEMENT ==================== -->
+    <string name="rooms_title">Room Management</string>
+    <string name="rooms_empty">No rooms. Click + to add.</string>
+    <string name="rooms_no_doctors">No assigned doctors</string>
+    <string name="rooms_toggle_staff">Toggle staff</string>
+    <string name="rooms_edit">Edit room</string>
+    <string name="rooms_delete">Delete room</string>
+    <string name="rooms_assigned_doctors">Assigned doctors:</string>
+    <string name="rooms_add_title">Add Room</string>
+    <string name="rooms_name">Room name</string>
+    <string name="rooms_name_error">Name must be at least 2 characters</string>
+    <string name="rooms_add_button">ADD</string>
+    <string name="rooms_edit_title">Edit Room</string>
+    <string name="rooms_save">SAVE</string>
+
+    <!-- ==================== REPORTS ==================== -->
+    <string name="reports_title">PDF Reports</string>
+    <string name="reports_visit_list">Visit list</string>
+    <string name="reports_visit_list_desc">Report of the visit list within a selected date range. Contains patient, doctor, service, and status details.</string>
+    <string name="reports_room_usage">Room occupancy</string>
+    <string name="reports_room_usage_desc">Room occupancy statistics: daily visits, doctors, top services, absence level.</string>
+    <string name="reports_patient_history">Patient history</string>
+    <string name="reports_patient_history_desc">Complete visit history of the selected patient with contact details and summary.</string>
+    <string name="reports_date_range">Date range:</string>
+    <string name="reports_download">Download PDF</string>
+    <string name="reports_all_rooms">All rooms</string>
+    <string name="reports_room">Room</string>
+    <string name="reports_no_patients">No patients in the room</string>
+    <string name="reports_select_patient">Select patient</string>
+    <string name="reports_patient">Patient</string>
+
+    <!-- ==================== NOTIFICATIONS ==================== -->
+    <string name="notifications_title">Notifications</string>
+    <string name="notifications_refresh">Refresh</string>
+    <string name="notifications_mark_all">Mark all</string>
+    <string name="notifications_all">All (%d)</string>
+    <string name="notifications_unread">Unread (%d)</string>
+    <string name="notifications_retry">Retry</string>
+    <string name="notifications_no_unread">No unread notifications</string>
+    <string name="notifications_empty">No notifications</string>
+    <string name="notification_type_visit">Visit</string>
+    <string name="notification_type_cancelled">Visit cancelled</string>
+    <string name="notification_type_completed">Visit completed</string>
+    <string name="notification_type_confirmed">Visit confirmed</string>
+    <string name="notification_type_absence">Absence</string>
+    <string name="notification_type_reminder_24h">Reminder (24h)</string>
+    <string name="notification_type_reminder_12h">Reminder (12h)</string>
+    <string name="notification_type_system">System</string>
+
+    <!-- ==================== CLINIC APPOINTMENTS ==================== -->
+    <string name="clinic_appointments_title">Clinic visits</string>
+    <string name="clinic_appointments_empty">No visits for this day</string>
+    <string name="clinic_appointments_patient">Patient: %1$s %2$s</string>
+    <string name="clinic_appointments_doctor">Doctor: %1$s %2$s</string>
+    <string name="clinic_appointments_confirm">Confirm</string>
+    <string name="clinic_appointments_complete">Complete</string>
+    <string name="clinic_appointments_cancel">Cancel</string>
+    <string name="clinic_appointments_cancel_title">Cancel visit?</string>
+    <string name="clinic_appointments_cancel_text">This operation is irreversible.</string>
+    <string name="clinic_appointments_cancel_button">Cancel visit</string>
+    <string name="clinic_appointments_leave">Leave</string>
+
+    <!-- ==================== CATALOG ==================== -->
+    <string name="catalog_title">Service Price List</string>
+    <string name="catalog_add">Add service</string>
+    <string name="catalog_empty">No services in the price list</string>
+    <string name="catalog_add_title">Add new service</string>
+    <string name="catalog_edit_title">Edit service</string>
+    <string name="catalog_name">Treatment name</string>
+    <string name="catalog_name_error">Name must be at least 2 characters</string>
+    <string name="catalog_price">Price (zł)</string>
+    <string name="catalog_price_error">Enter a valid price (e.g. 149.50)</string>
+    <string name="catalog_duration">Duration (min)</string>
+    <string name="catalog_duration_error">Duration must be an integer greater than 0</string>
+    <string name="catalog_active">Active service</string>
+
+    <!-- ==================== BUSINESS ==================== -->
+    <string name="business_main_location">Main Location</string>
+    <string name="business_logo_updated">Logo updated</string>
+    <string name="business_my_clinic">My Clinic</string>
+    <string name="business_no_address">No address configured</string>
+    <string name="business_logo">Logo</string>
+    <string name="business_visits">Visits</string>
+    <string name="business_patients">Patients</string>
+    <string name="business_treatments">Treatments</string>
+    <string name="business_management">Management</string>
+    <string name="business_staff">Employees</string>
+    <string name="business_rooms">Rooms</string>
+    <string name="business_clinic_visits">Clinic visits</string>
+    <string name="business_catalog">Service price list</string>
+    <string name="business_schedule">Work schedule</string>
+    <string name="business_reports">PDF Reports</string>
+    <string name="business_edit_data">Edit clinic data</string>
+    <string name="business_delete_title">Delete clinic</string>
+    <string name="business_delete_text">Are you sure you want to permanently delete the clinic? This operation cannot be undone.</string>
+    <string name="business_edit_screen_title">Edit clinic data</string>
+    <string name="business_clinic_data">Clinic data</string>
+    <string name="business_clinic_name">Clinic name</string>
+    <string name="business_location_name">Location name (e.g. Main Office)</string>
+    <string name="business_address">Clinic address</string>
+    <string name="business_saved">Data has been saved.</string>
+    <string name="business_save_data">Save data</string>
+    <string name="business_danger_zone">Danger zone</string>
+    <string name="business_delete_clinic">Delete clinic</string>
+
+    <!-- ==================== CREATE TENANT ==================== -->
+    <string name="tenant_title">Register Clinic</string>
+    <string name="tenant_basic_data">Basic data</string>
+    <string name="tenant_clinic_name">Clinic name</string>
+    <string name="tenant_location_name">Location name (e.g. Main Office)</string>
+    <string name="tenant_location_name_error">Location name must be at least 2 characters</string>
+    <string name="tenant_address">Address</string>
+    <string name="tenant_street">Street and number</string>
+    <string name="tenant_city">City</string>
+    <string name="tenant_zip">Postal code</string>
+    <string name="tenant_country">Country</string>
+    <string name="tenant_create">CREATE AND REGISTER</string>
+    <string name="tenant_main_location">Main Location</string>
+
+    <!-- ==================== MAIN DASHBOARD ==================== -->
+    <string name="tab_offers">Offers</string>
+    <string name="tab_clinic">Clinic</string>
+    <string name="tab_visits">Visits</string>
+    <string name="tab_notifications">Notifications</string>
+    <string name="tab_account">Account</string>
+
+    <!-- ==================== VALIDATION (shared) ==================== -->
+    <string name="validation_name_error">Min. 2 characters, letters only</string>
+    <string name="validation_min_3">Min. 3 characters</string>
+    <string name="validation_min_2">Min. 2 characters</string>
+
+    <!-- ==================== VIEWMODEL ERRORS ==================== -->
+    <string name="error_server_no_token">Error: Server did not send a token.</string>
+    <string name="error_wrong_credentials">Incorrect e-mail or password.</string>
+    <string name="error_forbidden">Access forbidden. Check your clinic configuration.</string>
+    <string name="error_server_internal">Internal server error.</string>
+    <string name="error_auth">Authorization error: %d</string>
+    <string name="error_connection_backend">Connection error. Make sure the backend is running.</string>
+    <string name="error_email_taken">This e-mail address is already registered.</string>
+    <string name="error_invalid_form">Invalid data in form.</string>
+    <string name="error_registration">Registration rejected (Code: %d)</string>
+    <string name="error_network">Network error: No response from server.</string>
+    <string name="error_wrong_current_password">Current password is incorrect.</string>
+    <string name="error_password_min">New password must be at least 8 characters.</string>
+    <string name="error_password_change">Password change error (%d)</string>
+    <string name="error_delete_account">Account deletion error (%d)</string>
+    <string name="error_email_occupied">The e-mail address is already taken.</string>
+    <string name="error_invalid_data">Invalid data. Check the form.</string>
+    <string name="error_session_expired">Session expired. Please log in again.</string>
+    <string name="error_profile_update">Update error (%1$d): %2$s</string>
+    <string name="error_no_permission_visits">No permission to download visits.</string>
+    <string name="error_no_permission_visit_list">No permission to view visit list.</string>
+    <string name="error_no_data_report">No data to generate report</string>
+    <string name="error_connection_server">Server connection error</string>
+    <string name="error_pdf_save">Failed to save file</string>
+    <string name="error_no_permission_staff">No permission to view staff.</string>
+    <string name="error_no_permission_staff_manage">No permission to manage staff.</string>
+    <string name="error_cannot_load_visits">Cannot load visit data. Please try again.</string>
+    <string name="error_cannot_load_data">Failed to load data. Check server connection.</string>
+    <string name="error_slot_taken">Time slot is already taken. Please choose another.</string>
+    <string name="error_bad_booking">Invalid booking data.</string>
+    <string name="error_booking_server">Server error (%d). Please try again.</string>
+    <string name="error_no_internet">No connection to server. Check your internet.</string>
+    <string name="error_no_session">No session data. Please log in again.</string>
+    <string name="error_notifications">Failed to fetch notifications (%d).</string>
+    <string name="error_no_services">No permission to view services.</string>
+    <string name="error_image_too_large">Photo is too large (max 5 MB)</string>
+    <string name="error_file_upload">File upload error (%d)</string>
+    <string name="error_file_connection">Connection error: %s</string>
+    <string name="success_pdf_saved">PDF saved to Downloads</string>
+    <string name="success_data_saved">Data has been saved.</string>
+    <string name="success_password_changed">Password has been changed.</string>
+
+    <!-- ==================== DAY NAMES (for schedule/week views) ==================== -->
+    <string name="day_monday">Monday</string>
+    <string name="day_tuesday">Tuesday</string>
+    <string name="day_wednesday">Wednesday</string>
+    <string name="day_thursday">Thursday</string>
+    <string name="day_friday">Friday</string>
+    <string name="day_saturday">Saturday</string>
+    <string name="day_sunday">Sunday</string>
+
+    <!-- ==================== PLACEHOLDERS ==================== -->
+    <string name="placeholder_dash">-</string>
+    <string name="doctor_format">dr %1$s %2$s</string>
+</resources>

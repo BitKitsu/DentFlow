@@ -1,5 +1,6 @@
 package pl.edu.ur.dentflow.data.ViewModel
 
+import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.compose.runtime.State
@@ -9,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import pl.edu.ur.dentflow.data.remote.ApiService
 import pl.edu.ur.dentflow.data.remote.ServiceCatalogItemDTO
 import pl.edu.ur.dentflow.data.remote.ServiceCatalogRequest
+import pl.edu.ur.dentflow.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -16,7 +18,8 @@ import javax.inject.Inject
 @HiltViewModel
 class CatalogViewModel @Inject constructor(
     private val apiService: ApiService,
-    private val prefs: SharedPreferences
+    private val prefs: SharedPreferences,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _servicesState = mutableStateOf<List<ServiceCatalogItemDTO>>(emptyList())
@@ -49,13 +52,13 @@ class CatalogViewModel @Inject constructor(
                 when {
                     response.isSuccessful -> _servicesState.value = response.body() ?: emptyList()
                     response.code() == 403 -> {
-                        _errorMessage.value = "No permission to view services."
+                        _errorMessage.value = context.getString(R.string.error_no_services)
                         Log.e(TAG, "403 Forbidden: loadServices")
                     }
                     else -> Log.e(TAG, "Error loading services: ${response.code()}")
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "No connection to server."
+                _errorMessage.value = context.getString(R.string.error_connection_server)
                 Log.e(TAG, "Error loading services: ${e.message}")
             } finally {
                 _isLoading.value = false

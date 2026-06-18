@@ -16,12 +16,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import pl.edu.ur.dentflow.R
 import pl.edu.ur.dentflow.data.remote.LoginRequest
 import pl.edu.ur.dentflow.data.remote.*
 
@@ -49,7 +51,7 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(60.dp))
 
             Text(
-                text = "DentFlow",
+                text = stringResource(R.string.login_title),
                 style = MaterialTheme.typography.displayMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.ExtraBold
@@ -61,7 +63,7 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Witaj ponownie",
+                    text = stringResource(R.string.login_welcome),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(bottom = 32.dp)
@@ -70,7 +72,7 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Email") },
+                    label = { Text(stringResource(R.string.login_email_label)) },
                     leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     enabled = !isLoading,
@@ -83,7 +85,7 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("Hasło") },
+                    label = { Text(stringResource(R.string.login_password_label)) },
                     leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -135,7 +137,7 @@ fun LoginScreen(
                         )
                     } else {
                         Text(
-                            text = "ZALOGUJ SIĘ",
+                            text = stringResource(R.string.login_button),
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleMedium
                         )
@@ -145,10 +147,10 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Nie masz konta?", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.login_no_account), style = MaterialTheme.typography.bodyMedium)
                     TextButton(onClick = onRegisterClick, enabled = !isLoading) {
                         Text(
-                            text = "Zarejestruj się",
+                            text = stringResource(R.string.login_register),
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -166,7 +168,7 @@ fun LoginScreen(
         ) {
             Icon(
                 imageVector = Icons.Default.Settings,
-                contentDescription = "Ustawienia serwera",
+                contentDescription = stringResource(R.string.login_settings_desc),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

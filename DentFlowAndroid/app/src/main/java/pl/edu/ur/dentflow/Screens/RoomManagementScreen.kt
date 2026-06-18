@@ -13,9 +13,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import pl.edu.ur.dentflow.R
 import pl.edu.ur.dentflow.data.ViewModel.TenantViewModel
 import pl.edu.ur.dentflow.data.remote.RoomResponse
 import pl.edu.ur.dentflow.data.remote.StaffMemberResponse
@@ -45,7 +47,7 @@ fun RoomManagementScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Zarządzanie Gabinetami", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.rooms_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = { IconButton(onClick = onBackClick) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } },
                 windowInsets = WindowInsets(0, 0, 0, 0)
             )
@@ -67,7 +69,7 @@ fun RoomManagementScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Brak gabinetów. Kliknij + aby dodać.",
+                    text = stringResource(R.string.rooms_empty),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -157,8 +159,9 @@ fun RoomCard(
                     )
                     Text(
                         text = if (assignedStaff.isNotEmpty()) {
-                            assignedStaff.joinToString(", ") { "dr ${it.firstName} ${it.lastName}" }
-                        } else "Brak przypisanych lekarzy",
+                            val fmt = stringResource(R.string.doctor_format)
+                            assignedStaff.joinToString(", ") { String.format(fmt, it.firstName, it.lastName) }
+                        } else stringResource(R.string.rooms_no_doctors),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -166,17 +169,17 @@ fun RoomCard(
                 IconButton(onClick = { expanded = !expanded }) {
                     Icon(
                         if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = "Toggle staff"
+                        contentDescription = stringResource(R.string.rooms_toggle_staff)
                     )
                 }
                 if (isOwner || isReceptionist) {
                     IconButton(onClick = onEdit) {
-                        Icon(Icons.Default.Edit, "Edit room")
+                        Icon(Icons.Default.Edit, stringResource(R.string.rooms_edit))
                     }
                 }
                 if (isOwner) {
                     IconButton(onClick = onDelete) {
-                        Icon(Icons.Default.Delete, "Delete room", tint = MaterialTheme.colorScheme.error)
+                        Icon(Icons.Default.Delete, stringResource(R.string.rooms_delete), tint = MaterialTheme.colorScheme.error)
                     }
                 }
             }
@@ -186,7 +189,7 @@ fun RoomCard(
                 HorizontalDivider()
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Przypisani lekarze:",
+                    text = stringResource(R.string.rooms_assigned_doctors),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -215,7 +218,7 @@ fun RoomCard(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "dr ${staff.firstName} ${staff.lastName}",
+                            text = stringResource(R.string.doctor_format, staff.firstName, staff.lastName),
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -236,17 +239,17 @@ fun CreateRoomDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Dodaj Gabinet", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.rooms_add_title), fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Nazwa gabinetu") },
+                    label = { Text(stringResource(R.string.rooms_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     isError = name.isNotBlank() && !isNameValid,
-                    supportingText = { if (name.isNotBlank() && !isNameValid) Text("Nazwa musi mieć co najmniej 2 znaki") }
+                    supportingText = { if (name.isNotBlank() && !isNameValid) Text(stringResource(R.string.rooms_name_error)) }
                 )
             }
         },
@@ -255,10 +258,10 @@ fun CreateRoomDialog(
                 onClick = { if (name.isNotBlank() && isNameValid) onConfirm(name) },
                 shape = RoundedCornerShape(12.dp),
                 enabled = name.isNotBlank() && isNameValid
-            ) { Text("DODAJ") }
+            ) { Text(stringResource(R.string.rooms_add_button)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("ANULUJ") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.staff_cancel)) }
         }
     )
 }
@@ -275,17 +278,17 @@ fun EditRoomDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edytuj Gabinet", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.rooms_edit_title), fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Nazwa gabinetu") },
+                    label = { Text(stringResource(R.string.rooms_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     isError = name.isNotBlank() && !isNameValid,
-                    supportingText = { if (name.isNotBlank() && !isNameValid) Text("Nazwa musi mieć co najmniej 2 znaki") }
+                    supportingText = { if (name.isNotBlank() && !isNameValid) Text(stringResource(R.string.rooms_name_error)) }
                 )
             }
         },
@@ -294,10 +297,10 @@ fun EditRoomDialog(
                 onClick = { if (name.isNotBlank() && isNameValid) onConfirm(name, room.locationId) },
                 shape = RoundedCornerShape(12.dp),
                 enabled = name.isNotBlank() && isNameValid
-            ) { Text("ZAPISZ") }
+            ) { Text(stringResource(R.string.rooms_save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("ANULUJ") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.staff_cancel)) }
         }
     )
 }

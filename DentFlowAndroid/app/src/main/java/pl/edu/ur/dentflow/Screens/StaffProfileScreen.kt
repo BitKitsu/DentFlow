@@ -12,9 +12,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import pl.edu.ur.dentflow.R
 import pl.edu.ur.dentflow.data.remote.StaffMemberResponse
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,10 +29,10 @@ fun StaffProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Profil Specjalisty", fontWeight = FontWeight.SemiBold) },
+                title = { Text(stringResource(R.string.staff_profile_title), fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Wróć")
+                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.visits_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -84,10 +86,10 @@ fun StaffProfileScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("O specjaliście", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    Text(stringResource(R.string.staff_about), fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = staff.bio?.takeIf { it.isNotBlank() } ?: "Brak dodatkowych informacji o specjaliście.",
+                        text = staff.bio?.takeIf { it.isNotBlank() } ?: stringResource(R.string.staff_no_info),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -103,7 +105,7 @@ fun StaffProfileScreen(
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Text("Zarezerwuj wizytę", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.staff_book_visit), fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
     }

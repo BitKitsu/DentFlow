@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -30,6 +31,7 @@ import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
 import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
+import pl.edu.ur.dentflow.R
 import pl.edu.ur.dentflow.data.ViewModel.FileViewModel
 import pl.edu.ur.dentflow.data.ViewModel.TenantViewModel
 import pl.edu.ur.dentflow.data.remote.AuthViewModel
@@ -100,7 +102,7 @@ fun AccountScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Profil użytkownika",
+            text = stringResource(R.string.account_title),
             style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold
@@ -176,12 +178,12 @@ fun AccountScreen(
         )
         Text(
             text = when (userRole) {
-                "OWNER" -> "Właściciel Kliniki"
-                "DENTIST" -> "Dentysta"
-                "RECEPTIONIST" -> "Recepcjonista"
-                "ASSISTANT" -> "Asystent"
-                "PATIENT" -> "Pacjent"
-                else -> "Pracownik"
+                "OWNER" -> stringResource(R.string.role_owner)
+                "DENTIST" -> stringResource(R.string.role_dentist)
+                "RECEPTIONIST" -> stringResource(R.string.role_receptionist)
+                "ASSISTANT" -> stringResource(R.string.role_assistant)
+                "PATIENT" -> stringResource(R.string.role_patient)
+                else -> stringResource(R.string.role_staff)
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.primary
@@ -191,7 +193,7 @@ fun AccountScreen(
 
         // Clinic
         Text(
-            text = "Twoja Firma",
+            text = stringResource(R.string.account_your_company),
             modifier = Modifier.fillMaxWidth(),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary
@@ -205,12 +207,12 @@ fun AccountScreen(
                 if (tenantData == null || tenantData?.id == 0L) {
                     // Creating new clinic
                     Text(
-                        "Brak przypisanej kliniki",
+                        stringResource(R.string.account_no_clinic),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        "Utwórz profil firmy, aby rozpocząć konfigurację kalendarza i dodawanie personelu.",
+                        stringResource(R.string.account_no_clinic_desc),
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(top = 4.dp, bottom = 16.dp)
                     )
@@ -222,7 +224,7 @@ fun AccountScreen(
                     ) {
                         Icon(Icons.Default.AddBusiness, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("UTWÓRZ KLINIKĘ")
+                        Text(stringResource(R.string.account_create_clinic))
                     }
                 } else {
                     // Managing existing clinic
@@ -248,8 +250,8 @@ fun AccountScreen(
                         }
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
-                            val businessName = tenantData?.name ?: "Brak nazwy"
-                            val cityName = tenantData?.locations?.firstOrNull()?.addressCity ?: "Brak adresu"
+                            val businessName = tenantData?.name ?: stringResource(R.string.account_no_name)
+                            val cityName = tenantData?.locations?.firstOrNull()?.addressCity ?: stringResource(R.string.account_no_address)
 
                             Text(businessName, fontWeight = FontWeight.Bold)
                             Text(cityName, style = MaterialTheme.typography.bodySmall)
@@ -267,7 +269,7 @@ fun AccountScreen(
                         ) {
                             Icon(Icons.Default.Business, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("ZARZĄDZAJ KLINIKĄ")
+                            Text(stringResource(R.string.account_manage_clinic))
                         }
                     }
 
@@ -280,7 +282,7 @@ fun AccountScreen(
                         ) {
                             Icon(Icons.Default.PictureAsPdf, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("RAPORTY PDF")
+                            Text(stringResource(R.string.account_reports_pdf))
                         }
                     }
                 }
@@ -290,14 +292,14 @@ fun AccountScreen(
 
         // Account
         Text(
-            text = "Konto i Bezpieczeństwo",
+            text = stringResource(R.string.account_security),
             modifier = Modifier.fillMaxWidth(),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary
         )
 
         AccountMenuItem(
-            title = "Ustawienia aplikacji",
+            title = stringResource(R.string.account_settings),
             icon = Icons.Default.Settings,
             onClick = onSettingsClick
         )
@@ -305,13 +307,13 @@ fun AccountScreen(
         var showDeleteDialog by remember { mutableStateOf(false) }
 
         AccountMenuItem(
-            title = "Dane konta",
+            title = stringResource(R.string.account_data),
             icon = Icons.Default.ManageAccounts,
             onClick = onAccountDataClick
         )
         
         AccountMenuItem(
-            title = "Usuń konto",
+            title = stringResource(R.string.account_delete),
             icon = Icons.Default.DeleteForever,
             onClick = { showDeleteDialog = true }
         )
@@ -319,8 +321,8 @@ fun AccountScreen(
         if (showDeleteDialog) {
             AlertDialog(
                 onDismissRequest = { showDeleteDialog = false },
-                title = { Text("Usuń konto") },
-                text = { Text("Czy na pewno chcesz bezpowrotnie usunąć swoje konto? Tej operacji nie można cofnąć.") },
+                title = { Text(stringResource(R.string.account_delete_title)) },
+                text = { Text(stringResource(R.string.account_delete_text)) },
                 confirmButton = {
                     TextButton(
                         onClick = {
@@ -336,12 +338,12 @@ fun AccountScreen(
                             )
                         }
                     ) {
-                        Text("Usuń", color = MaterialTheme.colorScheme.error)
+                        Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error)
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showDeleteDialog = false }) {
-                        Text("Anuluj")
+                        Text(stringResource(R.string.cancel))
                     }
                 }
             )
@@ -364,7 +366,7 @@ fun AccountScreen(
         ) {
             Icon(Icons.Default.Logout, contentDescription = null, tint = Color.White)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("WYLOGUJ SIĘ", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.account_logout), fontWeight = FontWeight.Bold)
         }
     }
 }

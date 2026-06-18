@@ -21,6 +21,8 @@ import pl.edu.ur.dentflow.data.ViewModel.ReportsViewModel
 import pl.edu.ur.dentflow.data.ViewModel.VisitViewModel
 import pl.edu.ur.dentflow.data.remote.PatientResponse
 import pl.edu.ur.dentflow.data.remote.RoomResponse
+import pl.edu.ur.dentflow.R
+import androidx.compose.ui.res.stringResource
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -42,7 +44,7 @@ fun ReportsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Raporty PDF", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.reports_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
@@ -62,16 +64,16 @@ fun ReportsScreen(
         ) {
             ReportCard(
                 icon = Icons.Default.PictureAsPdf,
-                title = "Lista wizyt",
-                description = "Raport listy wizyt w wybranym zakresie dat. Zawiera szczegóły pacjenta, lekarza, usługi i statusu."
+                title = stringResource(R.string.reports_visit_list),
+                description = stringResource(R.string.reports_visit_list_desc)
             ) {
                 ReportAppointmentList(visitViewModel = visitViewModel)
             }
 
             ReportCard(
                 icon = Icons.Default.BarChart,
-                title = "Obłożenie gabinetów",
-                description = "Statystyki obłożenia gabinetów: wizyty dzienne, lekarze, top usługi, poziom absencji."
+                title = stringResource(R.string.reports_room_usage),
+                description = stringResource(R.string.reports_room_usage_desc)
             ) {
                 ReportRoomOccupancy(
                     visitViewModel = visitViewModel,
@@ -81,8 +83,8 @@ fun ReportsScreen(
 
             ReportCard(
                 icon = Icons.Default.Person,
-                title = "Historia pacjenta",
-                description = "Pełna historia wizyt wybranego pacjenta z danymi kontaktowymi i podsumowaniem."
+                title = stringResource(R.string.reports_patient_history),
+                description = stringResource(R.string.reports_patient_history_desc)
             ) {
                 ReportPatientHistory(
                     visitViewModel = visitViewModel,
@@ -146,7 +148,7 @@ private fun ReportAppointmentList(visitViewModel: VisitViewModel) {
         toDate = LocalDate.of(y, m + 1, d)
     }, toDate.year, toDate.monthValue - 1, toDate.dayOfMonth)
 
-    Text("Zakres dat:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(stringResource(R.string.reports_date_range), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(modifier = Modifier.height(4.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(onClick = { fromPicker.show() }, modifier = Modifier.weight(1f)) {
@@ -174,7 +176,7 @@ private fun ReportAppointmentList(visitViewModel: VisitViewModel) {
     ) {
         Icon(Icons.Default.Download, null)
         Spacer(modifier = Modifier.width(8.dp))
-        Text("Pobierz PDF")
+        Text(stringResource(R.string.reports_download))
     }
 }
 
@@ -198,7 +200,7 @@ private fun ReportRoomOccupancy(
         toDate = LocalDate.of(y, m + 1, d)
     }, toDate.year, toDate.monthValue - 1, toDate.dayOfMonth)
 
-    Text("Zakres dat:", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(stringResource(R.string.reports_date_range), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(modifier = Modifier.height(4.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(onClick = { fromPicker.show() }, modifier = Modifier.weight(1f)) {
@@ -216,17 +218,17 @@ private fun ReportRoomOccupancy(
     Spacer(modifier = Modifier.height(8.dp))
     ExposedDropdownMenuBox(expanded = roomExpanded, onExpandedChange = { roomExpanded = it }) {
         OutlinedTextField(
-            value = rooms.find { it.id == selectedRoomId }?.name ?: "Wszystkie gabinety",
+            value = rooms.find { it.id == selectedRoomId }?.name ?: stringResource(R.string.reports_all_rooms),
             onValueChange = {},
             readOnly = true,
-            label = { Text("Gabinet") },
+            label = { Text(stringResource(R.string.reports_room)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(roomExpanded) },
             modifier = Modifier.menuAnchor().fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
         )
         ExposedDropdownMenu(expanded = roomExpanded, onDismissRequest = { roomExpanded = false }) {
             DropdownMenuItem(
-                text = { Text("Wszystkie gabinety") },
+                text = { Text(stringResource(R.string.reports_all_rooms)) },
                 onClick = { selectedRoomId = null; roomExpanded = false }
             )
             rooms.forEach { room ->
@@ -253,7 +255,7 @@ private fun ReportRoomOccupancy(
     ) {
         Icon(Icons.Default.Download, null)
         Spacer(modifier = Modifier.width(8.dp))
-        Text("Pobierz PDF")
+        Text(stringResource(R.string.reports_download))
     }
 }
 
@@ -274,17 +276,17 @@ private fun ReportPatientHistory(
     }
 
     if (patients.isEmpty()) {
-        Text("Brak pacjentów w gabinecie", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        Text(stringResource(R.string.reports_no_patients), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         return
     }
 
     ExposedDropdownMenuBox(expanded = patientExpanded, onExpandedChange = { patientExpanded = it }) {
         OutlinedTextField(
             value = patients.find { it.id == selectedPatientId }?.let { "${it.firstName} ${it.lastName}" }
-                ?: "Wybierz pacjenta",
+                ?: stringResource(R.string.reports_select_patient),
             onValueChange = {},
             readOnly = true,
-            label = { Text("Pacjent") },
+            label = { Text(stringResource(R.string.reports_patient)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(patientExpanded) },
             modifier = Modifier.menuAnchor().fillMaxWidth(),
             shape = RoundedCornerShape(12.dp)
@@ -312,6 +314,6 @@ private fun ReportPatientHistory(
     ) {
         Icon(Icons.Default.Download, null)
         Spacer(modifier = Modifier.width(8.dp))
-        Text("Pobierz PDF")
+        Text(stringResource(R.string.reports_download))
     }
 }

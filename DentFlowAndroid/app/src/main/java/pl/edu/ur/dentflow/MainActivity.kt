@@ -26,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import pl.edu.ur.dentflow.Screens.*
 import pl.edu.ur.dentflow.data.ViewModel.*
 import pl.edu.ur.dentflow.data.remote.AuthViewModel
+import pl.edu.ur.dentflow.di.NetworkModule
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -48,6 +49,13 @@ class MainActivity : ComponentActivity() {
                 val savedToken = startPrefs.getString("jwt_token", null)
                 val startDestination = if (!savedToken.isNullOrBlank()) "main_dashboard" else "login"
 
+                var authUrl by remember {
+                    mutableStateOf(startPrefs.getString(NetworkModule.AUTH_URL_KEY, "") ?: "")
+                }
+                var coreUrl by remember {
+                    mutableStateOf(startPrefs.getString(NetworkModule.CORE_URL_KEY, "") ?: "")
+                }
+
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -61,14 +69,16 @@ class MainActivity : ComponentActivity() {
                                     popUpTo("login") { inclusive = true }
                                 }
                             },
-                            onRegisterClick = { navController.navigate("register") }
+                            onRegisterClick = { navController.navigate("register") },
+                            onSettingsClick = { navController.navigate("settings") }
                         )
                     }
 
                     composable("register") {
                         RegisterScreen(
                             onRegisterSuccess = { navController.navigate("login") },
-                            onBackToLogin = { navController.popBackStack() }
+                            onBackToLogin = { navController.popBackStack() },
+                            onSettingsClick = { navController.navigate("settings") }
                         )
                     }
 
@@ -79,7 +89,17 @@ class MainActivity : ComponentActivity() {
                             navController = navController,
                             tenantViewModel = tenantViewModel,
                             selectedItem = currentDashboardTab,
-                            onTabChange = { currentDashboardTab = it }
+                            onTabChange = { currentDashboardTab = it },
+                            authUrl = authUrl,
+                            coreUrl = coreUrl,
+                            onAuthUrlChange = {
+                                authUrl = it
+                                startPrefs.edit().putString(NetworkModule.AUTH_URL_KEY, it).apply()
+                            },
+                            onCoreUrlChange = {
+                                coreUrl = it
+                                startPrefs.edit().putString(NetworkModule.CORE_URL_KEY, it).apply()
+                            }
                         )
                     }
 
@@ -143,6 +163,16 @@ class MainActivity : ComponentActivity() {
                         SettingsScreen(
                             isDarkTheme = isDarkTheme,
                             onThemeChange = { isDarkTheme = it },
+                            authUrl = authUrl,
+                            coreUrl = coreUrl,
+                            onAuthUrlChange = {
+                                authUrl = it
+                                startPrefs.edit().putString(NetworkModule.AUTH_URL_KEY, it).apply()
+                            },
+                            onCoreUrlChange = {
+                                coreUrl = it
+                                startPrefs.edit().putString(NetworkModule.CORE_URL_KEY, it).apply()
+                            },
                             onBackClick = { navController.popBackStack() }
                         )
                     }
@@ -179,6 +209,10 @@ fun MainDashboard(
     navController: NavHostController,
     selectedItem: Int,
     onTabChange: (Int) -> Unit,
+    authUrl: String,
+    coreUrl: String,
+    onAuthUrlChange: (String) -> Unit,
+    onCoreUrlChange: (String) -> Unit,
     staffViewModel: StaffViewModel = hiltViewModel(),
     tenantViewModel: TenantViewModel = hiltViewModel(),
     notificationViewModel: NotificationViewModel = hiltViewModel(),
@@ -307,6 +341,10 @@ fun MainDashboard(
                         SettingsScreen(
                             isDarkTheme = isDarkTheme,
                             onThemeChange = onThemeChange,
+                            authUrl = authUrl,
+                            coreUrl = coreUrl,
+                            onAuthUrlChange = onAuthUrlChange,
+                            onCoreUrlChange = onCoreUrlChange,
                             onBackClick = { isShowingSettings = false }
                         )
                     }

@@ -1,3 +1,490 @@
 <resources>
-    <string name="app_name">DentFlow-Android</string>
+    <string name="app_name">DentFlow</string>
+
+    <!-- ==================== COMMON ==================== -->
+    <string name="back">Powrót</string>
+    <string name="save">Zapisz</string>
+    <string name="cancel">Anuluj</string>
+    <string name="delete">Usuń</string>
+    <string name="edit">Edytuj</string>
+    <string name="close">Zamknij</string>
+    <string name="add">Dodaj</string>
+    <string name="confirm">Potwierdź</string>
+    <string name="yes">Tak</string>
+    <string name="no">Nie</string>
+    <string name="loading">Ładowanie…</string>
+    <string name="error_connection">Błąd połączenia z serwerem.</string>
+    <string name="min_2_chars">Min. 2 znaki</string>
+    <string name="min_3_chars">Min. 3 znaki</string>
+    <string name="postal_code_hint">00-000</string>
+
+    <!-- ==================== LOGIN ==================== -->
+    <string name="login_title">DentFlow</string>
+    <string name="login_welcome">Witaj ponownie</string>
+    <string name="login_email_label">Email</string>
+    <string name="login_password_label">Hasło</string>
+    <string name="login_button">ZALOGUJ SIĘ</string>
+    <string name="login_no_account">Nie masz konta?</string>
+    <string name="login_register">Zarejestruj się</string>
+    <string name="login_settings_desc">Ustawienia serwera</string>
+
+    <!-- ==================== REGISTER ==================== -->
+    <string name="register_title">Dołącz do DentFlow</string>
+    <string name="register_subtitle">Zarządzaj swoją kliniką z łatwością</string>
+    <string name="register_firstname">Imię</string>
+    <string name="register_lastname">Nazwisko</string>
+    <string name="register_name_error">Min. 2 znaki, tylko litery</string>
+    <string name="register_phone">Numer telefonu</string>
+    <string name="register_phone_error">Nieprawidłowy numer (np. +48 123 456 789)</string>
+    <string name="register_email">E-mail</string>
+    <string name="register_email_error">Nieprawidłowy adres e-mail (np. jan@example.com)</string>
+    <string name="register_street">Ulica i numer</string>
+    <string name="register_city">Miasto</string>
+    <string name="register_zip">Kod pocztowy</string>
+    <string name="register_country">Kraj</string>
+    <string name="register_password">Hasło (min. 8 znaków)</string>
+    <string name="register_password_error">Hasło musi mieć co najmniej 8 znaków</string>
+    <string name="register_confirm_password">Powtórz hasło</string>
+    <string name="register_passwords_match">Hasła muszą być identyczne</string>
+    <string name="register_button">ZAREJESTRUJ SIĘ</string>
+    <string name="register_has_account">Masz już konto? Zaloguj się</string>
+
+    <!-- ==================== HOME ==================== -->
+    <string name="home_search">Szukaj usług lub specjalisty…</string>
+    <string name="home_available_specialists">Dostępni specjaliści:</string>
+    <string name="home_no_doctors">Brak przypisanych lekarzy</string>
+    <string name="home_duration">Czas trwania</string>
+    <string name="home_book">ZAREZERWUJ</string>
+    <string name="home_no_services">Brak dostępnych usług</string>
+    <string name="home_auth_error">Błąd autoryzacji lub połączenia (403)</string>
+    <string name="home_welcome">Witaj w klinice</string>
+    <string name="home_change_theme">Zmień motyw</string>
+    <string name="price_format">%d zł</string>
+    <string name="price_format_decimal">%.2f zł</string>
+    <string name="duration_format">%d min</string>
+    <string name="service_format">%1$s (%2$d min, %3$s)</string>
+
+    <!-- ==================== VISITS ==================== -->
+    <string name="visits_history">Historia Wizyt</string>
+    <string name="visits_calendar">Kalendarz</string>
+    <string name="visits_download_pdf">Pobierz PDF</string>
+    <string name="visits_empty">Brak zarejestrowanych wizyt</string>
+    <string name="visits_details">Szczegóły wizyty</string>
+    <string name="visits_patient">Pacjent</string>
+    <string name="visits_service_id">Usługa ID: %d</string>
+    <string name="visits_no_service">Brak usługi</string>
+    <string name="status_confirmed">Potwierdzona</string>
+    <string name="status_completed">Zakończona</string>
+    <string name="status_cancelled">Anulowana</string>
+    <string name="status_planned">Zaplanowana</string>
+    <string name="status_absence">Nieobecność</string>
+    <string name="visits_edit">Edytuj wizytę</string>
+    <string name="visits_complete">Zakończ wizytę</string>
+    <string name="visits_cancel">Anuluj wizytę</string>
+    <string name="visits_cancel_title">Anulować wizytę?</string>
+    <string name="visits_cancel_text">Tej operacji nie można cofnąć. Pacjent otrzyma powiadomienie.</string>
+    <string name="visits_complete_title">Zakończyć wizytę?</string>
+    <string name="visits_complete_text">Wizyta zostanie oznaczona jako zakończona.</string>
+    <string name="visits_back">Wróć</string>
+    <string name="visits_pdf_range">Zakres raportu PDF</string>
+    <string name="visits_pdf_from">Od: %s</string>
+    <string name="visits_pdf_to">Do: %s</string>
+    <string name="visits_pdf_download">Pobierz</string>
+    <string name="visits_edit_title">Edytuj wizytę</string>
+    <string name="visits_from">Od: %s</string>
+    <string name="visits_to">Do: %s</string>
+    <string name="visits_select_service">Wybierz usługę</string>
+    <string name="visits_service">Usługa</string>
+    <string name="visits_select_room">Wybierz gabinet</string>
+    <string name="visits_room">Gabinet</string>
+    <string name="visits_notes">Notatki</string>
+    <string name="day_mon_short">Pn</string>
+    <string name="day_tue_short">Wt</string>
+    <string name="day_wed_short">Śr</string>
+    <string name="day_thu_short">Cz</string>
+    <string name="day_fri_short">Pt</string>
+    <string name="day_sat_short">Sb</string>
+    <string name="day_sun_short">Nd</string>
+
+    <!-- ==================== PATIENT LIST ==================== -->
+    <string name="patients_title">Baza Pacjentów</string>
+    <string name="patients_add">Dodaj pacjenta</string>
+    <string name="patients_phone_format">Tel: %s</string>
+    <string name="patients_phone_none">Brak</string>
+    <string name="patients_history">Historia wizyt</string>
+    <string name="patients_no_gender">Nie podano</string>
+    <string name="patients_add_title">Dodaj pacjenta</string>
+    <string name="patients_edit_title">Edytuj pacjenta</string>
+    <string name="patients_step1_email">1. Sprawdź email pacjenta</string>
+    <string name="patients_check">Sprawdź</string>
+    <string name="patients_user_exists">Użytkownik istnieje - dane zostaną automatycznie uzupełnione</string>
+    <string name="patients_new_user">Nowy pacjent</string>
+    <string name="patients_personal_data">Dane osobowe</string>
+    <string name="patients_step2_personal">2. Dane osobowe</string>
+    <string name="patients_firstname">Imię</string>
+    <string name="patients_firstname_error">Imię musi mieć 2-50 znaków (litery)</string>
+    <string name="patients_lastname">Nazwisko</string>
+    <string name="patients_lastname_error">Nazwisko musi mieć 2-50 znaków (litery)</string>
+    <string name="patients_phone">Telefon</string>
+    <string name="patients_phone_error">Nr telefonu jest nieprawidłowy</string>
+    <string name="patients_email_optional">E-mail (opcjonalny)</string>
+    <string name="patients_email_error">Email jest nieprawidłowy</string>
+    <string name="patients_step3_medical">3. Dane medyczne</string>
+    <string name="patients_pesel">Numer PESEL (11 cyfr)</string>
+    <string name="patients_pesel_error">PESEL musi zawierać dokładnie 11 cyfr</string>
+    <string name="patients_gender">Płeć</string>
+    <string name="patients_gender_female">Kobieta</string>
+    <string name="patients_gender_male">Mężczyzna</string>
+    <string name="patients_gender_other">Inna</string>
+    <string name="patients_birthdate">Data urodzenia (opcjonalna)</string>
+    <string name="patients_birthdate_pick">Wybierz datę urodzenia</string>
+    <string name="patients_step4_address">4. Adres (opcjonalny)</string>
+    <string name="patients_street">Ulica i numer</string>
+    <string name="patients_street_error">Ulica musi mieć co najmniej 3 znaki</string>
+    <string name="patients_zip">Kod pocztowy</string>
+    <string name="patients_zip_error">Kod: 5 cyfr</string>
+    <string name="patients_city">Miasto</string>
+    <string name="patients_city_error">Miasto musi mieć co najmniej 2 znaki</string>
+    <string name="patients_save">Zapisz</string>
+    <string name="patients_visit_history">Historia wizyt</string>
+    <string name="patients_no_history">Brak historii wizyt</string>
+    <string name="patients_empty">Baza pacjentów jest pusta</string>
+    <string name="patients_profile">Profil pacjenta</string>
+    <string name="patients_pesel_format">PESEL: %s</string>
+
+    <!-- ==================== APPOINTMENT ==================== -->
+    <string name="appointment_step_doctor">Wybierz lekarza</string>
+    <string name="appointment_step_date">Wybierz termin</string>
+    <string name="appointment_step_confirm">Potwierdzenie</string>
+    <string name="appointment_label_doctor">Lekarz</string>
+    <string name="appointment_label_date">Termin</string>
+    <string name="appointment_label_time">Godzina</string>
+    <string name="appointment_select_doctor">Wybierz lekarza, u którego chcesz umówić wizytę</string>
+    <string name="appointment_doctor_format">dr %1$s %2$s</string>
+    <string name="appointment_available">Dostępny termin</string>
+    <string name="appointment_unavailable">Brak dostępności</string>
+    <string name="appointment_available_hours">Dostępne godziny</string>
+    <string name="appointment_no_hours">Brak dostępnych terminów na wybrany dzień</string>
+    <string name="appointment_service_optional">Usługa (opcjonalne)</string>
+    <string name="appointment_select_service">Wybierz usługę</string>
+    <string name="appointment_no_service">Brak usługi</string>
+    <string name="appointment_notes_optional">Notatki (opcjonalne)</string>
+    <string name="appointment_confirm">POTWIERDŹ REZERWACJĘ</string>
+    <string name="appointment_prev_month">Previous month</string>
+    <string name="appointment_next_month">Next month</string>
+
+    <!-- ==================== SCHEDULE ==================== -->
+    <string name="schedule_title">Przerwy</string>
+    <string name="schedule_add">Dodaj</string>
+    <string name="schedule_delete_title">Usunąć przerwę?</string>
+    <string name="schedule_delete_text">Blokada zostanie usunięta.</string>
+    <string name="schedule_empty">Brak przerw / urlopów na ten dzień</string>
+    <string name="schedule_all">Wszyscy</string>
+    <string name="schedule_unknown">Nieznany</string>
+    <string name="schedule_break">Przerwa</string>
+    <string name="schedule_add_title">Dodaj przerwę / urlop</string>
+    <string name="schedule_from">Od: %s</string>
+    <string name="schedule_to">Do: %s</string>
+    <string name="schedule_reason">Powód (np. urlop, przerwa)</string>
+    <string name="schedule_doctor_optional">Wszyscy (opcjonalnie)</string>
+    <string name="schedule_doctor">Lekarz</string>
+    <string name="schedule_default_reason">Przerwa</string>
+    <string name="day_mon">Pon</string>
+    <string name="day_tue">Wt</string>
+    <string name="day_wed">Śr</string>
+    <string name="day_thu">Czw</string>
+    <string name="day_fri">Pt</string>
+    <string name="day_sat">Sob</string>
+    <string name="day_sun">Ndz</string>
+
+    <!-- ==================== ACCOUNT ==================== -->
+    <string name="account_title">Profil użytkownika</string>
+    <string name="role_owner">Właściciel Kliniki</string>
+    <string name="role_dentist">Dentysta</string>
+    <string name="role_receptionist">Recepcjonista</string>
+    <string name="role_assistant">Asystent</string>
+    <string name="role_patient">Pacjent</string>
+    <string name="role_staff">Pracownik</string>
+    <string name="account_your_company">Twoja Firma</string>
+    <string name="account_no_clinic">Brak przypisanej kliniki</string>
+    <string name="account_no_clinic_desc">Utwórz profil firmy, aby rozpocząć konfigurację kalendarza i dodawanie personelu.</string>
+    <string name="account_create_clinic">UTWÓRZ KLINIKĘ</string>
+    <string name="account_no_name">Brak nazwy</string>
+    <string name="account_no_address">Brak adresu</string>
+    <string name="account_manage_clinic">ZARZĄDZAJ KLINIKĄ</string>
+    <string name="account_reports_pdf">RAPORTY PDF</string>
+    <string name="account_security">Konto i Bezpieczeństwo</string>
+    <string name="account_settings">Ustawienia aplikacji</string>
+    <string name="account_data">Dane konta</string>
+    <string name="account_delete">Usuń konto</string>
+    <string name="account_delete_title">Usuń konto</string>
+    <string name="account_delete_text">Czy na pewno chcesz bezpowrotnie usunąć swoje konto? Tej operacji nie można cofnąć.</string>
+    <string name="account_logout">WYLOGUJ SIĘ</string>
+
+    <!-- ==================== ACCOUNT DATA ==================== -->
+    <string name="account_data_title">Dane konta</string>
+    <string name="account_data_avatar">Avatar</string>
+    <string name="account_data_change_photo">Zmień zdjęcie</string>
+    <string name="account_data_personal">Dane osobowe</string>
+    <string name="account_data_firstname">Imię</string>
+    <string name="account_data_name_error">Min. 2 znaki, tylko litery</string>
+    <string name="account_data_lastname">Nazwisko</string>
+    <string name="account_data_phone">Numer telefonu</string>
+    <string name="account_data_phone_hint">Np. +48 123 456 789</string>
+    <string name="account_data_email">Adres e-mail</string>
+    <string name="account_data_email_error">Nieprawidłowy adres e-mail</string>
+    <string name="account_data_address">Adres zamieszkania</string>
+    <string name="account_data_street">Ulica i numer</string>
+    <string name="account_data_city">Miasto</string>
+    <string name="account_data_zip">Kod pocztowy</string>
+    <string name="account_data_country">Kraj</string>
+    <string name="account_data_saved">Dane zostały zapisane.</string>
+    <string name="account_data_save">Zapisz dane</string>
+    <string name="account_data_change_password">Zmiana hasła</string>
+    <string name="account_data_current_password">Obecne hasło</string>
+    <string name="account_data_new_password">Nowe hasło</string>
+    <string name="account_data_new_password_same">Nowe hasło nie może być takie samo jak obecne</string>
+    <string name="account_data_password_min">Minimum 8 znaków</string>
+    <string name="account_data_confirm_password">Powtórz nowe hasło</string>
+    <string name="account_data_passwords_match">Hasła nie są identyczne</string>
+    <string name="account_data_password_changed">Hasło zostało zmienione.</string>
+    <string name="account_data_change_password_button">Zmień hasło</string>
+
+    <!-- ==================== SETTINGS ==================== -->
+    <string name="settings_title">Ustawienia</string>
+    <string name="settings_theme">Motyw</string>
+    <string name="settings_theme_dark">Tryb ciemny</string>
+    <string name="settings_theme_light">Tryb jasny</string>
+    <string name="settings_servers">Adresy serwerów</string>
+    <string name="settings_api_config">Konfiguracja adresów API</string>
+    <string name="settings_auth_url">URL serwera auth</string>
+    <string name="settings_core_url">URL serwera core</string>
+    <string name="settings_save_urls">Zapisz adresy</string>
+    <string name="settings_language">Język</string>
+    <string name="settings_language_polish">Polski</string>
+    <string name="settings_language_english">English</string>
+
+    <!-- ==================== STAFF MANAGEMENT ==================== -->
+    <string name="staff_title">Zarządzanie Personelem</string>
+    <string name="staff_add">Dodaj Pracownika</string>
+    <string name="staff_step1_email">1. Sprawdź email pracownika</string>
+    <string name="staff_email">Email</string>
+    <string name="staff_check">Sprawdź</string>
+    <string name="staff_user_exists">Użytkownik istnieje - dane zostaną automatycznie uzupełnione</string>
+    <string name="staff_new_user">Nowy użytkownik - zostanie utworzone konto</string>
+    <string name="staff_step2_personal">2. Dane osobowe</string>
+    <string name="staff_name_hint">2-50 znaków (litery)</string>
+    <string name="staff_phone">Telefon</string>
+    <string name="staff_phone_error">Nr telefonu jest nieprawidłowy</string>
+    <string name="staff_step3_role">3. Rola i dane zawodowe</string>
+    <string name="staff_role">Rola</string>
+    <string name="staff_bio">Bio / O mnie</string>
+    <string name="staff_step4_account">4. Konto logowania</string>
+    <string name="staff_temp_password">Hasło tymczasowe</string>
+    <string name="staff_password_error">Hasło musi mieć co najmniej 8 znaków</string>
+    <string name="staff_add_button">DODAJ</string>
+    <string name="staff_cancel">ANULUJ</string>
+    <string name="staff_edit_title">Edytuj dane</string>
+    <string name="staff_edit_bio">Krótkie Bio / O mnie</string>
+    <string name="staff_save">ZAPISZ</string>
+    <string name="staff_delete">Usuń z gabinetu</string>
+    <string name="staff_profile">Profil pracownika</string>
+    <string name="staff_work_hours">Godziny pracy</string>
+    <string name="staff_edit_hours">Edytuj godziny</string>
+    <string name="staff_no_hours">Brak ustawionych godzin pracy</string>
+    <string name="staff_hours_title">Godziny pracy</string>
+    <string name="staff_hours_end_error">Koniec musi być późniejszy niż początek</string>
+    <string name="staff_day_off">Wolne</string>
+
+    <!-- ==================== STAFF PROFILE ==================== -->
+    <string name="staff_profile_title">Profil Specjalisty</string>
+    <string name="staff_about">O specjaliście</string>
+    <string name="staff_no_info">Brak dodatkowych informacji o specjaliście.</string>
+    <string name="staff_book_visit">Zarezerwuj wizytę</string>
+
+    <!-- ==================== ROOM MANAGEMENT ==================== -->
+    <string name="rooms_title">Zarządzanie Gabinetami</string>
+    <string name="rooms_empty">Brak gabinetów. Kliknij + aby dodać.</string>
+    <string name="rooms_no_doctors">Brak przypisanych lekarzy</string>
+    <string name="rooms_toggle_staff">Toggle staff</string>
+    <string name="rooms_edit">Edit room</string>
+    <string name="rooms_delete">Delete room</string>
+    <string name="rooms_assigned_doctors">Przypisani lekarze:</string>
+    <string name="rooms_add_title">Dodaj Gabinet</string>
+    <string name="rooms_name">Nazwa gabinetu</string>
+    <string name="rooms_name_error">Nazwa musi mieć co najmniej 2 znaki</string>
+    <string name="rooms_add_button">DODAJ</string>
+    <string name="rooms_edit_title">Edytuj Gabinet</string>
+    <string name="rooms_save">ZAPISZ</string>
+
+    <!-- ==================== REPORTS ==================== -->
+    <string name="reports_title">Raporty PDF</string>
+    <string name="reports_visit_list">Lista wizyt</string>
+    <string name="reports_visit_list_desc">Raport listy wizyt w wybranym zakresie dat. Zawiera szczegóły pacjenta, lekarza, usługi i statusu.</string>
+    <string name="reports_room_usage">Obłożenie gabinetów</string>
+    <string name="reports_room_usage_desc">Statystyki obłożenia gabinetów: wizyty dzienne, lekarze, top usługi, poziom absencji.</string>
+    <string name="reports_patient_history">Historia pacjenta</string>
+    <string name="reports_patient_history_desc">Pełna historia wizyt wybranego pacjenta z danymi kontaktowymi i podsumowaniem.</string>
+    <string name="reports_date_range">Zakres dat:</string>
+    <string name="reports_download">Pobierz PDF</string>
+    <string name="reports_all_rooms">Wszystkie gabinety</string>
+    <string name="reports_room">Gabinet</string>
+    <string name="reports_no_patients">Brak pacjentów w gabinecie</string>
+    <string name="reports_select_patient">Wybierz pacjenta</string>
+    <string name="reports_patient">Pacjent</string>
+
+    <!-- ==================== NOTIFICATIONS ==================== -->
+    <string name="notifications_title">Powiadomienia</string>
+    <string name="notifications_refresh">Odśwież</string>
+    <string name="notifications_mark_all">Oznacz wszystkie</string>
+    <string name="notifications_all">Wszystkie (%d)</string>
+    <string name="notifications_unread">Nieprzeczytane (%d)</string>
+    <string name="notifications_retry">Ponów</string>
+    <string name="notifications_no_unread">Brak nieprzeczytanych powiadomień</string>
+    <string name="notifications_empty">Brak powiadomień</string>
+    <string name="notification_type_visit">Wizyta</string>
+    <string name="notification_type_cancelled">Wizyta odwołana</string>
+    <string name="notification_type_completed">Wizyta zakończona</string>
+    <string name="notification_type_confirmed">Wizyta potwierdzona</string>
+    <string name="notification_type_absence">Nieobecność</string>
+    <string name="notification_type_reminder_24h">Przypomnienie (24h)</string>
+    <string name="notification_type_reminder_12h">Przypomnienie (12h)</string>
+    <string name="notification_type_system">System</string>
+
+    <!-- ==================== CLINIC APPOINTMENTS ==================== -->
+    <string name="clinic_appointments_title">Wizyty w klinice</string>
+    <string name="clinic_appointments_empty">Brak wizyt na ten dzień</string>
+    <string name="clinic_appointments_patient">Pacjent: %1$s %2$s</string>
+    <string name="clinic_appointments_doctor">Lekarz: %1$s %2$s</string>
+    <string name="clinic_appointments_confirm">Potwierdź</string>
+    <string name="clinic_appointments_complete">Zakończ</string>
+    <string name="clinic_appointments_cancel">Anuluj</string>
+    <string name="clinic_appointments_cancel_title">Anulować wizytę?</string>
+    <string name="clinic_appointments_cancel_text">Ta operacja jest nieodwracalna.</string>
+    <string name="clinic_appointments_cancel_button">Anuluj wizytę</string>
+    <string name="clinic_appointments_leave">Zostaw</string>
+
+    <!-- ==================== CATALOG ==================== -->
+    <string name="catalog_title">Cennik Usług</string>
+    <string name="catalog_add">Dodaj usługę</string>
+    <string name="catalog_empty">Brak usług w cenniku</string>
+    <string name="catalog_add_title">Dodaj nową usługę</string>
+    <string name="catalog_edit_title">Edytuj usługę</string>
+    <string name="catalog_name">Nazwa zabiegu</string>
+    <string name="catalog_name_error">Nazwa musi mieć co najmniej 2 znaki</string>
+    <string name="catalog_price">Cena (zł)</string>
+    <string name="catalog_price_error">Wprowadź poprawną cenę (np. 149.50)</string>
+    <string name="catalog_duration">Czas trwania (min)</string>
+    <string name="catalog_duration_error">Czas musi być liczbą całkowitą większą od 0</string>
+    <string name="catalog_active">Usługa aktywna</string>
+
+    <!-- ==================== BUSINESS ==================== -->
+    <string name="business_main_location">Placówka Główna</string>
+    <string name="business_logo_updated">Logo zaktualizowane</string>
+    <string name="business_my_clinic">Moja Klinika</string>
+    <string name="business_no_address">Brak skonfigurowanego adresu</string>
+    <string name="business_logo">Logo</string>
+    <string name="business_visits">Wizyty</string>
+    <string name="business_patients">Pacjenci</string>
+    <string name="business_treatments">Zabiegi</string>
+    <string name="business_management">Zarządzanie</string>
+    <string name="business_staff">Pracownicy</string>
+    <string name="business_rooms">Gabinety</string>
+    <string name="business_clinic_visits">Wizyty w klinice</string>
+    <string name="business_catalog">Cennik usług</string>
+    <string name="business_schedule">Grafik pracy</string>
+    <string name="business_reports">Raporty PDF</string>
+    <string name="business_edit_data">Edytuj dane kliniki</string>
+    <string name="business_delete_title">Usuń klinikę</string>
+    <string name="business_delete_text">Czy na pewno chcesz bezpowrotnie usunąć klinikę? Tej operacji nie można cofnąć.</string>
+    <string name="business_edit_screen_title">Edytuj dane kliniki</string>
+    <string name="business_clinic_data">Dane kliniki</string>
+    <string name="business_clinic_name">Nazwa kliniki</string>
+    <string name="business_location_name">Nazwa placówki</string>
+    <string name="business_address">Adres kliniki</string>
+    <string name="business_saved">Dane zostały zapisane.</string>
+    <string name="business_save_data">Zapisz dane</string>
+    <string name="business_danger_zone">Strefa niebezpieczna</string>
+    <string name="business_delete_clinic">Usuń klinikę</string>
+
+    <!-- ==================== CREATE TENANT ==================== -->
+    <string name="tenant_title">Zarejestruj Klinikę</string>
+    <string name="tenant_basic_data">Dane podstawowe</string>
+    <string name="tenant_clinic_name">Nazwa kliniki</string>
+    <string name="tenant_location_name">Nazwa placówki (np. Gabinet Główny)</string>
+    <string name="tenant_location_name_error">Nazwa placówki musi mieć co najmniej 2 znaki</string>
+    <string name="tenant_address">Adres</string>
+    <string name="tenant_street">Ulica i numer</string>
+    <string name="tenant_city">Miasto</string>
+    <string name="tenant_zip">Kod pocztowy</string>
+    <string name="tenant_country">Kraj</string>
+    <string name="tenant_create">UTWÓRZ I ZAREJESTRUJ</string>
+    <string name="tenant_main_location">Placówka Główna</string>
+
+    <!-- ==================== MAIN DASHBOARD ==================== -->
+    <string name="tab_offers">Oferty</string>
+    <string name="tab_clinic">Klinika</string>
+    <string name="tab_visits">Wizyty</string>
+    <string name="tab_notifications">Powiadomienia</string>
+    <string name="tab_account">Konto</string>
+
+    <!-- ==================== VALIDATION (shared) ==================== -->
+    <string name="validation_name_error">Min. 2 znaki, tylko litery</string>
+    <string name="validation_min_3">Min. 3 znaki</string>
+    <string name="validation_min_2">Min. 2 znaki</string>
+
+    <!-- ==================== VIEWMODEL ERRORS ==================== -->
+    <string name="error_server_no_token">Błąd: Serwer nie przesłał tokenu.</string>
+    <string name="error_wrong_credentials">Błędny e-mail lub hasło.</string>
+    <string name="error_forbidden">Dostęp zabroniony. Sprawdź konfigurację kliniki.</string>
+    <string name="error_server_internal">Błąd wewnętrzny serwera.</string>
+    <string name="error_auth">Błąd autoryzacji: %d</string>
+    <string name="error_connection_backend">Błąd połączenia. Upewnij się, że backend działa.</string>
+    <string name="error_email_taken">Ten adres e-mail jest już zarejestrowany.</string>
+    <string name="error_invalid_form">Nieprawidłowe dane w formularzu.</string>
+    <string name="error_registration">Rejestracja odrzucona (Kod: %d)</string>
+    <string name="error_network">Błąd sieci: Brak odpowiedzi od serwera.</string>
+    <string name="error_wrong_current_password">Obecne hasło jest nieprawidłowe.</string>
+    <string name="error_password_min">Nowe hasło musi mieć co najmniej 8 znaków.</string>
+    <string name="error_password_change">Błąd zmiany hasła (%d)</string>
+    <string name="error_delete_account">Błąd usuwania konta (%d)</string>
+    <string name="error_email_occupied">Podany adres e-mail jest już zajęty.</string>
+    <string name="error_invalid_data">Nieprawidłowe dane. Sprawdź formularz.</string>
+    <string name="error_session_expired">Sesja wygasła. Zaloguj się ponownie.</string>
+    <string name="error_profile_update">Błąd aktualizacji (%1$d): %2$s</string>
+    <string name="error_no_permission_visits">Brak uprawnień do pobrania wizyt.</string>
+    <string name="error_no_permission_visit_list">Brak uprawnień do listy wizyt.</string>
+    <string name="error_no_data_report">Brak danych do wygenerowania raportu</string>
+    <string name="error_connection_server">Błąd połączenia z serwerem</string>
+    <string name="error_pdf_save">Nie udało się zapisać pliku</string>
+    <string name="error_no_permission_staff">Brak uprawnień do przeglądania personelu.</string>
+    <string name="error_no_permission_staff_manage">Brak uprawnień do zarządzania personelem.</string>
+    <string name="error_cannot_load_visits">Nie można pobrać danych o wizytach. Spróbuj ponownie.</string>
+    <string name="error_cannot_load_data">Nie udało się załadować danych. Sprawdź połączenie z serwerem.</string>
+    <string name="error_slot_taken">Termin jest już zajęty. Wybierz inny.</string>
+    <string name="error_bad_booking">Błędne dane rezerwacji.</string>
+    <string name="error_booking_server">Błąd serwera (%d). Spróbuj ponownie.</string>
+    <string name="error_no_internet">Brak połączenia z serwerem. Sprawdź internet.</string>
+    <string name="error_no_session">Brak danych sesji. Zaloguj się ponownie.</string>
+    <string name="error_notifications">Nie udało się pobrać powiadomień (%d).</string>
+    <string name="error_no_services">Brak uprawnień do przeglądania usług.</string>
+    <string name="error_image_too_large">Zdjęcie jest zbyt duże (max 5 MB)</string>
+    <string name="error_file_upload">Błąd przesyłania pliku (%d)</string>
+    <string name="error_file_connection">Błąd połączenia: %s</string>
+    <string name="success_pdf_saved">Zapisano PDF w Pobranych</string>
+    <string name="success_data_saved">Dane zostały zapisane.</string>
+    <string name="success_password_changed">Hasło zostało zmienione.</string>
+
+    <!-- ==================== DAY NAMES (for schedule/week views) ==================== -->
+    <string name="day_monday">Poniedziałek</string>
+    <string name="day_tuesday">Wtorek</string>
+    <string name="day_wednesday">Środa</string>
+    <string name="day_thursday">Czwartek</string>
+    <string name="day_friday">Piątek</string>
+    <string name="day_saturday">Sobota</string>
+    <string name="day_sunday">Niedziela</string>
+
+    <!-- ==================== PLACEHOLDERS ==================== -->
+    <string name="placeholder_dash">-</string>
+    <string name="doctor_format">dr %1$s %2$s</string>
 </resources>

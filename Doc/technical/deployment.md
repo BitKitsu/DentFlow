@@ -71,6 +71,52 @@ curl http://localhost:8081/swagger-ui.html  # Identity Service
 curl http://localhost:8080/swagger-ui.html  # Core Service
 ```
 
+## 2.1 Android App - Server URL Configuration
+
+The Android app allows configuring server URLs at runtime without rebuilding. Open **Settings** (gear icon on the login/register screen, or via Konto -> Ustawienia aplikacji) to set the URLs.
+
+### Default URLs (emulator)
+
+| Service | Default URL |
+|---------|------------|
+| Auth (identity-service) | `http://10.0.2.2:8081/` |
+| Core (core-service) | `http://10.0.2.2:8080/` |
+
+> `10.0.2.2` is the Android emulator's alias for the host machine's `localhost`.
+
+### Connecting to a real device on the same network
+
+1. Find your computer's local IP address:
+
+```bash
+# Linux / macOS
+ip addr show | grep "inet " | grep -v 127.0.0.1 | awk '{print $2}' | cut -d/ -f1
+
+# Windows
+ipconfig | findstr "IPv4"
+```
+
+2. In the Android app Settings, enter the URLs using that IP:
+
+| Field | Example value |
+|-------|--------------|
+| URL serwera auth | `http://192.168.1.100:8081/` |
+| URL serwera core | `http://192.168.1.100:8080/` |
+
+3. Make sure your computer's firewall allows incoming connections on ports 8080 and 8081.
+
+### Overriding defaults at build time (optional)
+
+You can still override the default URLs at build time via `local.properties`:
+
+```properties
+# DentFlowAndroid/local.properties
+API_AUTH_URL="http://192.168.1.100:8081/"
+API_CORE_URL="http://192.168.1.100:8080/"
+```
+
+These values are used as fallbacks when no runtime URL has been saved in the app settings.
+
 ## 3. Docker Deployment
 
 ```bash

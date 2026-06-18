@@ -28,6 +28,7 @@ object NetworkModule {
     const val PREFS_NAME = "dentflow_prefs"
     const val AUTH_URL_KEY = "server_auth_url"
     const val CORE_URL_KEY = "server_core_url"
+    const val LANGUAGE_KEY = "app_language"
     private const val TOKEN_KEY = "jwt_token"
 
     @Provides

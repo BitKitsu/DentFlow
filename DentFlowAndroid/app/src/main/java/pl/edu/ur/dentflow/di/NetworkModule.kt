@@ -29,6 +29,7 @@ object NetworkModule {
     const val AUTH_URL_KEY = "server_auth_url"
     const val CORE_URL_KEY = "server_core_url"
     const val LANGUAGE_KEY = "app_language"
+    const val THEME_KEY = "app_theme"
     private const val TOKEN_KEY = "jwt_token"
 
     @Provides

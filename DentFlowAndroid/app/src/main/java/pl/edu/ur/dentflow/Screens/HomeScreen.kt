@@ -33,7 +33,7 @@ data class ServiceDisplayModel(
 @Composable
 fun HomeScreen(
     isDarkTheme: Boolean,
-    onThemeChange: (Boolean) -> Unit,
+    onThemeChange: (String) -> Unit,
     onStaffClick: (StaffMemberResponse) -> Unit,
     onBookClick: (Long, Long) -> Unit = { _, _ -> },
     staffList: List<StaffMemberResponse>,
@@ -274,7 +274,7 @@ fun EmptyStateSection(isError: Boolean) {
 }
 
 @Composable
-fun HeaderSection(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
+fun HeaderSection(isDarkTheme: Boolean, onThemeChange: (String) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -295,7 +295,7 @@ fun HeaderSection(isDarkTheme: Boolean, onThemeChange: (Boolean) -> Unit) {
             )
         }
         IconButton(
-            onClick = { onThemeChange(!isDarkTheme) },
+            onClick = { onThemeChange(if (isDarkTheme) "light" else "dark") },
             modifier = Modifier.background(MaterialTheme.colorScheme.surface, CircleShape)
         ) {
             Icon(

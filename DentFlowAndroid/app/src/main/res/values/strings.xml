@@ -255,6 +255,7 @@
     <string name="settings_theme">Motyw</string>
     <string name="settings_theme_dark">Tryb ciemny</string>
     <string name="settings_theme_light">Tryb jasny</string>
+    <string name="settings_theme_system">Systemowy</string>
     <string name="settings_servers">Adresy serwerów</string>
     <string name="settings_api_config">Konfiguracja adresów API</string>
     <string name="settings_auth_url">URL serwera auth</string>

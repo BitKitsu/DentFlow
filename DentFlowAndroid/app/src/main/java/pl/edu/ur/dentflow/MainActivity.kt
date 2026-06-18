@@ -35,7 +35,11 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
     override fun attachBaseContext(newBase: android.content.Context) {
         val prefs = newBase.getSharedPreferences(NetworkModule.PREFS_NAME, android.content.Context.MODE_PRIVATE)
-        val lang = prefs.getString(NetworkModule.LANGUAGE_KEY, "pl") ?: "pl"
+        val lang = prefs.getString(NetworkModule.LANGUAGE_KEY, null)
+            ?: if (java.util.Locale.getDefault().language == "pl") "pl" else "en"
+        if (prefs.getString(NetworkModule.LANGUAGE_KEY, null) == null) {
+            prefs.edit().putString(NetworkModule.LANGUAGE_KEY, lang).apply()
+        }
         val config = android.content.res.Configuration(newBase.resources.configuration)
         config.setLocale(java.util.Locale(lang))
         val updatedContext = newBase.createConfigurationContext(config)
@@ -47,7 +51,21 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val systemInDark = isSystemInDarkTheme()
-            var isDarkTheme by remember { mutableStateOf(systemInDark) }
+
+            val ctx = androidx.compose.ui.platform.LocalContext.current
+            val startPrefs = ctx.getSharedPreferences(NetworkModule.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+            val themePref = startPrefs.getString(NetworkModule.THEME_KEY, "system") ?: "system"
+
+            var isDarkTheme by remember(systemInDark, themePref) {
+                mutableStateOf(
+                    when (themePref) {
+                        "dark" -> true
+                        "light" -> false
+                        else -> systemInDark
+                    }
+                )
+            }
+            var themeMode by remember { mutableStateOf(themePref) }
 
             DentFlowAndroidTheme(darkTheme = isDarkTheme) {
                 val navController = rememberNavController()
@@ -67,7 +85,10 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf(startPrefs.getString(NetworkModule.CORE_URL_KEY, "") ?: "")
                 }
                 var language by remember {
-                    mutableStateOf(startPrefs.getString(NetworkModule.LANGUAGE_KEY, "pl") ?: "pl")
+                    mutableStateOf(
+                        startPrefs.getString(NetworkModule.LANGUAGE_KEY, null)
+                            ?: if (java.util.Locale.getDefault().language == "pl") "pl" else "en"
+                    )
                 }
 
                 Surface(
@@ -99,7 +120,16 @@ class MainActivity : ComponentActivity() {
                     composable("main_dashboard") {
                         MainDashboard(
                             isDarkTheme = isDarkTheme,
-                            onThemeChange = { isDarkTheme = it },
+                            themeMode = themeMode,
+                            onThemeChange = {
+                                themeMode = it
+                                startPrefs.edit().putString(NetworkModule.THEME_KEY, it).apply()
+                                isDarkTheme = when (it) {
+                                    "dark" -> true
+                                    "light" -> false
+                                    else -> systemInDark
+                                }
+                            },
                             navController = navController,
                             tenantViewModel = tenantViewModel,
                             selectedItem = currentDashboardTab,
@@ -118,6 +148,7 @@ class MainActivity : ComponentActivity() {
                             onLanguageChange = {
                                 language = it
                                 startPrefs.edit().putString(NetworkModule.LANGUAGE_KEY, it).apply()
+                                (ctx as? android.app.Activity)?.recreate()
                             }
                         )
                     }
@@ -181,7 +212,16 @@ class MainActivity : ComponentActivity() {
                     composable("settings") {
                         SettingsScreen(
                             isDarkTheme = isDarkTheme,
-                            onThemeChange = { isDarkTheme = it },
+                            themeMode = themeMode,
+                            onThemeChange = {
+                                themeMode = it
+                                startPrefs.edit().putString(NetworkModule.THEME_KEY, it).apply()
+                                isDarkTheme = when (it) {
+                                    "dark" -> true
+                                    "light" -> false
+                                    else -> systemInDark
+                                }
+                            },
                             authUrl = authUrl,
                             coreUrl = coreUrl,
                             onAuthUrlChange = {
@@ -196,6 +236,7 @@ class MainActivity : ComponentActivity() {
                             onLanguageChange = {
                                 language = it
                                 startPrefs.edit().putString(NetworkModule.LANGUAGE_KEY, it).apply()
+                                (ctx as? android.app.Activity)?.recreate()
                             },
                             onBackClick = { navController.popBackStack() }
                         )
@@ -229,7 +270,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainDashboard(
     isDarkTheme: Boolean,
-    onThemeChange: (Boolean) -> Unit,
+    themeMode: String,
+    onThemeChange: (String) -> Unit,
     navController: NavHostController,
     selectedItem: Int,
     onTabChange: (Int) -> Unit,
@@ -372,6 +414,7 @@ fun MainDashboard(
                     } else {
                         SettingsScreen(
                             isDarkTheme = isDarkTheme,
+                            themeMode = themeMode,
                             onThemeChange = onThemeChange,
                             authUrl = authUrl,
                             coreUrl = coreUrl,

@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import pl.edu.ur.dentflow.data.remote.FileApiService
+import pl.edu.ur.dentflow.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -55,7 +56,7 @@ class FileViewModel @Inject constructor(
                 }
 
                 if (tempFile.length() > MAX_FILE_SIZE_BYTES) {
-                    val msg = "Zdjęcie jest zbyt duże (max 5 MB)"
+                    val msg = context.getString(R.string.error_image_too_large)
                     _uploadError.value = msg
                     onError(msg)
                     tempFile.delete()
@@ -73,12 +74,12 @@ class FileViewModel @Inject constructor(
                     Log.d("FileViewModel", "Upload successful: $publicUrl")
                     onSuccess(publicUrl)
                 } else {
-                    val msg = "Błąd przesyłania pliku (${response.code()})"
+                    val msg = context.getString(R.string.error_file_upload, response.code())
                     _uploadError.value = msg
                     onError(msg)
                 }
             } catch (e: Exception) {
-                val msg = "Błąd połączenia: ${e.message}"
+                val msg = context.getString(R.string.error_file_connection, e.message ?: "")
                 Log.e("FileViewModel", msg, e)
                 _uploadError.value = msg
                 onError(msg)

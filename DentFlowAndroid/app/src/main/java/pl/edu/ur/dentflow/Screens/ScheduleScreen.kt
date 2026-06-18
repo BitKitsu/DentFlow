@@ -27,6 +27,8 @@ import pl.edu.ur.dentflow.data.ViewModel.StaffViewModel
 import pl.edu.ur.dentflow.data.ViewModel.TenantViewModel
 import pl.edu.ur.dentflow.data.remote.ScheduleBlockerDTO
 import pl.edu.ur.dentflow.data.remote.StaffMemberResponse
+import pl.edu.ur.dentflow.R
+import androidx.compose.ui.res.stringResource
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -67,7 +69,7 @@ fun ScheduleScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Przerwy", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.schedule_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
@@ -82,7 +84,7 @@ fun ScheduleScreen(
                     onClick = { showBlockerDialog = true },
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = Color.White
-                ) { Icon(Icons.Default.Add, "Dodaj") }
+                ) { Icon(Icons.Default.Add, stringResource(R.string.schedule_add)) }
             }
         }
     ) { padding ->
@@ -109,7 +111,7 @@ fun ScheduleScreen(
                     }
 
                     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-                        listOf("Pn", "Wt", "Sr", "Cz", "Pt", "Sb", "Nd").forEach { d ->
+                        listOf(stringResource(R.string.day_mon_short), stringResource(R.string.day_tue_short), stringResource(R.string.day_wed_short), stringResource(R.string.day_thu_short), stringResource(R.string.day_fri_short), stringResource(R.string.day_sat_short), stringResource(R.string.day_sun_short)).forEach { d ->
                             Text(d, Modifier.weight(1f), textAlign = TextAlign.Center, fontSize = 12.sp, color = Color.Gray)
                         }
                     }
@@ -191,16 +193,16 @@ fun ScheduleScreen(
         AlertDialog(
             onDismissRequest = { showDeleteBlockerConfirm = null },
             icon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) },
-            title = { Text("Usunac przerwe?") },
-            text = { Text("Blokada zostanie usunieta.") },
+            title = { Text(stringResource(R.string.schedule_delete_title)) },
+            text = { Text(stringResource(R.string.schedule_delete_text)) },
             confirmButton = {
                 Button(
                     onClick = { viewModel.deleteBlocker(blocker.id); showDeleteBlockerConfirm = null },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     shape = RoundedCornerShape(12.dp)
-                ) { Text("Usun") }
+                ) { Text(stringResource(R.string.delete)) }
             },
-            dismissButton = { TextButton(onClick = { showDeleteBlockerConfirm = null }) { Text("Anuluj") } }
+            dismissButton = { TextButton(onClick = { showDeleteBlockerConfirm = null }) { Text(stringResource(R.string.cancel)) } }
         )
     }
 }
@@ -217,7 +219,7 @@ private fun BlockersList(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(Icons.Default.Block, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.outline)
                 Spacer(Modifier.height(8.dp))
-                Text("Brak przerw / urlopow na ten dzien", color = Color.Gray)
+                Text(stringResource(R.string.schedule_empty), color = Color.Gray)
             }
         }
     } else {
@@ -226,7 +228,7 @@ private fun BlockersList(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(blockers, key = { it.id }) { blocker ->
-                val staffName = if (blocker.staffId <= 0) "Wszyscy" else staffList.find { it.id == blocker.staffId }?.let { "${it.firstName} ${it.lastName}" } ?: "Nieznany"
+                val staffName = if (blocker.staffId <= 0) stringResource(R.string.schedule_all) else staffList.find { it.id == blocker.staffId }?.let { "${it.firstName} ${it.lastName}" } ?: stringResource(R.string.schedule_unknown)
                 val start = try { blocker.startAt.substringAfter("T").take(5) } catch (e: Exception) { "?" }
                 val end = try { blocker.endAt.substringAfter("T").take(5) } catch (e: Exception) { "?" }
                 Card(
@@ -238,7 +240,7 @@ private fun BlockersList(
                         Icon(Icons.Default.Block, null, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.error)
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
-                            Text(blocker.reason.ifBlank { "Przerwa" }, fontWeight = FontWeight.SemiBold)
+                            Text(blocker.reason.ifBlank { stringResource(R.string.schedule_default_reason) }, fontWeight = FontWeight.SemiBold)
                             Text("$staffName - $start - $end", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                         }
                         if (isOwner) {
@@ -279,32 +281,32 @@ fun BlockerAddDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Dodaj przerwe / urlop", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.schedule_add_title), fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { datePicker.show() }, Modifier.fillMaxWidth()) {
                     Icon(Icons.Default.DateRange, null); Spacer(Modifier.width(8.dp)); Text(date)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { startPicker.show() }, Modifier.weight(1f)) { Text("Od: $startT") }
-                    OutlinedButton(onClick = { endPicker.show() }, Modifier.weight(1f)) { Text("Do: $endT") }
+                    OutlinedButton(onClick = { startPicker.show() }, Modifier.weight(1f)) { Text(stringResource(R.string.schedule_from, startT)) }
+                    OutlinedButton(onClick = { endPicker.show() }, Modifier.weight(1f)) { Text(stringResource(R.string.schedule_to, endT)) }
                 }
                 OutlinedTextField(
                     value = reason, onValueChange = { reason = it },
-                    label = { Text("Powod (np. urlop, przerwa)") },
+                    label = { Text(stringResource(R.string.schedule_reason)) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 if (staffList.isNotEmpty()) {
                     ExposedDropdownMenuBox(expanded = staffExpanded, onExpandedChange = { staffExpanded = it }) {
                         OutlinedTextField(
-                            value = staffList.find { it.id == selectedStaffId }?.let { "${it.firstName} ${it.lastName}" } ?: "Wszyscy (opcjonalnie)",
+                            value = staffList.find { it.id == selectedStaffId }?.let { "${it.firstName} ${it.lastName}" } ?: stringResource(R.string.schedule_doctor_optional),
                             onValueChange = {}, readOnly = true,
-                            label = { Text("Lekarz") },
+                            label = { Text(stringResource(R.string.schedule_doctor)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(staffExpanded) },
                             modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth()
                         )
                         ExposedDropdownMenu(expanded = staffExpanded, onDismissRequest = { staffExpanded = false }) {
-                            DropdownMenuItem(text = { Text("Wszyscy") }, onClick = { selectedStaffId = null; staffExpanded = false })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.schedule_all)) }, onClick = { selectedStaffId = null; staffExpanded = false })
                             staffList.forEach { s ->
                                 DropdownMenuItem(text = { Text("${s.firstName} ${s.lastName}") }, onClick = { selectedStaffId = s.id; staffExpanded = false })
                             }
@@ -320,10 +322,10 @@ fun BlockerAddDialog(
                     staffId = selectedStaffId ?: 0L, roomId = 0L,
                     startAt = "${date}T${startT}:00Z",
                     endAt = "${date}T${endT}:00Z",
-                    reason = reason.ifBlank { "Przerwa" }
+                    reason = reason.ifBlank { context.getString(R.string.schedule_default_reason) }
                 ))
-            }, shape = RoundedCornerShape(12.dp)) { Text("Zapisz") }
+            }, shape = RoundedCornerShape(12.dp)) { Text(stringResource(R.string.save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Anuluj") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )
 }

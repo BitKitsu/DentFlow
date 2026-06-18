@@ -1,5 +1,6 @@
 package pl.edu.ur.dentflow.data.remote
 
+import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -8,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import pl.edu.ur.dentflow.R
 import javax.inject.Inject
 
 private const val TAG = "AuthViewModel"
@@ -31,7 +33,8 @@ data class SessionState(
 class AuthViewModel @Inject constructor(
     private val authService: AuthService,
     private val apiService: ApiService,
-    private val prefs: SharedPreferences
+    private val prefs: SharedPreferences,
+    @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private fun loadSessionState(): SessionState {
@@ -99,20 +102,20 @@ class AuthViewModel @Inject constructor(
 
                         onSuccess(body.tenantId)
                     } else {
-                        _errorMessage.value = "Błąd: Serwer nie przesłał tokenu."
+                        _errorMessage.value = context.getString(R.string.error_server_no_token)
                     }
                 } else {
                     val errorBody = response.errorBody()?.string()
                     Log.e(TAG, "Login error. Code: ${response.code()}, Body: $errorBody")
                     _errorMessage.value = when (response.code()) {
-                        401 -> "Błędny e-mail lub hasło."
-                        403 -> "Dostęp zabroniony. Sprawdź konfigurację kliniki."
-                        500 -> "Błąd wewnętrzny serwera."
-                        else -> "Błąd autoryzacji: ${response.code()}"
+                        401 -> context.getString(R.string.error_wrong_credentials)
+                        403 -> context.getString(R.string.error_forbidden)
+                        500 -> context.getString(R.string.error_server_internal)
+                        else -> context.getString(R.string.error_auth, response.code())
                     }
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Błąd połączenia. Upewnij się, że backend działa."
+                _errorMessage.value = context.getString(R.string.error_connection_backend)
                 Log.e(TAG, "Login exception: ${e.message}")
             } finally {
                 _isLoading.value = false
@@ -135,13 +138,13 @@ class AuthViewModel @Inject constructor(
                     val errorBody = response.errorBody()?.string()
                     Log.e(TAG, "Registration error. Code: ${response.code()}, Body: $errorBody")
                     _errorMessage.value = when (response.code()) {
-                        409 -> "Ten adres e-mail jest już zarejestrowany."
-                        400 -> "Nieprawidłowe dane w formularzu."
-                        else -> "Rejestracja odrzucona (Kod: ${response.code()})"
+                        409 -> context.getString(R.string.error_email_taken)
+                        400 -> context.getString(R.string.error_invalid_form)
+                        else -> context.getString(R.string.error_registration, response.code())
                     }
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Błąd sieci: Brak odpowiedzi od serwera."
+                _errorMessage.value = context.getString(R.string.error_network)
                 Log.e(TAG, "Registration exception: ${e.message}")
             } finally {
                 _isLoading.value = false
@@ -173,13 +176,13 @@ class AuthViewModel @Inject constructor(
                     onSuccess()
                 } else {
                     onError(when (response.code()) {
-                        401 -> "Obecne hasło jest nieprawidłowe."
-                        400 -> "Nowe hasło musi mieć co najmniej 8 znaków."
-                        else -> "Błąd zmiany hasła (${response.code()})"
+                        401 -> context.getString(R.string.error_wrong_current_password)
+                        400 -> context.getString(R.string.error_password_min)
+                        else -> context.getString(R.string.error_password_change, response.code())
                     })
                 }
             } catch (e: Exception) {
-                onError("Błąd połączenia z serwerem.")
+                onError(context.getString(R.string.error_connection_server))
             } finally {
                 _isLoading.value = false
             }
@@ -194,10 +197,10 @@ class AuthViewModel @Inject constructor(
                 if (response.isSuccessful) {
                     onSuccess()
                 } else {
-                    onError("Błąd usuwania konta (${response.code()})")
+                    onError(context.getString(R.string.error_delete_account, response.code()))
                 }
             } catch (e: Exception) {
-                onError("Błąd połączenia z serwerem.")
+                onError(context.getString(R.string.error_connection_server))
             } finally {
                 _isLoading.value = false
             }
@@ -277,14 +280,14 @@ class AuthViewModel @Inject constructor(
                 } else {
                     val errorBody = response.errorBody()?.string()
                     onError(when (response.code()) {
-                        409 -> "Podany adres e-mail jest już zajęty."
-                        400 -> "Nieprawidłowe dane. Sprawdź formularz."
-                        401 -> "Sesja wygasła. Zaloguj się ponownie."
-                        else -> "Błąd aktualizacji (${response.code()}): $errorBody"
+                        409 -> context.getString(R.string.error_email_occupied)
+                        400 -> context.getString(R.string.error_invalid_data)
+                        401 -> context.getString(R.string.error_session_expired)
+                        else -> context.getString(R.string.error_profile_update, response.code(), errorBody ?: "")
                     })
                 }
             } catch (e: Exception) {
-                onError("Błąd połączenia z serwerem.")
+                onError(context.getString(R.string.error_connection_server))
                 Log.e(TAG, "updateProfile exception: ${e.message}")
             } finally {
                 _isLoading.value = false

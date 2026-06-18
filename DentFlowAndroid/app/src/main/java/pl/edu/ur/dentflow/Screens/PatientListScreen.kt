@@ -19,10 +19,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import pl.edu.ur.dentflow.R
 import pl.edu.ur.dentflow.data.ViewModel.PatientViewModel
 import pl.edu.ur.dentflow.data.ViewModel.VisitViewModel
 import pl.edu.ur.dentflow.data.remote.AuthResponse
@@ -59,10 +61,10 @@ fun PatientListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Baza Pacjentów", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.patients_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 windowInsets = WindowInsets(0, 0, 0, 0)
@@ -77,7 +79,7 @@ fun PatientListScreen(
                     showDialog = true
                 }
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Dodaj pacjenta")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.patients_add))
             }
         }
     ) { padding ->
@@ -196,7 +198,7 @@ fun PatientItem(
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    text = "Tel: ${patient.phone ?: "Brak"}",
+                    text = stringResource(R.string.patients_phone_format, patient.phone ?: stringResource(R.string.patients_phone_none)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -211,17 +213,17 @@ fun PatientItem(
                 }
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                     DropdownMenuItem(
-                        text = { Text("Edytuj") },
+                        text = { Text(stringResource(R.string.edit)) },
                         onClick = { showMenu = false; onEdit() },
                         leadingIcon = { Icon(Icons.Default.Edit, null) }
                     )
                     DropdownMenuItem(
-                        text = { Text("Historia wizyt") },
+                        text = { Text(stringResource(R.string.patients_history)) },
                         onClick = { showMenu = false; onShowHistory() },
                         leadingIcon = { Icon(Icons.Default.History, null) }
                     )
                     DropdownMenuItem(
-                        text = { Text("Usuń", color = Color.Red) },
+                        text = { Text(stringResource(R.string.delete), color = Color.Red) },
                         onClick = { showMenu = false; onDelete() },
                         leadingIcon = { Icon(Icons.Default.Delete, null, tint = Color.Red) }
                     )
@@ -255,7 +257,7 @@ fun PatientDialog(
     var phone by remember { mutableStateOf(patient?.phone ?: "") }
     var dateOfBirth by remember { mutableStateOf(patient?.dateOfBirth ?: "") }
     var pesel by remember { mutableStateOf(patient?.pesel ?: "") }
-    var gender by remember { mutableStateOf(patient?.gender ?: "Nie podano") }
+    var gender by remember { mutableStateOf(patient?.gender ?: context.getString(R.string.patients_no_gender)) }
     var addressStreet by remember { mutableStateOf(patient?.addressStreet ?: "") }
     var addressCity by remember { mutableStateOf(patient?.addressCity ?: "") }
     var addressZip by remember { mutableStateOf(patient?.addressZip?.replace("-", "") ?: "") }
@@ -286,7 +288,7 @@ fun PatientDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (patient == null) "Dodaj pacjenta" else "Edytuj pacjenta") },
+        title = { Text(if (patient == null) stringResource(R.string.patients_add_title) else stringResource(R.string.patients_edit_title)) },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -294,12 +296,12 @@ fun PatientDialog(
             ) {
                 if (!isEditing) {
                     // Email check section (only for new patients)
-                    Text("1. Sprawdź email pacjenta", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.patients_step1_email), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
                             value = email,
                             onValueChange = { email = it; emailChecked = false },
-                            label = { Text("Email") },
+                            label = { Text(stringResource(R.string.login_email_label)) },
                             modifier = Modifier.weight(1f),
                             isError = !isEmailValid && email.isNotEmpty(),
                             shape = RoundedCornerShape(12.dp),
@@ -332,14 +334,14 @@ fun PatientDialog(
                             modifier = Modifier.align(Alignment.CenterVertically)
                         ) {
                             if (isCheckingEmail) CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                            else Text("Sprawdź")
+                            else Text(stringResource(R.string.patients_check))
                         }
                     }
                     if (emailChecked) {
                         if (userExists) {
-                            Text("✓ Użytkownik istnieje - dane zostaną automatycznie uzupełnione", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+                            Text("✓ " + stringResource(R.string.patients_user_exists), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
                         } else {
-                            Text("⚠ Nowy pacjent", color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.bodySmall)
+                            Text("⚠ " + stringResource(R.string.patients_new_user), color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                     Spacer(modifier = Modifier.height(4.dp))
@@ -347,67 +349,67 @@ fun PatientDialog(
 
                 if (emailChecked || isEditing) {
                 // Personal data section
-                Text(if (isEditing) "Dane osobowe" else "2. Dane osobowe", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                Text(if (isEditing) stringResource(R.string.patients_personal_data) else stringResource(R.string.patients_step2_personal), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                 OutlinedTextField(
                     value = firstName,
                     onValueChange = { firstName = it },
-                    label = { Text("Imię") },
+                    label = { Text(stringResource(R.string.patients_firstname)) },
                     leadingIcon = { Icon(Icons.Default.Person, null) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     isError = firstName.isNotBlank() && !isFirstNameValid,
-                    supportingText = { if (firstName.isNotBlank() && !isFirstNameValid) Text("Imię musi mieć 2-50 znaków (litery)") },
+                    supportingText = { if (firstName.isNotBlank() && !isFirstNameValid) Text(stringResource(R.string.patients_firstname_error)) },
                     enabled = !userExists || isEditing
                 )
                 OutlinedTextField(
                     value = lastName,
                     onValueChange = { lastName = it },
-                    label = { Text("Nazwisko") },
+                    label = { Text(stringResource(R.string.patients_lastname)) },
                     leadingIcon = { Icon(Icons.Default.Person, null) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     isError = lastName.isNotBlank() && !isLastNameValid,
-                    supportingText = { if (lastName.isNotBlank() && !isLastNameValid) Text("Nazwisko musi mieć 2-50 znaków (litery)") },
+                    supportingText = { if (lastName.isNotBlank() && !isLastNameValid) Text(stringResource(R.string.patients_lastname_error)) },
                     enabled = !userExists || isEditing
                 )
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it },
-                    label = { Text("Telefon") },
+                    label = { Text(stringResource(R.string.patients_phone)) },
                     leadingIcon = { Icon(Icons.Default.Phone, null) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     isError = phone.isNotBlank() && !isPhoneValid,
-                    supportingText = { if (phone.isNotBlank() && !isPhoneValid) Text("Nr telefonu jest nieprawidłowy") },
+                    supportingText = { if (phone.isNotBlank() && !isPhoneValid) Text(stringResource(R.string.patients_phone_error)) },
                     enabled = !userExists || isEditing
                 )
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("E-mail (opcjonalny)") },
+                    label = { Text(stringResource(R.string.patients_email_optional)) },
                     leadingIcon = { Icon(Icons.Default.Email, null) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     isError = !isEmailValid && email.isNotEmpty(),
-                    supportingText = { if (!isEmailValid && email.isNotEmpty()) Text("Email jest nieprawidłowy") },
+                    supportingText = { if (!isEmailValid && email.isNotEmpty()) Text(stringResource(R.string.patients_email_error)) },
                     enabled = !userExists || isEditing
                 )
                 
                 // Medical section
                 HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                Text("3. Dane medyczne", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.patients_step3_medical), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                 
                 OutlinedTextField(
                     value = pesel,
                     onValueChange = { if (it.length <= 11) pesel = it.filter { char -> char.isDigit() } },
-                    label = { Text("Numer PESEL (11 cyfr)") },
+                    label = { Text(stringResource(R.string.patients_pesel)) },
                     leadingIcon = { Icon(Icons.Default.Badge, null) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     isError = !isPeselValid && pesel.isNotEmpty()
                 )
                 if (!isPeselValid && pesel.isNotEmpty()) {
-                    Text("PESEL musi zawierać dokładnie 11 cyfr", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.patients_pesel_error), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
 
                 var expandedGender by remember { mutableStateOf(false) }
@@ -419,7 +421,7 @@ fun PatientDialog(
                         value = gender,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Płeć") },
+                        label = { Text(stringResource(R.string.patients_gender)) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedGender) },
                         modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
@@ -428,7 +430,7 @@ fun PatientDialog(
                         expanded = expandedGender,
                         onDismissRequest = { expandedGender = false }
                     ) {
-                        listOf("Kobieta", "Mężczyzna", "Inna", "Nie podano").forEach { selectionOption ->
+                        listOf(stringResource(R.string.patients_gender_female), stringResource(R.string.patients_gender_male), stringResource(R.string.patients_gender_other), stringResource(R.string.patients_no_gender)).forEach { selectionOption ->
                             DropdownMenuItem(
                                 text = { Text(selectionOption) },
                                 onClick = { gender = selectionOption; expandedGender = false }
@@ -440,7 +442,7 @@ fun PatientDialog(
                     value = if (dateOfBirth.isNotBlank()) dateOfBirth else "",
                     onValueChange = {},
                     readOnly = true,
-                    label = { Text("Data urodzenia (opcjonalna)") },
+                    label = { Text(stringResource(R.string.patients_birthdate)) },
                     leadingIcon = { Icon(Icons.Default.Cake, null) },
                     trailingIcon = {
                         if (dateOfBirth.isNotBlank()) {
@@ -461,29 +463,29 @@ fun PatientDialog(
                     TextButton(onClick = { datePickerDialog.show() }, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Default.CalendarMonth, null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Wybierz datę urodzenia")
+                        Text(stringResource(R.string.patients_birthdate_pick))
                     }
                 }
                 
                 // Address section
                 HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-                Text("4. Adres (opcjonalny)", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.patients_step4_address), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                 
                 OutlinedTextField(
                     value = addressStreet,
                     onValueChange = { addressStreet = it },
-                    label = { Text("Ulica i numer") },
+                    label = { Text(stringResource(R.string.patients_street)) },
                     leadingIcon = { Icon(Icons.Default.Home, null) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     isError = addressStreet.isNotBlank() && !isStreetValid,
-                    supportingText = { if (addressStreet.isNotBlank() && !isStreetValid) Text("Ulica musi mieć co najmniej 3 znaki") }
+                    supportingText = { if (addressStreet.isNotBlank() && !isStreetValid) Text(stringResource(R.string.patients_street_error)) }
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = addressZip,
                         onValueChange = { if (it.length <= 5) addressZip = it.filter { c -> c.isDigit() } },
-                        label = { Text("Kod pocztowy") },
+                        label = { Text(stringResource(R.string.patients_zip)) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
                         visualTransformation = { text ->
@@ -496,16 +498,16 @@ fun PatientDialog(
                             androidx.compose.ui.text.input.TransformedText(androidx.compose.ui.text.AnnotatedString(out), offsetMapping)
                         },
                         isError = addressZip.isNotBlank() && !isZipValid,
-                        supportingText = { if (addressZip.isNotBlank() && !isZipValid) Text("Kod: 5 cyfr") }
+                        supportingText = { if (addressZip.isNotBlank() && !isZipValid) Text(stringResource(R.string.patients_zip_error)) }
                     )
                     OutlinedTextField(
                         value = addressCity,
                         onValueChange = { addressCity = it },
-                        label = { Text("Miasto") },
+                        label = { Text(stringResource(R.string.patients_city)) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
                         isError = addressCity.isNotBlank() && !isCityValid,
-                        supportingText = { if (addressCity.isNotBlank() && !isCityValid) Text("Miasto musi mieć co najmniej 2 znaki") }
+                        supportingText = { if (addressCity.isNotBlank() && !isCityValid) Text(stringResource(R.string.patients_city_error)) }
                     )
                 }
                 } // end if (emailChecked || isEditing)
@@ -516,7 +518,7 @@ fun PatientDialog(
                 onClick = { 
                     onConfirm(
                         firstName, lastName, email, phone, dateOfBirth.ifBlank { null },
-                        pesel.ifBlank { null }, if (gender == "Nie podano") null else gender,
+                        pesel.ifBlank { null }, if (gender == context.getString(R.string.patients_no_gender)) null else gender,
                         addressStreet.ifBlank { null }, addressCity.ifBlank { null },
                         if (addressZip.length == 5) "${addressZip.take(2)}-${addressZip.drop(2)}" else addressZip.ifBlank { null },
                         userExists, existingUserId, userAvatarUrl
@@ -524,10 +526,10 @@ fun PatientDialog(
                 },
                 enabled = areFieldsValid && (emailChecked || isEditing),
                 shape = RoundedCornerShape(12.dp)
-            ) { Text("Zapisz") }
+            ) { Text(stringResource(R.string.save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Anuluj") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
 }
@@ -550,7 +552,7 @@ fun PatientHistoryDialog(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                text = "Historia wizyt",
+                text = stringResource(R.string.patients_visit_history),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -570,7 +572,7 @@ fun PatientHistoryDialog(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.EventBusy, null, modifier = Modifier.size(48.dp), tint = MaterialTheme.colorScheme.outline)
                         Spacer(Modifier.height(8.dp))
-                        Text("Brak historii wizyt", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.patients_no_history), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             } else {
@@ -588,10 +590,10 @@ fun PatientHistoryDialog(
                             else -> Color(0xFFFF9800)
                         }
                         val statusLabel = when (visit.status.uppercase()) {
-                            "CONFIRMED" -> "Potwierdzona"
-                            "COMPLETED" -> "Zakończona"
-                            "CANCELLED" -> "Anulowana"
-                            "SCHEDULED" -> "Zaplanowana"
+                            "CONFIRMED" -> stringResource(R.string.status_confirmed)
+                            "COMPLETED" -> stringResource(R.string.status_completed)
+                            "CANCELLED" -> stringResource(R.string.status_cancelled)
+                            "SCHEDULED" -> stringResource(R.string.status_planned)
                             else -> visit.status
                         }
                         Card(
@@ -606,7 +608,7 @@ fun PatientHistoryDialog(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(text = timeDisplay, fontWeight = FontWeight.SemiBold)
                                     Text(
-                                        text = "Usługa ID: ${visit.serviceItemId}",
+                                        text = stringResource(R.string.visits_service_id, visit.serviceItemId ?: 0L),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -642,7 +644,7 @@ fun EmptyPatientsState(modifier: Modifier) {
             tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Text("Baza pacjentów jest pusta", color = MaterialTheme.colorScheme.outline)
+        Text(stringResource(R.string.patients_empty), color = MaterialTheme.colorScheme.outline)
     }
 }
 
@@ -654,7 +656,7 @@ fun PatientDetailDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Profil pacjenta", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.patients_profile), fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -707,7 +709,7 @@ fun PatientDetailDialog(
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Badge, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("PESEL: ${patient.pesel}", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.patients_pesel_format, patient.pesel), style = MaterialTheme.typography.bodyMedium)
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
@@ -722,7 +724,7 @@ fun PatientDetailDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Zamknij") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
         }
     )
 }

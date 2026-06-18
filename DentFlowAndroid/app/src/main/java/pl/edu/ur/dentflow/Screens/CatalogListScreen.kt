@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import pl.edu.ur.dentflow.data.ViewModel.CatalogViewModel
 import pl.edu.ur.dentflow.data.remote.ServiceCatalogItemDTO
+import pl.edu.ur.dentflow.R
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,10 +52,10 @@ fun CatalogListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Cennik Usług", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.catalog_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Powrót")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 windowInsets = WindowInsets(0, 0, 0, 0),
@@ -63,7 +65,7 @@ fun CatalogListScreen(
                             selectedService = null
                             showAddEditDialog = true
                         }) {
-                            Icon(Icons.Default.Add, contentDescription = "Dodaj usługę")
+                            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.catalog_add))
                         }
                     }
                 }
@@ -86,7 +88,7 @@ fun CatalogListScreen(
                 ) {
                     Icon(Icons.Default.ContentPasteSearch, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.LightGray)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = "Brak usług w cenniku", color = Color.Gray)
+                    Text(text = stringResource(R.string.catalog_empty), color = Color.Gray)
                 }
             } else {
                 LazyColumn(
@@ -200,10 +202,10 @@ fun ServiceItemCard(
                 Row {
                     if (isOwner) {
                         IconButton(onClick = onEdit) {
-                            Icon(Icons.Default.Edit, contentDescription = "Edytuj", modifier = Modifier.size(20.dp), tint = Color.Gray)
+                            Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit), modifier = Modifier.size(20.dp), tint = Color.Gray)
                         }
                         IconButton(onClick = onDelete) {
-                            Icon(Icons.Default.Delete, contentDescription = "Usuń", modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete), modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -230,28 +232,28 @@ fun ServiceAddEditDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (service == null) "Dodaj nową usługę" else "Edytuj usługę") },
+        title = { Text(if (service == null) stringResource(R.string.catalog_add_title) else stringResource(R.string.catalog_edit_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Nazwa zabiegu") },
+                    label = { Text(stringResource(R.string.catalog_name)) },
                     modifier = Modifier.fillMaxWidth(),
                     isError = name.isNotBlank() && !isNameValid,
-                    supportingText = { if (name.isNotBlank() && !isNameValid) Text("Nazwa musi mieć co najmniej 2 znaki") }
+                    supportingText = { if (name.isNotBlank() && !isNameValid) Text(stringResource(R.string.catalog_name_error)) }
                 )
 
                 OutlinedTextField(
                     value = price,
                     onValueChange = { price = it.replace(',', '.') },
-                    label = { Text("Cena (zł)") },
+                    label = { Text(stringResource(R.string.catalog_price)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     isError = !isPriceValid,
                     supportingText = {
                         if (!isPriceValid) {
-                            Text("Wprowadź poprawną cenę (np. 149.50)", color = MaterialTheme.colorScheme.error)
+                            Text(stringResource(R.string.catalog_price_error), color = MaterialTheme.colorScheme.error)
                         }
                     }
                 )
@@ -259,13 +261,13 @@ fun ServiceAddEditDialog(
                 OutlinedTextField(
                     value = duration,
                     onValueChange = { duration = it },
-                    label = { Text("Czas trwania (min)") },
+                    label = { Text(stringResource(R.string.catalog_duration)) },
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     isError = !isDurationValid,
                     supportingText = {
                         if (!isDurationValid) {
-                            Text("Czas musi być liczbą całkowitą większą od 0", color = MaterialTheme.colorScheme.error)
+                            Text(stringResource(R.string.catalog_duration_error), color = MaterialTheme.colorScheme.error)
                         }
                     }
                 )
@@ -275,7 +277,7 @@ fun ServiceAddEditDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("Usługa aktywna")
+                    Text(stringResource(R.string.catalog_active))
                     Switch(checked = isActive, onCheckedChange = { isActive = it })
                 }
             }
@@ -290,11 +292,11 @@ fun ServiceAddEditDialog(
                 },
                 enabled = isFormReady
             ) {
-                Text("Zapisz")
+                Text(stringResource(R.string.save))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Anuluj") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         }
     )
 }

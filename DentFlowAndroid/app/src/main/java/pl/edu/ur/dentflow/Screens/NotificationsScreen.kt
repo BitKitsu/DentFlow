@@ -19,9 +19,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import pl.edu.ur.dentflow.R
 import pl.edu.ur.dentflow.data.ViewModel.NotificationViewModel
 import pl.edu.ur.dentflow.data.remote.NotificationDTO
 import java.time.ZonedDateTime
@@ -69,7 +71,7 @@ fun NotificationsScreen(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Powiadomienia",
+                    text = stringResource(R.string.notifications_title),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -91,13 +93,13 @@ fun NotificationsScreen(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 // Odśwież
                 IconButton(onClick = { viewModel.fetchNotifications() }) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Odśwież",
+                    Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.notifications_refresh),
                         tint = MaterialTheme.colorScheme.primary)
                 }
                 // Oznacz wszystkie
                 if (unreadCount > 0) {
                     TextButton(onClick = { viewModel.markAllAsRead() }) {
-                        Text("Oznacz wszystkie")
+                        Text(stringResource(R.string.notifications_mark_all))
                     }
                 }
             }
@@ -110,7 +112,7 @@ fun NotificationsScreen(
             FilterChip(
                 selected = selectedFilter == 0,
                 onClick  = { selectedFilter = 0 },
-                label    = { Text("Wszystkie (${notifications.size})") },
+                label    = { Text(stringResource(R.string.notifications_all, notifications.size)) },
                 leadingIcon = {
                     if (selectedFilter == 0)
                         Icon(Icons.Default.Check, contentDescription = null,
@@ -120,7 +122,7 @@ fun NotificationsScreen(
             FilterChip(
                 selected = selectedFilter == 1,
                 onClick  = { selectedFilter = 1 },
-                label    = { Text("Nieprzeczytane ($unreadCount)") },
+                label    = { Text(stringResource(R.string.notifications_unread, unreadCount)) },
                 leadingIcon = {
                     if (selectedFilter == 1)
                         Icon(Icons.Default.Check, contentDescription = null,
@@ -156,7 +158,7 @@ fun NotificationsScreen(
                         style = MaterialTheme.typography.bodySmall
                     )
                     TextButton(onClick = { viewModel.fetchNotifications() }) {
-                        Text("Ponów")
+                        Text(stringResource(R.string.notifications_retry))
                     }
                 }
             }
@@ -186,9 +188,9 @@ fun NotificationsScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = if (selectedFilter == 1)
-                            "Brak nieprzeczytanych powiadomień"
+                            stringResource(R.string.notifications_no_unread)
                         else
-                            "Brak powiadomień",
+                            stringResource(R.string.notifications_empty),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodyLarge
                     )
@@ -247,14 +249,14 @@ fun NotificationCard(
     }
 
     val typeLabel = when (notification.type) {
-        "APPOINTMENT"             -> "Wizyta"
-        "APPOINTMENT_CANCELLED"   -> "Wizyta odwołana"
-        "APPOINTMENT_COMPLETED"   -> "Wizyta zakończona"
-        "APPOINTMENT_CONFIRMED"   -> "Wizyta potwierdzona"
-        "APPOINTMENT_NO_SHOW"     -> "Nieobecność"
-        "APPOINTMENT_REMINDER_24H" -> "Przypomnienie (24h)"
-        "APPOINTMENT_REMINDER_12H" -> "Przypomnienie (12h)"
-        else                      -> "System"
+        "APPOINTMENT"             -> stringResource(R.string.notification_type_visit)
+        "APPOINTMENT_CANCELLED"   -> stringResource(R.string.notification_type_cancelled)
+        "APPOINTMENT_COMPLETED"   -> stringResource(R.string.notification_type_completed)
+        "APPOINTMENT_CONFIRMED"   -> stringResource(R.string.notification_type_confirmed)
+        "APPOINTMENT_NO_SHOW"     -> stringResource(R.string.notification_type_absence)
+        "APPOINTMENT_REMINDER_24H" -> stringResource(R.string.notification_type_reminder_24h)
+        "APPOINTMENT_REMINDER_12H" -> stringResource(R.string.notification_type_reminder_12h)
+        else                      -> stringResource(R.string.notification_type_system)
     }
 
     val formattedTime = remember(notification.createdAt) {

@@ -19,12 +19,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import pl.edu.ur.dentflow.R
 import pl.edu.ur.dentflow.data.ViewModel.StaffViewModel
 import pl.edu.ur.dentflow.data.remote.AuthResponse
 import pl.edu.ur.dentflow.data.remote.StaffMemberResponse
@@ -72,13 +74,13 @@ fun AddStaffDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Dodaj Pracownika", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.staff_add), fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.verticalScroll(rememberScrollState())
             ) {
-                Text("1. Sprawdź email pracownika", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.staff_step1_email), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = email,
@@ -86,7 +88,7 @@ fun AddStaffDialog(
                             email = it
                             emailChecked = false
                         },
-                        label = { Text("Email") },
+                        label = { Text(stringResource(R.string.staff_email)) },
                         modifier = Modifier.weight(1f),
                         isError = showError && !isEmailValid,
                         shape = RoundedCornerShape(12.dp),
@@ -124,43 +126,43 @@ fun AddStaffDialog(
                         if (isCheckingEmail) {
                             CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         } else {
-                            Text("Sprawdź")
+                            Text(stringResource(R.string.staff_check))
                         }
                     }
                 }
                 
                 if (emailChecked) {
                     if (userExists) {
-                        Text("Uzytkownik istnieje - dane zostana automatycznie uzupelnione", 
+                        Text(stringResource(R.string.staff_user_exists), 
                             color = MaterialTheme.colorScheme.primary, 
                             style = MaterialTheme.typography.bodySmall)
                     } else {
-                        Text("Nowy uzytkownik - zostanie utworzone konto", 
+                        Text(stringResource(R.string.staff_new_user), 
                             color = MaterialTheme.colorScheme.secondary, 
                             style = MaterialTheme.typography.bodySmall)
                     }
                     
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     
-                    Text("2. Dane osobowe", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.staff_step2_personal), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
                             value = fName,
                             onValueChange = { fName = it },
-                            label = { Text("Imie") },
+                            label = { Text(stringResource(R.string.staff_name_hint)) },
                             modifier = Modifier.weight(1f),
                             isError = (showError && fName.isBlank()) || (fName.isNotBlank() && !isFirstNameValid),
-                            supportingText = { if (fName.isNotBlank() && !isFirstNameValid) Text("2-50 znaków (litery)") },
+                            supportingText = { if (fName.isNotBlank() && !isFirstNameValid) Text(stringResource(R.string.staff_name_hint)) },
                             shape = RoundedCornerShape(12.dp),
                             enabled = !userExists
                         )
                         OutlinedTextField(
                             value = lName,
                             onValueChange = { lName = it },
-                            label = { Text("Nazwisko") },
+                            label = { Text(stringResource(R.string.staff_name_hint)) },
                             modifier = Modifier.weight(1f),
                             isError = (showError && lName.isBlank()) || (lName.isNotBlank() && !isLastNameValid),
-                            supportingText = { if (lName.isNotBlank() && !isLastNameValid) Text("2-50 znaków (litery)") },
+                            supportingText = { if (lName.isNotBlank() && !isLastNameValid) Text(stringResource(R.string.staff_name_hint)) },
                             shape = RoundedCornerShape(12.dp),
                             enabled = !userExists
                         )
@@ -168,41 +170,41 @@ fun AddStaffDialog(
                     OutlinedTextField(
                         value = phone,
                         onValueChange = { phone = it },
-                        label = { Text("Telefon") },
+                        label = { Text(stringResource(R.string.staff_phone)) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         isError = phone.isNotBlank() && !isPhoneValid,
-                        supportingText = { if (phone.isNotBlank() && !isPhoneValid) Text("Nr telefonu jest nieprawidłowy") },
+                        supportingText = { if (phone.isNotBlank() && !isPhoneValid) Text(stringResource(R.string.staff_phone_error)) },
                         enabled = !userExists
                     )
                     
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                     
-                    Text("3. Rola i dane zawodowe", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.staff_step3_role), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                     ExposedDropdownMenuBox(expanded = roleExpanded, onExpandedChange = { roleExpanded = it }) {
                         OutlinedTextField(
                             value = when (selectedRole) {
-                                "DENTIST" -> "Dentysta"
-                                "RECEPTIONIST" -> "Recepcjonista"
-                                "ASSISTANT" -> "Asystent"
+                                "DENTIST" -> stringResource(R.string.role_dentist)
+                                "RECEPTIONIST" -> stringResource(R.string.role_receptionist)
+                                "ASSISTANT" -> stringResource(R.string.role_assistant)
                                 else -> selectedRole
                             },
                             onValueChange = {}, readOnly = true,
-                            label = { Text("Rola") },
+                            label = { Text(stringResource(R.string.staff_role)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(roleExpanded) },
                             modifier = Modifier.fillMaxWidth().menuAnchor(MenuAnchorType.PrimaryNotEditable),
                             shape = RoundedCornerShape(12.dp)
                         )
                         ExposedDropdownMenu(expanded = roleExpanded, onDismissRequest = { roleExpanded = false }) {
-                            DropdownMenuItem(text = { Text("Dentysta") }, onClick = { selectedRole = "DENTIST"; roleExpanded = false })
-                            DropdownMenuItem(text = { Text("Recepcjonista") }, onClick = { selectedRole = "RECEPTIONIST"; roleExpanded = false })
-                            DropdownMenuItem(text = { Text("Asystent") }, onClick = { selectedRole = "ASSISTANT"; roleExpanded = false })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.role_dentist)) }, onClick = { selectedRole = "DENTIST"; roleExpanded = false })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.role_receptionist)) }, onClick = { selectedRole = "RECEPTIONIST"; roleExpanded = false })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.role_assistant)) }, onClick = { selectedRole = "ASSISTANT"; roleExpanded = false })
                         }
                     }
                     OutlinedTextField(
                         value = bio,
                         onValueChange = { bio = it },
-                        label = { Text("Bio / O mnie") },
+                        label = { Text(stringResource(R.string.staff_bio)) },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 2,
                         maxLines = 4,
@@ -211,18 +213,18 @@ fun AddStaffDialog(
 
                     if (!userExists) {
                         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                        Text("4. Konto logowania", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                        Text(stringResource(R.string.staff_step4_account), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
                         OutlinedTextField(
                             value = pass,
                             onValueChange = { pass = it },
-                            label = { Text("Haslo tymczasowe") },
+                            label = { Text(stringResource(R.string.staff_temp_password)) },
                             visualTransformation = PasswordVisualTransformation(),
                             modifier = Modifier.fillMaxWidth(),
                             isError = showError && !isPassValid,
                             shape = RoundedCornerShape(12.dp),
                             supportingText = {
                                 if (showError && !isPassValid) {
-                                    Text("Haslo musi miec co najmniej 8 znakow", color = MaterialTheme.colorScheme.error)
+                                    Text(stringResource(R.string.staff_password_error), color = MaterialTheme.colorScheme.error)
                                 }
                             }
                         )
@@ -239,10 +241,10 @@ fun AddStaffDialog(
                 },
                 shape = RoundedCornerShape(12.dp),
                 enabled = emailChecked
-            ) { Text("DODAJ") }
+            ) { Text(stringResource(R.string.staff_add_button)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("ANULUJ") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.staff_cancel)) }
         }
     )
 }
@@ -266,21 +268,21 @@ fun EditStaffDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edytuj dane", fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.staff_edit_title), fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(value = fName, onValueChange = { fName = it }, label = { Text("Imię") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), isError = (showError && fName.isBlank()) || (fName.isNotBlank() && !isFirstNameValid), supportingText = { if (fName.isNotBlank() && !isFirstNameValid) Text("2-50 znaków (litery)") })
-                OutlinedTextField(value = lName, onValueChange = { lName = it }, label = { Text("Nazwisko") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), isError = (showError && lName.isBlank()) || (lName.isNotBlank() && !isLastNameValid), supportingText = { if (lName.isNotBlank() && !isLastNameValid) Text("2-50 znaków (litery)") })
-                OutlinedTextField(value = roleDisplayName(prof), onValueChange = {}, label = { Text("Rola") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), readOnly = true)
-                OutlinedTextField(value = bio, onValueChange = { bio = it }, label = { Text("Krótkie Bio / O mnie") }, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 4, shape = RoundedCornerShape(12.dp))
+                OutlinedTextField(value = fName, onValueChange = { fName = it }, label = { Text(stringResource(R.string.patients_firstname)) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), isError = (showError && fName.isBlank()) || (fName.isNotBlank() && !isFirstNameValid), supportingText = { if (fName.isNotBlank() && !isFirstNameValid) Text(stringResource(R.string.staff_name_hint)) })
+                OutlinedTextField(value = lName, onValueChange = { lName = it }, label = { Text(stringResource(R.string.patients_lastname)) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), isError = (showError && lName.isBlank()) || (lName.isNotBlank() && !isLastNameValid), supportingText = { if (lName.isNotBlank() && !isLastNameValid) Text(stringResource(R.string.staff_name_hint)) })
+                OutlinedTextField(value = roleDisplayName(prof), onValueChange = {}, label = { Text(stringResource(R.string.staff_role)) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), readOnly = true)
+                OutlinedTextField(value = bio, onValueChange = { bio = it }, label = { Text(stringResource(R.string.staff_edit_bio)) }, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 4, shape = RoundedCornerShape(12.dp))
             }
         },
         confirmButton = {
             Button(onClick = {
                 if (isFormValid) { onConfirm(fName, lName, prof, bio) } else { showError = true }
-            }, shape = RoundedCornerShape(12.dp), enabled = isFormValid) { Text("ZAPISZ") }
+            }, shape = RoundedCornerShape(12.dp), enabled = isFormValid) { Text(stringResource(R.string.staff_save)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("ANULUJ") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.staff_cancel)) } }
     )
 }
 
@@ -320,7 +322,7 @@ fun StaffManagementScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Zarządzanie Personelem", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.staff_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = { IconButton(onClick = onBackClick) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } },
                 windowInsets = WindowInsets(0, 0, 0, 0)
             )
@@ -474,12 +476,12 @@ fun StaffItem(
                 }
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                     DropdownMenuItem(
-                        text = { Text("Edytuj") },
+                        text = { Text(stringResource(R.string.edit)) },
                         onClick = { showMenu = false; onEdit() },
                         leadingIcon = { Icon(Icons.Default.Edit, null) }
                     )
                     DropdownMenuItem(
-                        text = { Text("Usuń z gabinetu", color = Color.Red) },
+                        text = { Text(stringResource(R.string.staff_delete), color = Color.Red) },
                         onClick = { showMenu = false; onDelete() },
                         leadingIcon = { Icon(Icons.Default.Delete, null, tint = Color.Red) }
                     )
@@ -497,13 +499,13 @@ fun StaffDetailDialog(
     onEditHours: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val dayNames = listOf("Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Ndz")
+    val dayNames = listOf(stringResource(R.string.day_mon), stringResource(R.string.day_tue), stringResource(R.string.day_wed), stringResource(R.string.day_thu), stringResource(R.string.day_fri), stringResource(R.string.day_sat), stringResource(R.string.day_sun))
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Profil pracownika", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.staff_profile), fontWeight = FontWeight.Bold)
             }
         },
         text = {
@@ -593,14 +595,14 @@ fun StaffDetailDialog(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Godziny pracy", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.staff_work_hours), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                     IconButton(onClick = onEditHours, modifier = Modifier.size(24.dp)) {
-                        Icon(Icons.Default.Edit, "Edytuj godziny", modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.Edit, stringResource(R.string.staff_edit_hours), modifier = Modifier.size(16.dp))
                     }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 if (workingHours.isEmpty()) {
-                    Text("Brak ustawionych godzin pracy", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.staff_no_hours), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
                     val sortedHours = workingHours.sortedBy { it.dayOfWeek }
                     sortedHours.forEach { wh ->
@@ -618,7 +620,7 @@ fun StaffDetailDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Zamknij") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) }
         }
     )
 }
@@ -640,7 +642,7 @@ fun WorkingHoursEditorDialog(
     onSave: (List<WorkingHoursEntry>) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val dayLabels = listOf("Pon", "Wt", "Śr", "Czw", "Pt", "Sob", "Ndz")
+    val dayLabels = listOf(stringResource(R.string.day_mon), stringResource(R.string.day_tue), stringResource(R.string.day_wed), stringResource(R.string.day_thu), stringResource(R.string.day_fri), stringResource(R.string.day_sat), stringResource(R.string.day_sun))
 
     val days = remember {
         mutableStateListOf(
@@ -674,7 +676,7 @@ fun WorkingHoursEditorDialog(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
-                Text("Godziny pracy", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(R.string.staff_hours_title), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
@@ -691,7 +693,7 @@ fun WorkingHoursEditorDialog(
                 Spacer(modifier = Modifier.height(16.dp))
                 if (hasInvalidTimeRange) {
                     Text(
-                        "Koniec musi byc pozniejszy niz poczatek",
+                        stringResource(R.string.staff_hours_end_error),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -702,7 +704,7 @@ fun WorkingHoursEditorDialog(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = onDismiss) { Text("Anuluj") }
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
                     Spacer(modifier = Modifier.width(8.dp))
                     Button(
                         onClick = {
@@ -717,7 +719,7 @@ fun WorkingHoursEditorDialog(
                         },
                         shape = RoundedCornerShape(12.dp),
                         enabled = !hasInvalidTimeRange
-                    ) { Text("Zapisz") }
+                    ) { Text(stringResource(R.string.save)) }
                 }
             }
         }
@@ -783,7 +785,7 @@ fun WorkingHoursDayRow(
             }
         } else {
             Text(
-                text = "Wolne",
+                text = stringResource(R.string.staff_day_off),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
